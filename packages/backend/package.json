@@ -1,0 +1,29 @@
+{
+  "name": "@seila/backend",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "scripts": {
+    "build": "echo 'backend build not configured yet'",
+    "lint": "echo 'backend lint not configured yet'",
+    "test": "echo 'backend test not configured yet'",
+    "check-types": "bunx tsc -p convex/tsconfig.json --noEmit",
+    "dev": "convex dev",
+    "dev:setup": "convex dev --configure --until-success"
+  },
+  "dependencies": {
+    "@better-auth/expo": "catalog:",
+    "@convex-dev/better-auth": "catalog:",
+    "@seila/domain-kernel": "workspace:*",
+    "better-auth": "catalog:",
+    "convex": "catalog:",
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@seila/config": "workspace:*",
+    "@types/node": "^24.3.0",
+    "typescript": "catalog:"
+  }
+}

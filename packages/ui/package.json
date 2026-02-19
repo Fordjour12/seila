@@ -1,0 +1,20 @@
+{
+  "name": "@seila/ui",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "echo 'ui build not configured yet'",
+    "lint": "echo 'ui lint not configured yet'",
+    "test": "echo 'ui test not configured yet'",
+    "check-types": "bunx tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@seila/config": "workspace:*",
+    "@types/node": "^24.3.0",
+    "typescript": "catalog:"
+  }
+}

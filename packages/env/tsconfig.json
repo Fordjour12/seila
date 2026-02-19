@@ -1,0 +1,3 @@
+{
+  "extends": "@seila/config/tsconfig.base.json"
+}

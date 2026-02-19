@@ -1,0 +1,45 @@
+{
+  "name": "seila",
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "apps/*",
+      "packages/*"
+    ],
+    "catalog": {
+      "dotenv": "^17.2.2",
+      "zod": "^4.1.13",
+      "typescript": "^5",
+      "convex": "^1.32.0",
+      "better-auth": "1.4.9",
+      "@better-auth/expo": "1.4.9",
+      "@convex-dev/better-auth": "^0.10.9"
+    }
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "check-types": "turbo run check-types",
+    "dev:native": "turbo run dev -F native",
+    "dev:web": "turbo run dev -F web",
+    "dev:server": "turbo run dev -F @seila/backend",
+    "dev:setup": "turbo run dev:setup -F @seila/backend",
+    "check": "turbo run lint && oxfmt --write"
+  },
+  "dependencies": {
+    "@seila/env": "workspace:*",
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@seila/config": "workspace:*",
+    "oxfmt": "^0.26.0",
+    "oxlint": "^1.41.0",
+    "turbo": "^2.6.3",
+    "typescript": "catalog:"
+  },
+  "packageManager": "bun@1.3.0"
+}

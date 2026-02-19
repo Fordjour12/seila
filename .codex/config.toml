@@ -1,0 +1,16 @@
+[mcp_servers.context7]
+command = "npx"
+args = ["-y", "@upstash/context7-mcp"]
+
+[mcp_servers.convex]
+command = "npx"
+args = ["-y", "convex@latest", "mcp", "start"]
+startup_timeout_sec = 100
+
+[mcp_servers.better-auth]
+type = "http"
+url = "https://mcp.inkeep.com/better-auth/mcp"
+
+[mcp_servers.expo-mcp]
+type = "http"
+url = "https://mcp.expo.dev/mcp"

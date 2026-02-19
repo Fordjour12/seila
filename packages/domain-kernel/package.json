@@ -1,0 +1,20 @@
+{
+  "name": "@seila/domain-kernel",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "echo 'domain-kernel build not configured yet'",
+    "lint": "echo 'domain-kernel lint not configured yet'",
+    "test": "bun test",
+    "check-types": "bunx tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@seila/config": "workspace:*",
+    "@types/node": "^24.3.0",
+    "typescript": "catalog:"
+  }
+}

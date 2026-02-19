@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "scheme": "seila",
+    "userInterfaceStyle": "automatic",
+    "orientation": "default",
+    "web": {
+      "bundler": "metro"
+    },
+    "name": "seila",
+    "slug": "seila",
+    "plugins": [
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "android": {
+      "package": "com.thedevelophantom.seila"
+    },
+    "ios": {
+      "bundleIdentifier": "com.thedevelophantom.seila"
+    }
+  }
+}

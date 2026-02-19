@@ -1,0 +1,25 @@
+{
+  "name": "@seila/env",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./native": "./src/native.ts"
+  },
+  "scripts": {
+    "build": "echo 'env build not configured yet'",
+    "lint": "echo 'env lint not configured yet'",
+    "test": "echo 'env test not configured yet'",
+    "check-types": "bunx tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@t3-oss/env-core": "^0.13.1",
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@seila/config": "workspace:*",
+    "@types/node": "^24.3.0",
+    "typescript": "catalog:"
+  }
+}
