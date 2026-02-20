@@ -32,11 +32,6 @@ import { authClient } from "@/lib/auth-client";
 type UiCadence = "daily" | "weekdays";
 type UiAnchor = "morning" | "afternoon" | "evening" | "anytime";
 type UiDifficulty = "low" | "medium" | "high";
-type TodayHabit = {
-  habitId: string;
-  name: string;
-  todayStatus?: "completed" | "skipped" | "snoozed";
-};
 
 function getIdempotencyKey(prefix: string) {
   return `${prefix}:${Date.now()}:${Math.random().toString(36).slice(2, 10)}`;
@@ -66,7 +61,7 @@ export default function Home() {
   const [difficulty, setDifficulty] = useState<UiDifficulty>("medium");
   const aiInitRanRef = useRef(false);
 
-  const habits = (todayHabits ?? []) as TodayHabit[];
+  const habits = todayHabits ?? [];
 
   useEffect(() => {
     if (!user || aiInitRanRef.current) {
@@ -209,7 +204,7 @@ export default function Home() {
           <Text className="text-muted text-xs">{emptyHabitLabel}</Text>
         ) : (
           <View className="gap-3">
-            {habits.map((habit: TodayHabit) => (
+            {habits.map((habit) => (
               <Swipeable
                 key={habit.habitId}
                 renderRightActions={() => (
