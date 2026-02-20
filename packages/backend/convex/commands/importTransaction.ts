@@ -44,8 +44,8 @@ export const importTransaction = mutation({
       payload: {
         transactionId,
         amount: args.amount,
-        merchantHint: args.merchantHint,
-        note: args.note,
+        ...(args.merchantHint ? { merchantHint: args.merchantHint } : {}),
+        ...(args.note ? { note: args.note } : {}),
       },
     });
 

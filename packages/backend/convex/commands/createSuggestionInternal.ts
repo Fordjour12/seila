@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { jsonPayloadObjectValidator } from "../lib/payloadValidators";
 
 import { internalMutation } from "../_generated/server";
 
@@ -12,7 +13,7 @@ export const createSuggestionInternal = internalMutation({
       v.object({
         type: v.union(v.literal("open_screen"), v.literal("run_command")),
         label: v.string(),
-        payload: v.optional(v.any()),
+        payload: v.optional(jsonPayloadObjectValidator),
       }),
     ),
     expiresAt: v.optional(v.number()),

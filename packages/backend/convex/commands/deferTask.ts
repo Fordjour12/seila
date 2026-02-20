@@ -7,7 +7,6 @@ export const deferTask = mutation({
     taskId: v.id("tasks"),
     deferUntil: v.optional(v.number()),
   },
-  returns: v.any(),
   handler: async (ctx, args) => {
     const task = await ctx.db.get(args.taskId);
     if (!task) {
@@ -25,7 +24,10 @@ export const deferTask = mutation({
       type: "task.deferred",
       occurredAt,
       idempotencyKey: args.idempotencyKey,
-      payload: { id: args.taskId, deferUntil: args.deferUntil },
+      payload: {
+        id: args.taskId,
+        ...(args.deferUntil !== undefined ? { deferUntil: args.deferUntil } : {}),
+      },
     });
 
     return { success: true };

@@ -4,10 +4,26 @@ import type { TaskState } from "./tasks";
 
 export type SuggestionPriority = 1 | 2 | 3 | 4 | 5;
 
+export type SuggestionPayloadValue =
+  | string
+  | number
+  | boolean
+  | null
+  | string[]
+  | number[]
+  | boolean[]
+  | null[]
+  | Record<string, string>
+  | Record<string, number>
+  | Record<string, boolean>
+  | Record<string, null>
+  | {}
+  | {}[];
+
 export type SuggestionAction = {
   type: "open_screen" | "run_command";
   label: string;
-  payload?: Record<string, unknown>;
+  payload?: Record<string, SuggestionPayloadValue>;
 };
 
 export type Suggestion = {

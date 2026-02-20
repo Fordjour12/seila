@@ -5,7 +5,6 @@ export const moodTrend = query({
   args: {
     days: v.optional(v.number()),
   },
-  returns: v.any(),
   handler: async (ctx, args) => {
     const days = args.days ?? 14;
     const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;

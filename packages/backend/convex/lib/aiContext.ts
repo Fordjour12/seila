@@ -1,4 +1,5 @@
 import { makeFunctionReference } from "convex/server";
+import type { ActionCtx } from "../_generated/server";
 
 export type AiConfidence = "low" | "medium" | "high";
 
@@ -78,12 +79,14 @@ const writeAiContextRef = makeFunctionReference<
 >("commands/aiContext:applyAiContextPatch");
 
 export async function readAiContext(ctx: unknown) {
-  return (await (ctx as any).runQuery(readAiContextRef, {})) as AiContextDoc;
+  const actionCtx = ctx as ActionCtx;
+  return (await actionCtx.runQuery(readAiContextRef, {})) as AiContextDoc;
 }
 
 export async function writeAiContext(
   ctx: unknown,
   patch: AiContextPatch,
 ) {
-  return (await (ctx as any).runMutation(writeAiContextRef, patch)) as { updated: boolean };
+  const actionCtx = ctx as ActionCtx;
+  return (await actionCtx.runMutation(writeAiContextRef, patch)) as { updated: boolean };
 }

@@ -1,7 +1,6 @@
-import { v } from "convex/values";
-import { internalQuery, query } from "../_generated/server";
+import { internalQuery, query, type QueryCtx } from "../_generated/server";
 
-async function getLastCheckin(ctx: { db: any }) {
+async function getLastCheckin(ctx: QueryCtx) {
   const checkins = await ctx.db
     .query("checkins")
     .withIndex("by_occurredAt")
@@ -25,7 +24,6 @@ async function getLastCheckin(ctx: { db: any }) {
 
 export const lastCheckin = query({
   args: {},
-  returns: v.any(),
   handler: async (ctx) => getLastCheckin(ctx),
 });
 

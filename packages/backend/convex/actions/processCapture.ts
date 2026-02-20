@@ -3,10 +3,11 @@
 import { v } from "convex/values";
 
 import { internal } from "../_generated/api";
-import { internalAction } from "../_generated/server";
+import { action } from "../_generated/server";
 import { readAiContext, writeAiContext } from "../lib/aiContext";
 import { captureAgent } from "../agents/captureAgent";
 import { tonePolicy } from "../lib/tonePolicy";
+import { runAgentText } from "../lib/runAgentText";
 
 type CaptureResult = {
   reply: string;
@@ -36,13 +37,12 @@ function parseCaptureResult(raw: string): CaptureResult | null {
   return null;
 }
 
-export const processCapture = internalAction({
+export const processCapture = action({
   args: {
-    input: v.string(),
-    captureId: v.string(),
+    text: v.string(),
   },
   handler: async (ctx, args): Promise<CaptureResult> => {
-    const aiContext = await readAiContext(ctx);
+    await readAiContext(ctx);
 
     // Daily threadId — captures share context within the same day
     const dayKey = new Date().toISOString().split("T")[0];
@@ -53,8 +53,9 @@ export const processCapture = internalAction({
 
     let result;
     try {
-      result = await thread.generateText({
-        prompt: `The person just said: "${args.input}"
+      result = await runAgentText(
+        thread,
+        `The person just said: "${args.text}"
 
                  Use your tools to fetch AI context.
                  Reply in 1–2 sentences, warm but brief.
@@ -69,7 +70,7 @@ export const processCapture = internalAction({
                    "suggestedAction": { "headline": "string", "subtext": "string", "screen": "checkin|tasks|finance..." },
                    "moodSignal": number (1-5, optional)
                  }`,
-      });
+      );
     } catch {
       return {
         reply: "Heard. Keeping things grounded today.",
@@ -106,11 +107,16 @@ export const processCapture = internalAction({
         await ctx.runMutation(
           internal.commands.createSuggestionInternal.createSuggestionInternal,
           {
+            policy: "capture",
             headline: tonePolicy(parsed.suggestedAction.headline),
             subtext: tonePolicy(parsed.suggestedAction.subtext),
-            screen: parsed.suggestedAction.screen ?? "checkin",
-            source: "captureAgent",
             priority: 1,
+            action: {
+              type: "open_screen",
+              label: "Open",
+              payload: { screen: parsed.suggestedAction.screen ?? "checkin" },
+            },
+            expiresAt: Date.now() + 30 * 60 * 1000,
           },
         );
       } catch { /* suggestion creation is non-critical */ }

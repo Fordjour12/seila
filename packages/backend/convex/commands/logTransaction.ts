@@ -54,10 +54,10 @@ export const logTransaction = mutation({
       payload: {
         transactionId,
         amount: args.amount,
-        envelopeId: args.envelopeId,
         source: args.source,
-        merchantHint: args.merchantHint,
-        note: args.note,
+        ...(args.envelopeId ? { envelopeId: args.envelopeId } : {}),
+        ...(args.merchantHint ? { merchantHint: args.merchantHint } : {}),
+        ...(args.note ? { note: args.note } : {}),
       },
     });
 

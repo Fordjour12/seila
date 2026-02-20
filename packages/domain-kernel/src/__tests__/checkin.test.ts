@@ -5,6 +5,8 @@ import {
   checkinReducer,
   handleCheckinCommand,
   initialCheckinState,
+  type CheckinCommand as KernelCheckinCommand,
+  type CheckinEvent as KernelCheckinEvent,
 } from "../checkin";
 import { createTraceHarness } from "../trace-harness";
 
@@ -66,10 +68,10 @@ const checkinHarness = createTraceHarness<
   ) => ReturnType<typeof checkinReducer>,
   handleCommand: (events, command) => {
     const emitted = handleCheckinCommand(
-      events as any,
-      command as any,
+      events as ReadonlyArray<KernelCheckinEvent>,
+      command as KernelCheckinCommand,
     );
-    return emitted as any;
+    return emitted as ReadonlyArray<CheckinEvent>;
   },
 });
 

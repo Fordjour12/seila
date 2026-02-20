@@ -120,7 +120,7 @@ export const submitReflection = mutation({
         feltGood: args.feltGood,
         feltHard: args.feltHard,
         carryForward: args.carryForward,
-        aiSuggested: args.aiSuggested,
+        ...(args.aiSuggested ? { aiSuggested: args.aiSuggested } : {}),
       },
     });
 

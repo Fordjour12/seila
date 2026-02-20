@@ -8,7 +8,6 @@ export const focusTask = mutation({
     idempotencyKey: v.string(),
     taskId: v.id("tasks"),
   },
-  returns: v.any(),
   handler: async (ctx, args) => {
     const task = await ctx.db.get(args.taskId);
     if (!task) {

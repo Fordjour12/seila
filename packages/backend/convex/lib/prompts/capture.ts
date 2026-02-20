@@ -1,6 +1,6 @@
-import { BASE_SYSTEM } from "./base";
+import { BASE_SYSTEM } from "../../agent";
 
-export const CAPTURE_SYSTEM_PROMPT = `${BASE_SYSTEM}
+export const CAPTURE_SYSTEM = `${BASE_SYSTEM}
 
 CAPTURE RULES:
 - Reply in 1–2 sentences, warm but brief

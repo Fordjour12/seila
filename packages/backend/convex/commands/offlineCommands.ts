@@ -1,18 +1,13 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
-
-interface QueuedCommandInput {
-  type: string;
-  payload: unknown;
-  idempotencyKey: string;
-}
+import { jsonPayloadObjectValidator } from "../lib/payloadValidators";
 
 export const processQueuedCommands = mutation({
   args: {
     commands: v.array(
       v.object({
         type: v.string(),
-        payload: v.any(),
+        payload: jsonPayloadObjectValidator,
         idempotencyKey: v.string(),
       }),
     ),

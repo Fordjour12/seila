@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { parseISO, format } from "date-fns";
+import { format } from "date-fns";
 import { useMutation, useQuery } from "convex/react";
 import { useThemeColor } from "heroui-native";
 import React, { useState } from "react";
@@ -23,7 +23,7 @@ export default function AiContextScreen() {
     const clearAiContext = useMutation(api.commands.clearAiContext.clearAiContext);
     const themeColorForeground = useThemeColor("foreground");
     const themeColorBackground = useThemeColor("background");
-    const themeColorBorder = useThemeColor("default-200");
+    const themeColorBorder = useThemeColor("border");
     const [isClearing, setIsClearing] = useState(false);
 
     const handleClear = async () => {

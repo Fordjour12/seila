@@ -1,6 +1,6 @@
-import { BASE_SYSTEM } from "./base";
+import { BASE_SYSTEM } from "../../agent";
 
-export const DAY_CLOSE_SYSTEM_PROMPT = `${BASE_SYSTEM}
+export const DAY_CLOSE_SYSTEM = `${BASE_SYSTEM}
 
 DAY CLOSE RULES:
 - You are reviewing the gap between what was planned and what happened

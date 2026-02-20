@@ -243,12 +243,16 @@ export const internalActivePatterns = internalQuery({
 
 export const getPatternByType = internalQuery({
   args: {
-    type: v.string(),
+    type: v.union(
+      v.literal("mood_habit"),
+      v.literal("energy_checkin_timing"),
+      v.literal("spending_mood"),
+    ),
   },
   handler: async (ctx, args) => {
     const patterns = await ctx.db
       .query("patterns")
-      .withIndex("by_type", (q) => q.eq("type", args.type as any))
+      .withIndex("by_type", (q) => q.eq("type", args.type))
       .collect();
 
     const active = patterns

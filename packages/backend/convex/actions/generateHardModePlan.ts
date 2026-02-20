@@ -16,6 +16,7 @@ import { internalAction } from "../_generated/server";
 import { readAiContext, writeAiContext } from "../lib/aiContext";
 import { plannerAgent } from "../agents/plannerAgent";
 import { tonePolicy } from "../lib/tonePolicy";
+import { runAgentText } from "../lib/runAgentText";
 
 const applyGeneratedPlanRef = makeFunctionReference<
   "mutation",
@@ -45,6 +46,37 @@ const recoveryContextRef = makeFunctionReference<
 >("queries/recoveryContext:internalRecoveryContext");
 
 const MAX_RATIONALE_LENGTH = 80;
+
+type TodayHabit = {
+  habitId: Id<"habits">;
+  name: string;
+  anchor?: "morning" | "afternoon" | "evening" | "anytime";
+  todayStatus?: "completed" | "skipped" | "snoozed";
+};
+
+type InboxTask = {
+  _id: Id<"tasks">;
+  title: string;
+};
+
+type AgentRationalePayload = {
+  rationales?: Record<string, string>;
+};
+
+function parseAgentRationales(raw: string): AgentRationalePayload {
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (parsed && typeof parsed === "object" && "rationales" in parsed) {
+      const rationales = (parsed as { rationales?: unknown }).rationales;
+      if (rationales && typeof rationales === "object") {
+        return { rationales: rationales as Record<string, string> };
+      }
+    }
+  } catch {
+    // fallback handled by caller
+  }
+  return {};
+}
 
 function truncateRationale(input: string) {
   if (input.length <= MAX_RATIONALE_LENGTH) {
@@ -193,7 +225,12 @@ export const generateHardModePlan = internalAction({
       return { generated: false };
     }
 
-    const [todayHabits, inboxTasks, lastCheckin, recoveryContext] = await Promise.all([
+    const [todayHabits, inboxTasks, lastCheckin, recoveryContext]: [
+      TodayHabit[],
+      InboxTask[],
+      { mood: number; energy: number } | null,
+      { hardDayLooksLike?: string; knownTriggers: string[]; restDefinition?: string } | null,
+    ] = await Promise.all([
       ctx.runQuery(api.queries.todayHabits.todayHabits, {}),
       ctx.runQuery(api.queries.taskQueries.inbox, {}),
       ctx.runQuery(api.queries.lastCheckin.lastCheckin, {}),
@@ -208,26 +245,25 @@ export const generateHardModePlan = internalAction({
     // Let the agent generate rationale refinements
     let agentRationales: Record<string, string> = {};
     try {
-      const result = await thread.generateText({
-        prompt: `Generate today's Hard Mode plan rationales.
+      const result = await runAgentText(
+        thread,
+        `Generate today's Hard Mode plan rationales.
                  Session scope: ${JSON.stringify(session.scope)}
                  Constraints: ${JSON.stringify(session.constraints)}
-                 Today habits: ${JSON.stringify(todayHabits.map((h: any) => ({ name: h.name, anchor: h.anchor, status: h.todayStatus })))}
-                 Inbox tasks: ${JSON.stringify(inboxTasks.slice(0, 3).map((t: any) => ({ id: t._id, title: t.title })))}
+                 Today habits: ${JSON.stringify(todayHabits.map((habit) => ({ name: habit.name, anchor: habit.anchor, status: habit.todayStatus })))}
+                 Inbox tasks: ${JSON.stringify(inboxTasks.slice(0, 3).map((task) => ({ id: task._id, title: task.title })))}
                  Last check-in: mood=${lastCheckin?.mood ?? "?"} energy=${lastCheckin?.energy ?? "?"}
                  Calibration accuracy: ${aiContext.calibration.hardModePlanAccuracy.toFixed(2)}
                  
                  For each planned item, provide an observational rationale (max 80 chars).
                  Return JSON only: { "rationales": { "itemId": "rationale string" } }`,
-      });
+      );
 
       const safe = tonePolicy(result.text);
-      try {
-        const parsed = JSON.parse(safe);
-        if (parsed.rationales) {
-          agentRationales = parsed.rationales;
-        }
-      } catch { /* use rule-based rationales */ }
+      const parsed = parseAgentRationales(safe);
+      if (parsed.rationales) {
+        agentRationales = parsed.rationales;
+      }
     } catch { /* agent failure — use rule-based rationales */ }
 
     const candidates = buildCandidates({

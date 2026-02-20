@@ -122,7 +122,7 @@ export default function Home() {
             <Text className="text-muted-foreground text-sm">{user.email}</Text>
           </View>
           <Button
-            variant="flat"
+            variant="secondary"
             size="sm"
             className="bg-destructive/10 text-destructive"
             onPress={() => {

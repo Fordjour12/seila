@@ -10,13 +10,14 @@ import {
   aiMemoryEntryValidator,
   aiWorkingModelValidator,
 } from "./aiContext/validators";
+import { jsonPayloadObjectValidator } from "./lib/payloadValidators";
 
 export default defineSchema({
   events: defineTable({
     type: v.string(),
     occurredAt: v.number(),
     idempotencyKey: v.string(),
-    payload: v.any(),
+    payload: jsonPayloadObjectValidator,
   }).index("by_idempotency_key", ["idempotencyKey"]),
   habits: defineTable({
     name: v.string(),
@@ -76,7 +77,7 @@ export default defineSchema({
       v.object({
         type: v.union(v.literal("open_screen"), v.literal("run_command")),
         label: v.string(),
-        payload: v.optional(v.any()),
+        payload: v.optional(jsonPayloadObjectValidator),
       }),
     ),
     createdAt: v.number(),

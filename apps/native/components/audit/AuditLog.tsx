@@ -1,8 +1,10 @@
 import { api } from "@seila/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
-import { Button, Surface, useToast } from "heroui-native";
+import { Button, Surface } from "heroui-native";
 import { useState } from "react";
-import { Text, View, ScrollView, Alert, Share } from "react-native";
+import { Text, View, ScrollView, Share } from "react-native";
+
+type AuditModule = "checkin" | "finance" | "habit" | "task" | "review" | "pattern" | "suggestion" | "hardmode";
 
 const MODULES = [
   { value: "", label: "All" },
@@ -12,22 +14,25 @@ const MODULES = [
   { value: "review", label: "Reviews" },
   { value: "finance", label: "Finance" },
   { value: "pattern", label: "Patterns" },
-];
+ ] as const satisfies ReadonlyArray<{ value: "" | AuditModule; label: string }>;
 
 export function AuditLog() {
-  const untypedApi = api as any;
-  const { toast } = useToast();
-  const [selectedModule, setSelectedModule] = useState("");
+  const [selectedModule, setSelectedModule] = useState<"" | AuditModule>("");
 
   const events = useQuery(
-    untypedApi.queries.auditLog.allEvents,
+    api.queries.auditLog.allEvents,
     { module: selectedModule || undefined, limit: 50 }
-  ) as any[];
+  );
   
   const eventCount = useQuery(
-    untypedApi.queries.auditLog.eventCount,
+    api.queries.auditLog.eventCount,
     { module: selectedModule || undefined }
-  ) as number;
+  );
+
+  const exportData = useQuery(
+    api.queries.auditLog.exportEvents,
+    { module: selectedModule || undefined },
+  );
 
   const formatDate = (timestamp: number) => {
     const date = new Date(timestamp);
@@ -56,18 +61,13 @@ export function AuditLog() {
 
   const handleShare = async () => {
     try {
-      const exportData = useQuery(
-        untypedApi.queries.auditLog.exportEvents,
-        { module: selectedModule || undefined }
-      );
-      
       const json = JSON.stringify(exportData, null, 2);
       
       await Share.share({
         message: json,
         title: "Life OS Event Log Export",
       });
-    } catch (error) {
+    } catch {
       // User cancelled
     }
   };

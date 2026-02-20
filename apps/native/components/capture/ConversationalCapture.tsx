@@ -4,7 +4,6 @@ import { Text, TextInput, View, ActivityIndicator } from "react-native";
 import { Button } from "heroui-native";
 import { SpicedCard } from "@/components/ui/SpicedCard";
 import { api } from "@seila/backend/convex/_generated/api";
-import * as Crypto from "expo-crypto";
 import { useThemeColor } from "heroui-native";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -16,7 +15,7 @@ export function ConversationalCapture() {
 
     const themeColorForeground = useThemeColor("foreground");
     const themeColorBackground = useThemeColor("background");
-    const themeColorPrimary = useThemeColor("primary");
+    const themeColorAccent = useThemeColor("accent");
 
     const handleSubmit = async () => {
         const input = text.trim();
@@ -30,8 +29,7 @@ export function ConversationalCapture() {
 
         try {
             const response = await processCapture({
-                input,
-                captureId: Crypto.randomUUID(),
+                text: input,
             });
             setReply(response.reply);
         } catch (err) {
@@ -83,7 +81,7 @@ export function ConversationalCapture() {
                 />
                 <View style={{ marginLeft: 12 }}>
                     {isLoading ? (
-                        <ActivityIndicator color={themeColorPrimary} />
+                        <ActivityIndicator color={themeColorAccent} />
                     ) : (
                         <Button size="sm" variant="primary" onPress={handleSubmit} isDisabled={!text.trim() || isLoading}>
                             Send

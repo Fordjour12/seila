@@ -1,12 +1,36 @@
 "use node";
 
 import { v } from "convex/values";
+import { makeFunctionReference } from "convex/server";
+import type { HardModePlan } from "@seila/domain-kernel";
 
-import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
 import { readAiContext, writeAiContext } from "../lib/aiContext";
 import { plannerAgent } from "../agents/plannerAgent";
 import { tonePolicy } from "../lib/tonePolicy";
+import { runAgentText } from "../lib/runAgentText";
+
+type EventDoc = {
+  type: string;
+  payload?: Record<string, unknown>;
+};
+
+type DayCloseQueryResult = {
+  dayStart: number;
+  dayEnd: number;
+  session: {
+    _id: string;
+    plan?: HardModePlan;
+    isActive: boolean;
+  } | null;
+  todayEvents: EventDoc[];
+};
+
+const dayCloseInputRef = makeFunctionReference<
+  "query",
+  { now: number; sessionId?: string },
+  DayCloseQueryResult
+>("queries/hardModeDayClose:dayCloseInput");
 
 type DayCloseResult = {
   observations: string[];
@@ -50,16 +74,21 @@ function parseDayCloseResult(raw: string): DayCloseResult | null {
 
 export const closeHardModeDay = internalAction({
   args: {
-    sessionId: v.id("hardModeSessions"),
+    sessionId: v.optional(v.id("hardModeSessions")),
+    now: v.optional(v.number()),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{ processed: boolean; reason?: string; completions?: number; flags?: number; ignored?: number; accuracy?: number }> => {
     const aiContext = await readAiContext(ctx);
+    const now = args.now ?? Date.now();
 
     // Get today's events and plan via the day-close input query
-    const dayCloseData = await ctx.runQuery(
-      internal.queries.hardModeDayClose.dayCloseInput,
-      { now: Date.now(), sessionId: args.sessionId },
-    );
+    const dayCloseData = await ctx.runQuery(dayCloseInputRef, {
+      now,
+      sessionId: args.sessionId,
+    });
 
     if (!dayCloseData.session || !dayCloseData.session.plan) {
       return { processed: false, reason: "no_plan" };
@@ -68,41 +97,52 @@ export const closeHardModeDay = internalAction({
     const plan = dayCloseData.session.plan;
     const todayEvents = dayCloseData.todayEvents;
 
-    const flags = todayEvents.filter(
-      (e: any) => e.type === "hardmode.itemFlagged",
-    );
-    const completions = todayEvents.filter((e: any) => isCompletionEvent(e));
+    const flags = todayEvents.filter((event) => event.type === "hardMode.itemFlagged");
+    const completions = todayEvents.filter((event) => isCompletionEvent(event));
     const completedIds = new Set(
-      completions.map((c: any) => c.payload?.itemId ?? c.payload?.targetId),
+      completions
+        .map((event) => {
+          const payload = event.payload as Record<string, unknown> | undefined;
+          const id = payload?.itemId ?? payload?.targetId ?? payload?.id;
+          return typeof id === "string" ? id : null;
+        })
+        .filter((id): id is string => id !== null),
     );
     const flaggedIds = new Set(
-      flags.map((f: any) => f.payload?.targetId),
+      flags
+        .map((event) => {
+          const payload = event.payload as Record<string, unknown> | undefined;
+          const id = payload?.itemId ?? payload?.targetId ?? payload?.id;
+          return typeof id === "string" ? id : null;
+        })
+        .filter((id): id is string => id !== null),
     );
-    const ignored = (plan.items ?? []).filter(
-      (item: any) =>
-        !completedIds.has(item.id) && !flaggedIds.has(item.id),
-    );
+    const ignored = (plan.items ?? []).filter((item) => !completedIds.has(item.id) && !flaggedIds.has(item.id));
 
     // Same thread as the plan — agent sees full session history
     const { thread } = await plannerAgent.continueThread(ctx, {
-      threadId: `hardmode-${args.sessionId}`,
+      threadId: `hardmode-${dayCloseData.session._id}`,
     });
 
     let dayCloseResult: DayCloseResult;
 
     try {
-      const result = await thread.generateText({
-        prompt: `The day is done. Here is what happened:
+      const result = await runAgentText(
+        thread,
+        `The day is done. Here is what happened:
 
 Completed: ${JSON.stringify(Array.from(completedIds))}
 Flagged: ${JSON.stringify(
-          flags.map((f: any) => ({
-            id: f.payload?.targetId,
-            reason: f.payload?.reason,
-          })),
+          flags.map((event) => {
+            const payload = event.payload as Record<string, unknown> | undefined;
+            return {
+              id: payload?.itemId ?? payload?.targetId,
+              reason: payload?.flag ?? payload?.reason,
+            };
+          }),
         )}
 Ignored (planned but neither done nor flagged): ${JSON.stringify(
-          ignored.map((i: any) => i.id),
+          ignored.map((item) => item.id),
         )}
 
 Reason about what you learned:
@@ -119,7 +159,7 @@ Return JSON only:
   "calibrationPatch": { "hardModePlanAccuracy": number }
 }
 hardModePlanAccuracy = completed / (planned - too_much_flags)`,
-      });
+      );
 
       const safe = tonePolicy(result.text);
       const parsed = parseDayCloseResult(safe);
@@ -129,7 +169,10 @@ hardModePlanAccuracy = completed / (planned - too_much_flags)`,
       } else {
         // Fallback: rule-based calculation
         const tooMuchFlags = flags.filter(
-          (f: any) => f.payload?.reason === "too_much",
+          (event) => {
+            const payload = event.payload as Record<string, unknown> | undefined;
+            return payload?.flag === "too_much" || payload?.reason === "too_much";
+          },
         ).length;
         const denominator = Math.max(1, (plan.items ?? []).length - tooMuchFlags);
         const accuracy = Math.min(1, completions.length / denominator);
@@ -178,7 +221,7 @@ hardModePlanAccuracy = completed / (planned - too_much_flags)`,
       })),
       calibrationPatch: {
         hardModePlanAccuracy: rollingAccuracy,
-        lastHardModeReflection: Date.now(),
+        lastHardModeReflection: now,
       },
     });
 
@@ -187,11 +230,7 @@ hardModePlanAccuracy = completed / (planned - too_much_flags)`,
       completions: completions.length,
       flags: flags.length,
       ignored: ignored.length,
-      accuracy: rolePolicy(),
+      accuracy: dayCloseResult.calibrationPatch.hardModePlanAccuracy,
     };
-
-    function rolePolicy() {
-      return dayCloseResult.calibrationPatch.hardModePlanAccuracy;
-    }
   },
 });

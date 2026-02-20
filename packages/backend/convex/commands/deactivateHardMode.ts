@@ -7,7 +7,7 @@ import { mutation } from "../_generated/server";
 const closeHardModeDayRef = makeFunctionReference<
   "action",
   { now?: number; sessionId?: Id<"hardModeSessions"> },
-  { ran: boolean; reason?: string }
+  { processed: boolean; reason?: string; completions?: number; flags?: number; ignored?: number; accuracy?: number }
 >("actions/closeHardModeDay:closeHardModeDay");
 
 export const deactivateHardMode = mutation({

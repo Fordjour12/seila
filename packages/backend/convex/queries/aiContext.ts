@@ -1,7 +1,9 @@
 import { query, internalQuery } from "../_generated/server";
-import { DEFAULT_AI_CONTEXT } from "../lib/aiContext";
+import { DEFAULT_AI_CONTEXT, type AiContextDoc } from "../lib/aiContext";
 
-function toAiContext(doc: any) {
+type StoredAiContextDoc = Partial<Omit<AiContextDoc, "_id">> & { _id: string };
+
+function toAiContext(doc: StoredAiContextDoc | null) {
   if (!doc) {
     return {
       _id: "ai-context-default",

@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { jsonPayloadObjectValidator } from "./lib/payloadValidators";
 
 import { mutation, query } from "./_generated/server";
 
@@ -15,7 +16,7 @@ export const appendTestEvent = mutation({
   args: {
     type: v.optional(v.string()),
     idempotencyKey: v.string(),
-    payload: v.optional(v.any()),
+    payload: v.optional(jsonPayloadObjectValidator),
   },
   returns: v.id("events"),
   handler: async (ctx, args) => {

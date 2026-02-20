@@ -16,19 +16,11 @@ interface DashboardProps {
 }
 
 export function Dashboard({ compact = false }: DashboardProps) {
-  const untypedApi = api as any;
-
-  const moodTrend = useQuery(untypedApi.queries.moodTrend.moodTrend) as {
-    averageMood: number;
-    averageEnergy: number;
-    daysTracked: number;
-  } | null;
-
-  const todayHabits = useQuery(untypedApi.queries.todayHabits.todayHabits) as any[] | null;
-  const lastCheckin = useQuery(untypedApi.queries.lastCheckin.lastCheckin) as any | null;
-  const lastReview = useQuery(untypedApi.queries.reviewQueries.lastReview) as any | null;
-  const activePatterns = useQuery(untypedApi.queries.activePatterns.activePatterns) as any[] | null;
-  const todayFocus = useQuery(untypedApi.queries.taskQueries.todayFocus) as any[] | null;
+  const moodTrend = useQuery(api.queries.moodTrend.moodTrend, {});
+  const todayHabits = useQuery(api.queries.todayHabits.todayHabits, {});
+  const lastReview = useQuery(api.queries.reviewQueries.lastReview, {});
+  const activePatterns = useQuery(api.queries.activePatterns.activePatterns, {});
+  const todayFocus = useQuery(api.queries.taskQueries.todayFocus, {});
 
   const completedHabits = todayHabits?.filter((h) => h.todayStatus === "completed").length ?? 0;
   const totalHabits = todayHabits?.length ?? 0;

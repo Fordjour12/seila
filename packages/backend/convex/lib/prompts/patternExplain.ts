@@ -1,4 +1,4 @@
-import { BASE_SYSTEM } from "./base";
+import { BASE_SYSTEM } from "../../agent";
 
 export const PATTERN_EXPLAIN_SYSTEM = `${BASE_SYSTEM}
 

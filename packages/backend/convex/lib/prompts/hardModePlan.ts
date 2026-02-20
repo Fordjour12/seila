@@ -1,6 +1,6 @@
-import { BASE_SYSTEM } from "./base";
+import { BASE_SYSTEM } from "../../agent";
 
-export const HARD_MODE_PLAN_SYSTEM_PROMPT = `${BASE_SYSTEM}
+export const HARD_MODE_PLAN_SYSTEM = `${BASE_SYSTEM}
 
 HARD MODE PLANNING RULES:
 - Fetch constraints FIRST — a constraint violation is a kernel error, not a soft skip

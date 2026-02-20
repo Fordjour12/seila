@@ -1,6 +1,6 @@
 "use node";
 
-import { internalAction } from "../_generated/server";
+import { internalAction, type ActionCtx } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { makeFunctionReference } from "convex/server";
 
@@ -8,6 +8,7 @@ import { passesPatternTonePolicy } from "../patterns/tonePolicy";
 import { readAiContext, writeAiContext } from "../lib/aiContext";
 import { patternAgent } from "../agents/patternAgent";
 import { tonePolicy } from "../lib/tonePolicy";
+import { runAgentText } from "../lib/runAgentText";
 
 type Candidate = {
   type: "mood_habit" | "energy_checkin_timing" | "spending_mood";
@@ -213,21 +214,22 @@ function createSpendingMoodCandidate(input: {
  * Falls back to the raw headline if agent fails.
  */
 async function explainWithAgent(
-  ctx: any,
+  ctx: ActionCtx,
   candidate: Candidate,
 ): Promise<{ headline: string; subtext: string }> {
   try {
     const { thread } = await patternAgent.createThread(ctx);
 
-    const result = await thread.generateText({
-      prompt: `Explain this pattern in plain language.
+    const result = await runAgentText(
+      thread,
+      `Explain this pattern in plain language.
                Pattern type: ${candidate.type}
                Correlation: ${candidate.correlation.toFixed(3)}
                Confidence: ${candidate.confidence.toFixed(2)}
                Raw headline: ${candidate.headline}
                Raw subtext: ${candidate.subtext}
                Max 2 sentences. Positive or neutral framing only.`,
-    });
+    );
 
     const safe = tonePolicy(result.text);
 

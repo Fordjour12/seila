@@ -2,7 +2,17 @@
 
 import { Agent, createTool } from "@convex-dev/agent";
 import { google } from "@ai-sdk/google";
-import { components, internal } from "./_generated/api";
+import type { ToolSet } from "ai";
+import { z } from "zod";
+import { makeFunctionReference } from "convex/server";
+import { components } from "./_generated/api";
+
+const readAiContextRef = makeFunctionReference<"query", {}, unknown>(
+  "queries/aiContext:internalReadAiContext",
+);
+const lastCheckinRef = makeFunctionReference<"query", {}, unknown>(
+  "queries/lastCheckin:internalLastCheckin",
+);
 
 // ─────────────────────────────────────────────
 // BASE_SYSTEM — shared across every agent
@@ -38,26 +48,26 @@ HARD LIMITS:
 // Shared tools — available to every agent
 // ─────────────────────────────────────────────
 
-export const sharedTools = {
-    getAiContext: createTool({
-        description: "Read the AI's persistent working model of the user",
-        args: {},
-        handler: async (ctx) => {
-            return ctx.runQuery(internal.queries.aiContext.internalReadAiContext, {});
-        },
-    }),
+export const sharedTools: ToolSet = {
+  getAiContext: createTool({
+    description: "Read the AI's persistent working model of the user",
+    args: z.object({}),
+    handler: async (ctx): Promise<unknown> => {
+      return ctx.runQuery(readAiContextRef, {});
+    },
+  }),
 
-    getLastCheckin: createTool({
-        description: "Get the most recent mood and energy check-in",
-        args: {},
-        handler: async (ctx) => {
-            return ctx.runQuery(internal.queries.lastCheckin.internalLastCheckin, {});
-        },
-    }),
+  getLastCheckin: createTool({
+    description: "Get the most recent mood and energy check-in",
+    args: z.object({}),
+    handler: async (ctx): Promise<unknown> => {
+      return ctx.runQuery(lastCheckinRef, {});
+    },
+  }),
 };
 
 // ─────────────────────────────────────────────
 // Re-exports for agent definitions
 // ─────────────────────────────────────────────
 
-export { Agent, createTool, google, components };
+export { Agent, createTool, google, components, z };

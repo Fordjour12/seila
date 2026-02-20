@@ -68,8 +68,8 @@ export const submitCheckin = mutation({
         mood: args.mood,
         energy: args.energy,
         flags: args.flags,
-        note: args.note,
-        weeklyAnswers: args.weeklyAnswers,
+        ...(args.note ? { note: args.note } : {}),
+        ...(args.weeklyAnswers ? { weeklyAnswers: args.weeklyAnswers } : {}),
       },
     });
 

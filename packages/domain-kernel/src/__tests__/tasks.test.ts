@@ -4,6 +4,8 @@ import type { Command, LifeEvent } from "../index";
 import {
   handleTaskCommand,
   initialTaskState,
+  type TaskCommand as KernelTaskCommand,
+  type TaskEvent as KernelTaskEvent,
   taskReducer,
 } from "../tasks";
 import { createTraceHarness } from "../trace-harness";
@@ -35,8 +37,11 @@ const taskHarness = createTraceHarness<
     event: TaskEvent,
   ) => ReturnType<typeof taskReducer>,
   handleCommand: (events, command) => {
-    const emitted = handleTaskCommand(events as any, command as any);
-    return emitted as any;
+    const emitted = handleTaskCommand(
+      events as ReadonlyArray<KernelTaskEvent>,
+      command as KernelTaskCommand,
+    );
+    return emitted as ReadonlyArray<TaskEvent>;
   },
 });
 

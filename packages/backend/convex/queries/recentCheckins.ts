@@ -5,7 +5,6 @@ export const recentCheckins = query({
   args: {
     limit: v.optional(v.number()),
   },
-  returns: v.any(),
   handler: async (ctx, args) => {
     const limit = args.limit ?? 30;
     const checkins = await ctx.db

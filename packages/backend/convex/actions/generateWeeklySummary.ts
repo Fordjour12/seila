@@ -8,6 +8,7 @@ import { internalAction } from "../_generated/server";
 import { readAiContext, writeAiContext } from "../lib/aiContext";
 import { summaryAgent } from "../agents/summaryAgent";
 import { tonePolicy } from "../lib/tonePolicy";
+import { runAgentText } from "../lib/runAgentText";
 
 type WeeklySummary = {
   bullets: string[];
@@ -66,8 +67,9 @@ export const generateWeeklySummary = internalAction({
 
     const { thread } = await summaryAgent.createThread(ctx);
 
-    const result = await thread.generateText({
-      prompt: `Generate this week's summary.
+    const result = await runAgentText(
+      thread,
+      `Generate this week's summary.
                Week range: ${new Date(args.weekStart).toISOString()} to ${new Date(args.weekEnd).toISOString()}
                Use your tools to gather what you need — events, check-ins, mood trend, active patterns, AI context.
                Fetch each module separately via tool.
@@ -87,7 +89,7 @@ export const generateWeeklySummary = internalAction({
                - One worth-noticing observation (neutral, not prescriptive)
                - No recommendations. No forward instructions. Facts and observations only.
                - If a week has very little data, generate a shorter summary — do not pad it out`,
-    });
+    );
 
     const safe = tonePolicy(result.text);
     const parsed = parseWeeklySummary(safe);

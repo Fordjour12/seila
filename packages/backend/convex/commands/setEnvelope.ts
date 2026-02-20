@@ -50,7 +50,7 @@ export const setEnvelope = mutation({
         idempotencyKey: args.idempotencyKey,
         payload: {
           envelopeId: args.envelopeId,
-          softCeiling: args.softCeiling,
+          ...(args.softCeiling !== undefined ? { softCeiling: args.softCeiling } : {}),
         },
       });
 
@@ -76,8 +76,8 @@ export const setEnvelope = mutation({
       payload: {
         envelopeId,
         name,
-        softCeiling: args.softCeiling,
-        emoji: args.emoji,
+        ...(args.softCeiling !== undefined ? { softCeiling: args.softCeiling } : {}),
+        ...(args.emoji ? { emoji: args.emoji } : {}),
         isPrivate: args.isPrivate ?? false,
       },
     });

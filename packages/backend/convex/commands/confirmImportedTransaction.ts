@@ -48,7 +48,7 @@ export const confirmImportedTransaction = mutation({
       idempotencyKey: args.idempotencyKey,
       payload: {
         transactionId: args.transactionId,
-        envelopeId: args.envelopeId,
+        ...(args.envelopeId ? { envelopeId: args.envelopeId } : {}),
       },
     });
 

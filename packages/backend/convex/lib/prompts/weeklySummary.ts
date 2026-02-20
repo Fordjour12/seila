@@ -1,6 +1,6 @@
-import { BASE_SYSTEM } from "./base";
+import { BASE_SYSTEM } from "../../agent";
 
-export const WEEKLY_SUMMARY_SYSTEM_PROMPT = `${BASE_SYSTEM}
+export const WEEKLY_SUMMARY_SYSTEM = `${BASE_SYSTEM}
 
 WEEKLY SUMMARY RULES:
 - Fetch each module separately via tool — habits, check-ins, tasks, mood trend, active patterns, AI context
