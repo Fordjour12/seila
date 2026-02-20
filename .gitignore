@@ -54,3 +54,6 @@ temp
 **/.expo
 apps/native/android
 apps/native/ios
+
+# domain-kernel test build output
+packages/domain-kernel/.test-build/
