@@ -1,122 +1,126 @@
 "use node";
 
 import { v } from "convex/values";
-import { makeFunctionReference } from "convex/server";
 
-import { action } from "../_generated/server";
-import { callAI } from "../lib/callAI";
+import { internal } from "../_generated/api";
+import { internalAction } from "../_generated/server";
 import { readAiContext, writeAiContext } from "../lib/aiContext";
+import { captureAgent } from "../agents/captureAgent";
+import { tonePolicy } from "../lib/tonePolicy";
 
 type CaptureResult = {
   reply: string;
-  contextPatch?: {
-    energyPatterns?: string;
-    triggerSignals?: string;
-  };
+  contextPatch?: Record<string, string>;
   suggestedAction?: {
     headline: string;
     subtext: string;
     screen?: "checkin" | "tasks" | "finance" | "patterns" | "weekly-review";
   };
   moodSignal?: number;
-  energySignal?: number;
 };
 
-const recentDomainStateRef = makeFunctionReference<
-  "query",
-  {},
-  {
-    lastCheckins: Array<{ mood: number; energy: number; occurredAt: number }>;
-    activePatternCount: number;
-    focusCount: number;
-    quietToday: boolean;
+function parseCaptureResult(raw: string): CaptureResult | null {
+  try {
+    const parsed = JSON.parse(raw);
+    if (typeof parsed.reply === "string" && parsed.reply.length > 0) {
+      return {
+        reply: parsed.reply,
+        contextPatch: parsed.contextPatch,
+        suggestedAction: parsed.suggestedAction,
+        moodSignal: parsed.moodSignal,
+      };
+    }
+  } catch {
+    // free text response — treat as reply-only
   }
->("queries/recentDomainState:recentDomainState");
+  return null;
+}
 
-const createSuggestionInternalRef = makeFunctionReference<
-  "mutation",
-  {
-    policy: string;
-    headline: string;
-    subtext: string;
-    priority: number;
-    action?: {
-      type: "open_screen" | "run_command";
-      label: string;
-      payload?: Record<string, unknown>;
-    };
-    expiresAt?: number;
-  },
-  { created: boolean; suggestionId: string }
->("commands/createSuggestionInternal:createSuggestionInternal");
-
-export const processCapture = action({
+export const processCapture = internalAction({
   args: {
-    text: v.string(),
+    input: v.string(),
+    captureId: v.string(),
   },
-  handler: async (ctx, args) => {
-    const text = args.text.trim();
+  handler: async (ctx, args): Promise<CaptureResult> => {
+    const aiContext = await readAiContext(ctx);
 
-    if (!text) {
-      return { reply: "Signal received." };
+    // Daily threadId — captures share context within the same day
+    const dayKey = new Date().toISOString().split("T")[0];
+
+    const { thread } = await captureAgent.continueThread(ctx, {
+      threadId: `capture-${dayKey}`,
+    });
+
+    let result;
+    try {
+      result = await thread.generateText({
+        prompt: `The person just said: "${args.input}"
+
+                 Use your tools to fetch AI context.
+                 Reply in 1–2 sentences, warm but brief.
+                 Never repeat back what the user said verbatim.
+                 Never ask a follow-up question in the reply.
+                 Raw input text must NEVER appear in the output JSON or in any stored observation.
+
+                 Return JSON only:
+                 {
+                   "reply": "string",
+                   "contextPatch": { "fieldName": "new value" },
+                   "suggestedAction": { "headline": "string", "subtext": "string", "screen": "checkin|tasks|finance..." },
+                   "moodSignal": number (1-5, optional)
+                 }`,
+      });
+    } catch {
+      return {
+        reply: "Heard. Keeping things grounded today.",
+      };
     }
 
-    if (text.length > 280) {
-      throw new Error("Capture input must be 280 characters or fewer");
+    const safe = tonePolicy(result.text);
+    const parsed = parseCaptureResult(safe);
+
+    if (!parsed) {
+      return {
+        reply: tonePolicy(result.text, "Noted. Keeping things contained."),
+      };
     }
 
-    const [context, recentState] = await Promise.all([
-      readAiContext(ctx),
-      ctx.runQuery(recentDomainStateRef, {}),
-    ]);
-
-    const result = (await callAI({
-      promptKey: "capture",
-      context,
-      payload: {
-        text,
-        recentState,
-      },
-    })) as CaptureResult;
-
-    if (result.contextPatch || result.moodSignal || result.energySignal) {
+    // Write context updates if indicated
+    if (parsed.contextPatch || parsed.moodSignal) {
       await writeAiContext(ctx, {
-        workingModelPatch: result.contextPatch,
+        workingModelPatch: parsed.contextPatch,
         memoryEntries: [
           {
             module: "capture",
-            observation:
-              typeof result.moodSignal === "number" || typeof result.energySignal === "number"
-                ? `Capture signal mood:${result.moodSignal ?? "?"} energy:${result.energySignal ?? "?"}`
-                : "Capture updated context from unstructured signal.",
-            confidence: "low",
-            source: "conversationalCapture",
+            observation: `Capture processed. ${parsed.moodSignal ? `Mood signal: ${parsed.moodSignal}.` : "No mood signal."}`,
+            confidence: parsed.moodSignal ? "medium" : "low",
+            source: "captureAgent",
           },
         ],
       });
     }
 
-    if (result.suggestedAction) {
-      await ctx.runMutation(createSuggestionInternalRef, {
-        policy: "capture",
-        headline: result.suggestedAction.headline,
-        subtext: result.suggestedAction.subtext,
-        priority: 2,
-        action: result.suggestedAction.screen
-          ? {
-              type: "open_screen",
-              label: "Open",
-              payload: {
-                screen: result.suggestedAction.screen,
-              },
-            }
-          : undefined,
-        expiresAt: Date.now() + 30 * 60 * 1000,
-      });
+    // Create a suggestion if the agent identified one
+    if (parsed.suggestedAction) {
+      try {
+        await ctx.runMutation(
+          internal.commands.createSuggestionInternal.createSuggestionInternal,
+          {
+            headline: tonePolicy(parsed.suggestedAction.headline),
+            subtext: tonePolicy(parsed.suggestedAction.subtext),
+            screen: parsed.suggestedAction.screen ?? "checkin",
+            source: "captureAgent",
+            priority: 1,
+          },
+        );
+      } catch { /* suggestion creation is non-critical */ }
     }
 
     return {
-      reply: result.reply,
+      reply: parsed.reply,
+      contextPatch: parsed.contextPatch,
+      suggestedAction: parsed.suggestedAction,
+      moodSignal: parsed.moodSignal,
     };
   },
 });

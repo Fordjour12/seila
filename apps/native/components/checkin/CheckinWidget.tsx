@@ -1,7 +1,9 @@
 import { api } from "@seila/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
-import { Button, Surface } from "heroui-native";
+import { Button } from "heroui-native";
 import { Text, View } from "react-native";
+
+import { SpicedCard } from "@/components/ui/SpicedCard";
 
 const MOOD_EMOJIS: Record<number, string> = {
   1: "😞",
@@ -18,7 +20,8 @@ interface CheckinWidgetProps {
 export function CheckinWidget({ onPress }: CheckinWidgetProps) {
   const lastCheckin = useQuery(api.queries.lastCheckin.lastCheckin);
 
-  const formatTimeAgo = (timestamp: number) => {
+  const formatTimeAgo = (timestamp?: number) => {
+    if (!timestamp) return "";
     const now = Date.now();
     const diff = now - timestamp;
     const hours = Math.floor(diff / (1000 * 60 * 60));
@@ -34,34 +37,39 @@ export function CheckinWidget({ onPress }: CheckinWidgetProps) {
   };
 
   return (
-    <Surface variant="secondary" className="p-4 rounded-xl">
-      <View className="flex-row items-center justify-between">
-        <View className="flex-row items-center gap-3">
-          {lastCheckin ? (
-            <>
-              <Text className="text-3xl">{MOOD_EMOJIS[lastCheckin.mood]}</Text>
-              <View>
-                <Text className="text-foreground font-medium">
-                  Mood: {lastCheckin.mood}/5
-                </Text>
-                <Text className="text-muted text-sm">
-                  Energy: {lastCheckin.energy}/5 • {formatTimeAgo(lastCheckin.occurredAt)}
-                </Text>
-              </View>
-            </>
-          ) : (
-            <View>
-              <Text className="text-foreground font-medium">No check-ins yet</Text>
-              <Text className="text-muted text-sm">
-                How are you feeling today?
+    <SpicedCard className="p-5 flex-row items-center justify-between">
+      <View className="flex-row items-center gap-4 flex-1">
+        {lastCheckin ? (
+          <>
+            <View className="h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+              <Text className="text-3xl leading-9">{MOOD_EMOJIS[lastCheckin.mood] ?? "😐"}</Text>
+            </View>
+            <View className="flex-1">
+              <Text className="text-foreground text-lg font-semibold tracking-tight">
+                Mood: {lastCheckin.mood}/5
+              </Text>
+              <Text className="text-muted-foreground text-sm font-medium">
+                Energy: {lastCheckin.energy}/5 • {formatTimeAgo(lastCheckin.occurredAt)}
               </Text>
             </View>
-          )}
-        </View>
-        <Button variant="secondary" size="sm" onPress={onPress}>
-          {lastCheckin ? "Update" : "Check in"}
-        </Button>
+          </>
+        ) : (
+          <View>
+            <Text className="text-foreground text-lg font-semibold tracking-tight">Check in</Text>
+            <Text className="text-muted-foreground text-sm">
+              Track your energy to unlock insights
+            </Text>
+          </View>
+        )}
       </View>
-    </Surface>
+      <Button
+        variant="primary"
+        size="sm"
+        onPress={onPress}
+        className="rounded-full px-5 shadow-sm"
+      >
+        {lastCheckin ? "Update" : "Start"}
+      </Button>
+    </SpicedCard>
   );
 }

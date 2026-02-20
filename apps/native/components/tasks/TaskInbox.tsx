@@ -1,8 +1,9 @@
 import { api } from "@seila/backend/convex/_generated/api";
 import type { Id } from "@seila/backend/convex/_generated/dataModel";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
-import { Button, Surface, useToast } from "heroui-native";
+import { Button, useToast } from "heroui-native";
 import { Text, View } from "react-native";
+import { SpicedCard } from "@/components/ui/SpicedCard";
 
 function getIdempotencyKey(prefix: string) {
   return `${prefix}:${Date.now()}:${Math.random().toString(36).slice(2, 10)}`;
@@ -69,30 +70,31 @@ export function TaskInbox() {
   };
 
   return (
-    <Surface variant="secondary" className="p-4 rounded-xl">
-      <View className="flex-row items-center justify-between mb-3">
-        <Text className="text-foreground font-medium">Inbox</Text>
-        <Text className="text-muted text-xs">
+    <SpicedCard className="p-5">
+      <View className="flex-row items-center justify-between mb-4">
+        <Text className="text-foreground text-lg font-bold tracking-tight">Inbox</Text>
+        <Text className="text-muted-foreground text-xs font-medium">
           {inboxTasks?.length ?? 0} items
         </Text>
       </View>
 
       {!inboxTasks || inboxTasks.length === 0 ? (
-        <Text className="text-muted text-sm">
+        <Text className="text-muted-foreground text-sm italic">
           Inbox is empty. Capture tasks to get started.
         </Text>
       ) : (
-        <View className="gap-2">
+        <View className="gap-3">
           {inboxTasks.map((task) => (
             <View
               key={task._id}
-              className="flex-row items-center justify-between bg-default-100 p-3 rounded-lg"
+              className="flex-col gap-3 bg-secondary/30 p-4 rounded-xl border border-border/5"
             >
-              <Text className="text-foreground flex-1">{task.title}</Text>
-              <View className="flex-row gap-1">
+              <Text className="text-foreground text-base font-medium">{task.title}</Text>
+              <View className="flex-row gap-2 justify-end">
                 <Button
                   size="sm"
                   variant="primary"
+                  className="rounded-full h-8 px-4 shadow-sm"
                   onPress={() => handleFocus(task._id)}
                   isDisabled={isFocusFull}
                 >
@@ -101,13 +103,15 @@ export function TaskInbox() {
                 <Button
                   size="sm"
                   variant="secondary"
+                  className="rounded-full h-8 px-4"
                   onPress={() => handleDefer(task._id)}
                 >
                   Later
                 </Button>
                 <Button
                   size="sm"
-                  variant="danger"
+                  variant="ghost"
+                  className="rounded-full h-8 px-4 text-destructive"
                   onPress={() => handleAbandon(task._id)}
                 >
                   Drop
@@ -117,6 +121,6 @@ export function TaskInbox() {
           ))}
         </View>
       )}
-    </Surface>
+    </SpicedCard>
   );
 }

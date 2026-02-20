@@ -1,10 +1,11 @@
 import { api } from "@seila/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import { router } from "expo-router";
-import { Button, Surface } from "heroui-native";
+import { Button } from "heroui-native";
 import { useMemo } from "react";
 import { Text, View } from "react-native";
 
+import { SpicedCard } from "@/components/ui/SpicedCard";
 import {
   quietTodayRef,
   recoveryContextRef,
@@ -132,40 +133,45 @@ export function TodayOrchestrationCard() {
   ]);
 
   return (
-    <Surface variant="secondary" className="mt-3 p-4 rounded-xl">
-      <Text className="text-foreground font-medium">Today</Text>
-      <Text className="text-muted text-xs mt-1">Single entry point for what today looks like.</Text>
+    <SpicedCard className="mt-4 p-5">
+      <View className="mb-4">
+        <Text className="text-foreground text-xl font-bold tracking-tight">Today</Text>
+        <Text className="text-muted-foreground text-sm font-medium mt-1">
+          Single entry point for what today looks like.
+        </Text>
+      </View>
 
-      <View className="flex-row gap-2 mt-3">
-        <View className="flex-1 rounded-lg bg-default-100 p-2">
-          <Text className="text-muted text-[11px]">Quiet</Text>
-          <Text className="text-foreground text-xs font-medium">
-            {quietToday?.isQuiet ? "On" : "Off"}
+      <View className="flex-row gap-2 mt-2">
+        <View className="flex-1 rounded-xl bg-secondary/50 p-3 border border-border/10">
+          <Text className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">Quiet</Text>
+          <Text className="text-foreground text-sm font-semibold mt-1">
+            {quietToday?.isQuiet ? "Active" : "Off"}
           </Text>
         </View>
-        <View className="flex-1 rounded-lg bg-default-100 p-2">
-          <Text className="text-muted text-[11px]">Scratchpad</Text>
-          <Text className="text-foreground text-xs font-medium">{scratchpadCount}</Text>
+        <View className="flex-1 rounded-xl bg-secondary/50 p-3 border border-border/10">
+          <Text className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">Notes</Text>
+          <Text className="text-foreground text-sm font-semibold mt-1">{scratchpadCount}</Text>
         </View>
-        <View className="flex-1 rounded-lg bg-default-100 p-2">
-          <Text className="text-muted text-[11px]">Focus</Text>
-          <Text className="text-foreground text-xs font-medium">{focusCount}/3</Text>
+        <View className="flex-1 rounded-xl bg-secondary/50 p-3 border border-border/10">
+          <Text className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">Focus</Text>
+          <Text className="text-foreground text-sm font-semibold mt-1">{focusCount}/3</Text>
         </View>
-        <View className="flex-1 rounded-lg bg-default-100 p-2">
-          <Text className="text-muted text-[11px]">Habits</Text>
-          <Text className="text-foreground text-xs font-medium">{pendingHabits} pending</Text>
+        <View className="flex-1 rounded-xl bg-secondary/50 p-3 border border-border/10">
+          <Text className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">Habits</Text>
+          <Text className="text-foreground text-sm font-semibold mt-1">{pendingHabits}</Text>
         </View>
       </View>
 
-      <View className="mt-3 rounded-lg bg-default-100 p-3">
-        <Text className="text-foreground text-sm font-medium">{nextAction.label}</Text>
-        <Text className="text-muted text-xs mt-1">{nextAction.hint}</Text>
+      <View className="mt-4 rounded-xl bg-primary/5 p-4 border border-primary/10">
+        <Text className="text-primary text-base font-semibold">{nextAction.label}</Text>
+        <Text className="text-muted-foreground text-sm mt-1">{nextAction.hint}</Text>
       </View>
 
-      <View className="flex-row gap-2 mt-3">
+      <View className="flex-row gap-3 mt-4 pt-2 border-t border-border/5">
         <Button
-          size="sm"
+          size="md"
           variant="secondary"
+          className="flex-1 rounded-full"
           onPress={() => {
             void setQuietToday({
               idempotencyKey: idempotencyKey("quiet.today.toggle"),
@@ -173,17 +179,18 @@ export function TodayOrchestrationCard() {
             });
           }}
         >
-          {quietToday?.isQuiet ? "Resume" : "Not Today"}
+          {quietToday?.isQuiet ? "Resume Day" : "Not Today"}
         </Button>
         <Button
-          size="sm"
+          size="md"
           variant="primary"
+          className="flex-1 rounded-full shadow-sm"
           isDisabled={!nextAction.onPress || Boolean(quietToday?.isQuiet)}
           onPress={() => nextAction.onPress?.()}
         >
           Do Next
         </Button>
       </View>
-    </Surface>
+    </SpicedCard>
   );
 }

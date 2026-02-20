@@ -1,4 +1,4 @@
-import { query } from "../_generated/server";
+import { internalQuery, query } from "../_generated/server";
 
 export const todayFocus = query({
   args: {},
@@ -36,5 +36,16 @@ export const deferred = query({
       .collect();
 
     return deferredTasks;
+  },
+});
+
+export const internalInbox = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db
+      .query("tasks")
+      .withIndex("by_status", (q) => q.eq("status", "inbox"))
+      .order("desc")
+      .collect();
   },
 });

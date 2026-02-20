@@ -1,7 +1,7 @@
 import { api } from "@seila/backend/convex/_generated/api";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { router } from "expo-router";
-import { Button, Surface } from "heroui-native";
+import { Button } from "heroui-native";
 import { useMemo, useState } from "react";
 import {
   Alert,
@@ -14,6 +14,8 @@ import {
 import Swipeable from "react-native-gesture-handler/Swipeable";
 
 import { Container } from "@/components/container";
+import { SpicedCard } from "@/components/ui/SpicedCard";
+import { SpicedHeader } from "@/components/ui/SpicedHeader";
 import { CheckinWidget } from "@/components/checkin";
 import { HardModeIndicator } from "@/components/hard-mode/HardModeIndicator";
 import { PatternStrip } from "@/components/patterns";
@@ -94,52 +96,52 @@ export default function Home() {
   };
 
   return (
-    <Container className="px-4 pb-6">
-      <View className="py-6 mb-5">
-        <Text className="text-3xl font-semibold text-foreground tracking-tight">Life OS</Text>
-        <Text className="text-muted text-sm mt-1">Recovery-first operating system</Text>
-      </View>
+    <Container className="px-5 pb-8">
+      <SpicedHeader
+        title="Life OS"
+        subtitle="Recovery-first operating system"
+      />
 
       {user ? (
-        <Surface variant="secondary" className="mb-4 p-4 rounded-xl">
-          <View className="flex-row items-center justify-between">
-            <View className="flex-1">
-              <Text className="text-foreground font-medium">{user.name}</Text>
-              <Text className="text-muted text-xs mt-0.5">{user.email}</Text>
-            </View>
-            <Button
-              variant="danger"
-              size="sm"
-              onPress={() => {
-                authClient.signOut();
-              }}
-            >
-              Sign Out
-            </Button>
+        <SpicedCard className="mb-6 p-4 flex-row items-center justify-between bg-card/50">
+          <View className="flex-1">
+            <Text className="text-foreground font-semibold text-lg">{user.name}</Text>
+            <Text className="text-muted-foreground text-sm">{user.email}</Text>
           </View>
-        </Surface>
+          <Button
+            variant="flat"
+            size="sm"
+            className="bg-destructive/10 text-destructive"
+            onPress={() => {
+              authClient.signOut();
+            }}
+          >
+            Sign Out
+          </Button>
+        </SpicedCard>
       ) : null}
 
       {user && <CheckinWidget onPress={() => router.push("/checkin")} />}
+      {user && <View className="h-4" />}
       {user && <HardModeIndicator />}
       {user && <TodayOrchestrationCard />}
       {user && !quietToday?.isQuiet && <SuggestionStrip />}
       {user && <PatternStrip />}
 
       {user && (
-        <View className="mt-4">
+        <View className="mt-6">
           <ScratchpadCapture />
         </View>
       )}
 
       {user && (
-        <View className="mt-4">
+        <View className="mt-6">
           <QuickCapture />
         </View>
       )}
 
       {user && (
-        <View className="mt-4 gap-4">
+        <View className="mt-6 gap-6">
           {!quietToday?.isQuiet && <WeeklyReview />}
           <TodayFocus />
           {!quietToday?.isQuiet && <FocusNudge />}
@@ -147,24 +149,24 @@ export default function Home() {
         </View>
       )}
 
-      <Surface variant="secondary" className="p-4 rounded-xl mb-4 mt-4">
-        <Text className="text-foreground font-medium mb-2">API Status</Text>
-        <Text className="text-muted text-xs">
+      <SpicedCard className="p-5 mt-8 mb-4">
+        <Text className="text-foreground font-semibold mb-2">API Status</Text>
+        <Text className="text-muted-foreground text-xs font-medium">
           {healthCheck === undefined
             ? "Checking..."
             : healthCheck === "OK"
               ? "Connected to API"
               : "API Disconnected"}
         </Text>
-      </Surface>
+      </SpicedCard>
 
-      <Surface variant="secondary" className="p-4 rounded-xl mb-4">
-        <Text className="text-foreground font-medium mb-2">Event Log</Text>
-        <Text className="text-muted text-xs mb-3">
+      <SpicedCard className="p-5 mb-4">
+        <Text className="text-foreground font-semibold mb-2">Event Log</Text>
+        <Text className="text-muted-foreground text-xs mb-4">
           Total events: {eventCount === undefined ? "Loading..." : eventCount}
         </Text>
         <Button
-          variant="primary"
+          variant="secondary"
           size="sm"
           onPress={() => {
             void appendTestEvent({
@@ -174,13 +176,13 @@ export default function Home() {
         >
           Write Test Event
         </Button>
-      </Surface>
+      </SpicedCard>
 
-      <Surface variant="secondary" className="p-4 rounded-xl mb-4">
-        <View className="flex-row items-center justify-between mb-3">
-          <Text className="text-foreground font-medium">Today&apos;s Habits</Text>
-          <Button variant="primary" size="sm" onPress={() => setSheetOpen(true)}>
-            Add Habit
+      <SpicedCard className="p-5 mb-4">
+        <View className="flex-row items-center justify-between mb-4">
+          <Text className="text-foreground text-lg font-bold tracking-tight">Today&apos;s Habits</Text>
+          <Button variant="ghost" size="sm" onPress={() => setSheetOpen(true)} className="text-primary">
+            + Add Habit
           </Button>
         </View>
 
@@ -273,7 +275,7 @@ export default function Home() {
         <Text className="text-muted text-xs mt-3">
           Tap to complete. Swipe right to skip. Long-press to snooze one hour.
         </Text>
-      </Surface>
+      </SpicedCard>
 
       {!user && (
         <View className="mt-2 gap-4">

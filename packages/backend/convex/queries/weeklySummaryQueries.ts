@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { query } from "../_generated/server";
+import { internalQuery, query } from "../_generated/server";
 
 export const eventsByDateRange = query({
   args: {
@@ -55,5 +55,30 @@ export const tasksForWeeklySummary = query({
         t.completedAt ||
         t.abandonedAt
     );
+  },
+});
+
+export const internalEventsByDateRange = internalQuery({
+  args: {
+    since: v.number(),
+    until: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const events = await ctx.db.query("events").collect();
+    return events.filter((e) => e.occurredAt >= args.since && e.occurredAt <= args.until);
+  },
+});
+
+export const internalCheckinsForWeeklySummary = internalQuery({
+  args: {
+    since: v.number(),
+    until: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const checkins = await ctx.db
+      .query("checkins")
+      .withIndex("by_occurredAt", (q) => q.gte("occurredAt", args.since))
+      .collect();
+    return checkins.filter((c) => c.occurredAt <= args.until);
   },
 });

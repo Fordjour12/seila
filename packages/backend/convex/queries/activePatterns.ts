@@ -224,3 +224,37 @@ export const expireOldPatterns = internalMutation({
     return { dismissed };
   },
 });
+
+export const internalActivePatterns = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+    const patterns = await ctx.db
+      .query("patterns")
+      .withIndex("by_dismissed_at", (q) => q.eq("dismissedAt", undefined))
+      .collect();
+
+    return patterns
+      .filter((pattern) => pattern.pinnedAt || pattern.expiresAt > now)
+      .sort((a, b) => b.confidence - a.confidence)
+      .slice(0, 3);
+  },
+});
+
+export const getPatternByType = internalQuery({
+  args: {
+    type: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const patterns = await ctx.db
+      .query("patterns")
+      .withIndex("by_type", (q) => q.eq("type", args.type as any))
+      .collect();
+
+    const active = patterns
+      .filter((p) => !p.dismissedAt)
+      .sort((a, b) => b.updatedAt - a.updatedAt);
+
+    return active[0] ?? null;
+  },
+});

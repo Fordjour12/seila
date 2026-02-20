@@ -1,6 +1,7 @@
-import { Button, Surface } from "heroui-native";
+import { Button } from "heroui-native";
 import { Text, View } from "react-native";
 import type { Id } from "@seila/backend/convex/_generated/dataModel";
+import { SpicedCard } from "@/components/ui/SpicedCard";
 
 export type SuggestionItem = {
   _id: Id<"suggestions">;
@@ -23,21 +24,35 @@ type Props = {
 
 export function SuggestionCard({ suggestion, onDismiss, onAction }: Props) {
   return (
-    <Surface variant="secondary" className="w-80 p-4 rounded-xl mr-3">
+    <SpicedCard className="w-80 p-5 rounded-xl mr-4 flex-1 justify-between">
       <View className="gap-2">
-        <Text className="text-foreground font-semibold">{suggestion.headline}</Text>
-        <Text className="text-muted text-sm">{suggestion.subtext}</Text>
-        <View className="flex-row gap-2 mt-2">
-          {suggestion.action ? (
-            <Button size="sm" variant="primary" onPress={() => onAction?.(suggestion)}>
-              {suggestion.action.label}
-            </Button>
-          ) : null}
-          <Button size="sm" variant="secondary" onPress={() => onDismiss(suggestion._id)}>
-            Dismiss
-          </Button>
-        </View>
+        <Text className="text-foreground text-lg font-bold tracking-tight leading-6">
+          {suggestion.headline}
+        </Text>
+        <Text className="text-muted-foreground text-sm leading-5">
+          {suggestion.subtext}
+        </Text>
       </View>
-    </Surface>
+      <View className="flex-row gap-3 mt-4 pt-3 border-t border-border/5">
+        {suggestion.action ? (
+          <Button
+            size="sm"
+            variant="primary"
+            className="flex-1 rounded-full shadow-sm"
+            onPress={() => onAction?.(suggestion)}
+          >
+            {suggestion.action.label}
+          </Button>
+        ) : null}
+        <Button
+          size="sm"
+          variant="ghost"
+          className="flex-1 rounded-full"
+          onPress={() => onDismiss(suggestion._id)}
+        >
+          Dismiss
+        </Button>
+      </View>
+    </SpicedCard>
   );
 }

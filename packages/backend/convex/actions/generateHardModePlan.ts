@@ -14,7 +14,8 @@ import type { Id } from "../_generated/dataModel";
 import { api } from "../_generated/api";
 import { internalAction } from "../_generated/server";
 import { readAiContext, writeAiContext } from "../lib/aiContext";
-import { callAI } from "../lib/callAI";
+import { plannerAgent } from "../agents/plannerAgent";
+import { tonePolicy } from "../lib/tonePolicy";
 
 const applyGeneratedPlanRef = makeFunctionReference<
   "mutation",
@@ -183,13 +184,7 @@ export const generateHardModePlan = internalAction({
   },
   handler: async (ctx, args) => {
     const aiContext = await readAiContext(ctx);
-    await callAI({
-      promptKey: "hardModePlan",
-      context: aiContext,
-      payload: {
-        dayStart: args.dayStart,
-      },
-    });
+
     const session = await ctx.runQuery(getSessionByIdRef, {
       sessionId: args.sessionId,
     });
@@ -205,6 +200,36 @@ export const generateHardModePlan = internalAction({
       ctx.runQuery(recoveryContextRef, {}),
     ]);
 
+    // Use the planner agent with stable threadId for session continuity
+    const { thread } = await plannerAgent.continueThread(ctx, {
+      threadId: `hardmode-${args.sessionId}`,
+    });
+
+    // Let the agent generate rationale refinements
+    let agentRationales: Record<string, string> = {};
+    try {
+      const result = await thread.generateText({
+        prompt: `Generate today's Hard Mode plan rationales.
+                 Session scope: ${JSON.stringify(session.scope)}
+                 Constraints: ${JSON.stringify(session.constraints)}
+                 Today habits: ${JSON.stringify(todayHabits.map((h: any) => ({ name: h.name, anchor: h.anchor, status: h.todayStatus })))}
+                 Inbox tasks: ${JSON.stringify(inboxTasks.slice(0, 3).map((t: any) => ({ id: t._id, title: t.title })))}
+                 Last check-in: mood=${lastCheckin?.mood ?? "?"} energy=${lastCheckin?.energy ?? "?"}
+                 Calibration accuracy: ${aiContext.calibration.hardModePlanAccuracy.toFixed(2)}
+                 
+                 For each planned item, provide an observational rationale (max 80 chars).
+                 Return JSON only: { "rationales": { "itemId": "rationale string" } }`,
+      });
+
+      const safe = tonePolicy(result.text);
+      try {
+        const parsed = JSON.parse(safe);
+        if (parsed.rationales) {
+          agentRationales = parsed.rationales;
+        }
+      } catch { /* use rule-based rationales */ }
+    } catch { /* agent failure — use rule-based rationales */ }
+
     const candidates = buildCandidates({
       scope: session.scope as HardModeScope,
       todayHabits,
@@ -212,8 +237,20 @@ export const generateHardModePlan = internalAction({
       recoveryContext,
     });
 
+    // Apply agent rationales where available
+    const enhancedCandidates = candidates.map((item) => {
+      const agentRationale = agentRationales[item.id];
+      if (agentRationale) {
+        return {
+          ...item,
+          rationale: truncateRationale(tonePolicy(agentRationale)),
+        };
+      }
+      return item;
+    });
+
     const calibratedCandidates = adjustForCalibration({
-      items: candidates,
+      items: enhancedCandidates,
       accuracy: aiContext.calibration.hardModePlanAccuracy,
       scope: session.scope as HardModeScope,
       inboxTasks,
@@ -245,7 +282,7 @@ export const generateHardModePlan = internalAction({
           module: "hard_mode",
           observation: `Generated hard mode plan with ${safePlan.items.length} items at accuracy ${aiContext.calibration.hardModePlanAccuracy.toFixed(2)}.`,
           confidence: "medium",
-          source: "generateHardModePlan",
+          source: "plannerAgent",
         },
       ],
     });
