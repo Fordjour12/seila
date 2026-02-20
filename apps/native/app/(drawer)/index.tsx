@@ -19,7 +19,7 @@ import { SpicedHeader } from "@/components/ui/SpicedHeader";
 import { CheckinWidget } from "@/components/checkin";
 import { HardModeIndicator } from "@/components/hard-mode/HardModeIndicator";
 import { PatternStrip } from "@/components/patterns";
-import { ScratchpadCapture } from "@/components/scratchpad";
+import { ConversationalCapture } from "@/components/capture/ConversationalCapture";
 import { SuggestionStrip } from "@/components/suggestions";
 import { QuickCapture, TodayFocus, TaskInbox, FocusNudge } from "@/components/tasks";
 import { TodayOrchestrationCard } from "@/components/today";
@@ -130,7 +130,7 @@ export default function Home() {
 
       {user && (
         <View className="mt-6">
-          <ScratchpadCapture />
+          <ConversationalCapture />
         </View>
       )}
 

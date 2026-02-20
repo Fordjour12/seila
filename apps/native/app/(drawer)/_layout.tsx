@@ -105,7 +105,23 @@ function DrawerLayout() {
           ),
         }}
       />
-    </Drawer>
+      <Drawer.Screen
+        name="ai-context"
+        options={{
+          headerTitle: "AI Memory",
+          drawerLabel: ({ color, focused }) => (
+            <Text style={{ color: focused ? color : themeColorForeground }}>AI Memory</Text>
+          ),
+          drawerIcon: ({ size, color, focused }) => (
+            <Ionicons
+              name="bulb-outline"
+              size={size}
+              color={focused ? color : themeColorForeground}
+            />
+          ),
+        }}
+      />
+    </Drawer >
   );
 }
 
