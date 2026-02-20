@@ -5,72 +5,93 @@
 
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Typography, Spacing, Radius } from '../../constants/theme';
 
+type IconName = React.ComponentProps<typeof Ionicons>['name'];
+type LifeOSTabBarProps = Parameters<NonNullable<React.ComponentProps<typeof Tabs>['tabBar']>>[0];
+
 const TABS = [
-  { name: 'index',   label: 'Today',    icon: '◎' },
-  { name: 'habits',  label: 'Habits',   icon: '◇' },
-  { name: 'checkin', label: 'Check-in', icon: '○' },
-  { name: 'tasks',   label: 'Tasks',    icon: '□' },
-  { name: 'finance', label: 'Finance',  icon: '◈' },
-  { name: 'patterns', label: 'Patterns', icon: '◐' },
-  { name: 'review',  label: 'Review',   icon: '▷' },
-] as const;
+   { name: 'index', label: 'Today', icon: 'home-outline' },
+   { name: 'habits/index', label: 'Habits', icon: 'leaf-outline' },
+   { name: 'checkin/index', label: 'Check-in', icon: 'pulse-outline' },
+   { name: 'tasks/index', label: 'Tasks', icon: 'checkbox-outline' },
+   { name: 'finance/index', label: 'Finance', icon: 'wallet-outline' },
+   { name: 'patterns/index', label: 'Patterns', icon: 'analytics-outline' },
+   { name: 'review/index', label: 'Review', icon: 'document-text-outline' },
+   { name: 'two', label: 'Two', icon: "search" }
 
-function LifeOSTabBar({ state, navigation }: any) {
-  return (
-    <View style={styles.tabBar}>
-      <View style={styles.tabBarBorder} />
-      <View style={styles.tabRow}>
-        {state.routes.map((route, index) => {
-          const tab = TABS[index];
-          if (!tab) return null;
-          const isFocused = state.index === index;
+] as const satisfies ReadonlyArray<{ name: string; label: string; icon: IconName }>;
 
-          const onPress = () => {
-            const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-            if (!isFocused && !event.defaultPrevented) navigation.navigate(route.name);
-          };
+function getTabIconName(icon: IconName, isFocused: boolean): IconName {
+   if (isFocused && icon.endsWith('-outline')) {
+      return icon.replace('-outline', '') as IconName;
+   }
+   return icon;
+}
 
-          return (
-            <Pressable key={route.key} onPress={onPress} style={({ pressed }) => [styles.tabItem, pressed && styles.tabItemPressed]}>
-              <View style={[styles.tabIconWrap, isFocused && styles.tabIconWrapActive]}>
-                <Text style={[styles.tabIcon, isFocused && styles.tabIconActive]}>{tab.icon}</Text>
-              </View>
-              <Text style={[styles.tabLabel, isFocused && styles.tabLabelActive]}>{tab.label}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
-    </View>
-  );
+function LifeOSTabBar({ state, navigation }: LifeOSTabBarProps) {
+   return (
+      <SafeAreaView edges={['bottom']} style={styles.tabSafeArea}>
+         <View style={styles.tabBar}>
+            <View style={styles.tabBarBorder} />
+            <View style={styles.tabRow}>
+               {state.routes.map((route, index) => {
+                  const tab = TABS[index];
+                  if (!tab) return null;
+                  const isFocused = state.index === index;
+
+                  const onPress = () => {
+                     const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+                     if (!isFocused && !event.defaultPrevented) navigation.navigate(route.name);
+                  };
+
+                  return (
+                     <Pressable key={route.key} onPress={onPress} style={({ pressed }) => [styles.tabItem, pressed && styles.tabItemPressed]}>
+                        <View style={[styles.tabIconWrap, isFocused && styles.tabIconWrapActive]}>
+                           <Ionicons
+                              name={getTabIconName(tab.icon, isFocused)}
+                              size={18}
+                              style={[styles.tabIcon, isFocused && styles.tabIconActive]}
+                           />
+                        </View>
+                        <Text style={[styles.tabLabel, isFocused && styles.tabLabelActive]}>{tab.label}</Text>
+                     </Pressable>
+                  );
+               })}
+            </View>
+         </View>
+      </SafeAreaView>
+   );
 }
 
 export default function TabLayout() {
-  return (
-    <Tabs tabBar={props => <LifeOSTabBar {...props} />} screenOptions={{ headerShown: false }}>
-      <Tabs.Screen name="index"         options={{ title: 'Today'    }} />
-      <Tabs.Screen name="habits"  options={{ title: 'Habits'   }} />
-      <Tabs.Screen name="checkin" options={{ title: 'Check-in' }} />
-      <Tabs.Screen name="tasks"   options={{ title: 'Tasks'    }} />
-      <Tabs.Screen name="finance" options={{ title: 'Finance'  }} />
-      <Tabs.Screen name="patterns" options={{ title: 'Patterns' }} />
-      <Tabs.Screen name="review"  options={{ title: 'Review'   }} />
-    </Tabs>
-  );
+   return (
+      <Tabs tabBar={props => <LifeOSTabBar {...props} />} screenOptions={{ headerShown: false }}>
+         <Tabs.Screen name="index" options={{ title: 'Today' }} />
+         <Tabs.Screen name="habits/index" options={{ title: 'Habits' }} />
+         <Tabs.Screen name="checkin/index" options={{ title: 'Check-in' }} />
+         <Tabs.Screen name="tasks/index" options={{ title: 'Tasks' }} />
+         <Tabs.Screen name="finance/index" options={{ title: 'Finance' }} />
+         <Tabs.Screen name="patterns/index" options={{ title: 'Patterns' }} />
+         <Tabs.Screen name="review/index" options={{ title: 'Review' }} />
+      </Tabs>
+   );
 }
 
 const styles = StyleSheet.create({
-  tabBar: { backgroundColor: Colors.bgRaised, paddingBottom: Platform.OS === 'ios' ? 28 : Spacing.md },
-  tabBarBorder: { height: 1, backgroundColor: Colors.borderSoft },
-  tabRow: { flexDirection: 'row', paddingHorizontal: Spacing.sm, paddingTop: Spacing.sm },
-  tabItem: { flex: 1, alignItems: 'center', gap: Spacing.xs, paddingVertical: Spacing.xs, borderRadius: Radius.md },
-  tabItemPressed: { opacity: 0.7 },
-  tabIconWrap: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: Radius.sm, borderWidth: 1, borderColor: Colors.transparent },
-  tabIconWrapActive: { backgroundColor: Colors.amberGlow, borderColor: Colors.amberBorder },
-  tabIcon: { fontSize: 15, color: Colors.textMuted, fontFamily: 'monospace' },
-  tabIconActive: { color: Colors.amber },
-  tabLabel: { ...Typography.eyebrow, color: Colors.textMuted, fontSize: 9 },
-  tabLabelActive: { color: Colors.amber },
+   tabSafeArea: { backgroundColor: Colors.bgRaised },
+   tabBar: { backgroundColor: Colors.bgRaised },
+   tabBarBorder: { height: 1, backgroundColor: Colors.borderSoft },
+   tabRow: { flexDirection: 'row', paddingHorizontal: Spacing.sm, paddingTop: Spacing.sm },
+   tabItem: { flex: 1, alignItems: 'center', gap: Spacing.xs, paddingVertical: Spacing.xs, borderRadius: Radius.md },
+   tabItemPressed: { opacity: 0.7 },
+   tabIconWrap: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: Radius.sm, borderWidth: 1, borderColor: Colors.transparent },
+   tabIconWrapActive: { backgroundColor: Colors.amberGlow, borderColor: Colors.amberBorder },
+   tabIcon: { color: Colors.textMuted },
+   tabIconActive: { color: Colors.amber },
+   tabLabel: { ...Typography.eyebrow, color: Colors.textMuted, fontSize: 9 },
+   tabLabelActive: { color: Colors.amber },
 });

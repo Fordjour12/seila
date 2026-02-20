@@ -16,7 +16,7 @@
  *   - Export only as plain text
  */
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -27,11 +27,11 @@ import {
   Animated,
   KeyboardAvoidingView,
   Platform,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import { Colors, Typography, Spacing, Radius } from '../../constants/theme';
-import { SectionLabel, Button, EmptyState } from '../../components/ui';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { router } from "expo-router";
+import { Colors, Typography, Spacing, Radius } from "../constants/theme";
+import { SectionLabel, Button, EmptyState } from "../components/ui";
 
 // ─────────────────────────────────────────────
 // TYPES + MOCK
@@ -43,47 +43,49 @@ interface RecoveryNote {
   content: string;
   createdAt: number;
   pinned: boolean;
-  tag?: 'reflection' | 'therapy' | 'gratitude' | 'general';
+  tag?: "reflection" | "therapy" | "gratitude" | "general";
 }
 
 const MOCK_NOTES: RecoveryNote[] = [
   {
-    id: '1',
-    title: 'Things I noticed this week',
-    content: 'Energy dropped hard on Thursday. Not sure why yet. Might be related to the difficult call Wednesday. Worth watching.',
+    id: "1",
+    title: "Things I noticed this week",
+    content:
+      "Energy dropped hard on Thursday. Not sure why yet. Might be related to the difficult call Wednesday. Worth watching.",
     createdAt: Date.now() - 1000 * 60 * 60 * 24,
     pinned: true,
-    tag: 'reflection',
+    tag: "reflection",
   },
   {
-    id: '2',
-    title: 'What my therapist said',
-    content: 'That patterns I can see don\'t need to be fixed right away — just seeing them is enough for now. The pressure to act immediately is itself a pattern.',
+    id: "2",
+    title: "What my therapist said",
+    content:
+      "That patterns I can see don't need to be fixed right away — just seeing them is enough for now. The pressure to act immediately is itself a pattern.",
     createdAt: Date.now() - 1000 * 60 * 60 * 72,
     pinned: true,
-    tag: 'therapy',
+    tag: "therapy",
   },
   {
-    id: '3',
-    content: 'Had a good walk today. Something about moving helps the thoughts settle.',
+    id: "3",
+    content: "Had a good walk today. Something about moving helps the thoughts settle.",
     createdAt: Date.now() - 1000 * 60 * 60 * 120,
     pinned: false,
-    tag: 'general',
+    tag: "general",
   },
 ];
 
-const TAGS: Array<{ id: NonNullable<RecoveryNote['tag']>; label: string; emoji: string }> = [
-  { id: 'reflection', label: 'Reflection', emoji: '○' },
-  { id: 'therapy',    label: 'Therapy',    emoji: '◇' },
-  { id: 'gratitude',  label: 'Gratitude',  emoji: '◈' },
-  { id: 'general',    label: 'General',    emoji: '□' },
+const TAGS: Array<{ id: NonNullable<RecoveryNote["tag"]>; label: string; emoji: string }> = [
+  { id: "reflection", label: "Reflection", emoji: "○" },
+  { id: "therapy", label: "Therapy", emoji: "◇" },
+  { id: "gratitude", label: "Gratitude", emoji: "◈" },
+  { id: "general", label: "General", emoji: "□" },
 ];
 
-const TAG_COLOR: Record<NonNullable<RecoveryNote['tag']>, string> = {
+const TAG_COLOR: Record<NonNullable<RecoveryNote["tag"]>, string> = {
   reflection: Colors.amber,
-  therapy:    Colors.sage,
-  gratitude:  Colors.amber,
-  general:    Colors.textMuted,
+  therapy: Colors.sage,
+  gratitude: Colors.amber,
+  general: Colors.textMuted,
 };
 
 // ─────────────────────────────────────────────
@@ -95,28 +97,36 @@ function formatDate(ts: number): string {
   const today = new Date();
   const isToday = d.toDateString() === today.toDateString();
   if (isToday) {
-    return `Today, ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+    return `Today, ${d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
   }
-  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 }
 
 // ─────────────────────────────────────────────
 // NOTE CARD
 // ─────────────────────────────────────────────
 
-function NoteCard({ note, onPress, onPin }: {
+function NoteCard({
+  note,
+  onPress,
+  onPin,
+}: {
   note: RecoveryNote;
   onPress: () => void;
   onPin: () => void;
 }) {
-  const tagConfig = note.tag ? TAGS.find(t => t.id === note.tag) : undefined;
+  const tagConfig = note.tag ? TAGS.find((t) => t.id === note.tag) : undefined;
   const tagColor = note.tag ? TAG_COLOR[note.tag] : Colors.textMuted;
-  const preview = note.content.length > 120 ? note.content.slice(0, 120) + '…' : note.content;
+  const preview = note.content.length > 120 ? note.content.slice(0, 120) + "…" : note.content;
 
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [noteStyles.card, note.pinned && noteStyles.cardPinned, pressed && noteStyles.cardPressed]}
+      style={({ pressed }) => [
+        noteStyles.card,
+        note.pinned && noteStyles.cardPinned,
+        pressed && noteStyles.cardPressed,
+      ]}
     >
       {/* Pin stripe */}
       {note.pinned && <View style={noteStyles.pinStripe} />}
@@ -126,14 +136,14 @@ function NoteCard({ note, onPress, onPin }: {
         <Text style={noteStyles.preview}>{preview}</Text>
         <View style={noteStyles.footer}>
           {tagConfig && (
-            <View style={[noteStyles.tag, { borderColor: tagColor + '40' }]}>
+            <View style={[noteStyles.tag, { borderColor: tagColor + "40" }]}>
               <Text style={[noteStyles.tagText, { color: tagColor }]}>{tagConfig.label}</Text>
             </View>
           )}
           <Text style={noteStyles.date}>{formatDate(note.createdAt)}</Text>
           <Pressable onPress={onPin} style={noteStyles.pinBtn}>
             <Text style={[noteStyles.pinIcon, note.pinned && noteStyles.pinIconActive]}>
-              {note.pinned ? '◆' : '◇'}
+              {note.pinned ? "◆" : "◇"}
             </Text>
           </Pressable>
         </View>
@@ -149,8 +159,8 @@ const noteStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.borderSoft,
     marginBottom: Spacing.md,
-    flexDirection: 'row',
-    overflow: 'hidden',
+    flexDirection: "row",
+    overflow: "hidden",
   },
   cardPinned: {
     borderColor: Colors.amberBorder,
@@ -167,10 +177,10 @@ const noteStyles = StyleSheet.create({
     ...Typography.bodyMD,
     color: Colors.textSecondary,
     lineHeight: 22,
-    fontFamily: 'DMSans_300Light',
-    fontStyle: 'italic',
+    fontFamily: "DMSans_300Light",
+    fontStyle: "italic",
   },
-  footer: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginTop: Spacing.xs },
+  footer: { flexDirection: "row", alignItems: "center", gap: Spacing.sm, marginTop: Spacing.xs },
   tag: {
     paddingHorizontal: Spacing.sm,
     paddingVertical: 2,
@@ -188,40 +198,50 @@ const noteStyles = StyleSheet.create({
 // NEW NOTE SHEET
 // ─────────────────────────────────────────────
 
-function NewNoteSheet({ onClose, onSave }: {
+function NewNoteSheet({
+  onClose,
+  onSave,
+}: {
   onClose: () => void;
-  onSave: (note: Omit<RecoveryNote, 'id' | 'createdAt'>) => void;
+  onSave: (note: Omit<RecoveryNote, "id" | "createdAt">) => void;
 }) {
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [tag, setTag] = useState<RecoveryNote['tag']>('general');
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [tag, setTag] = useState<RecoveryNote["tag"]>("general");
   const slideAnim = useRef(new Animated.Value(700)).current;
 
   React.useEffect(() => {
     Animated.spring(slideAnim, {
-      toValue: 0, damping: 28, stiffness: 280, useNativeDriver: true,
+      toValue: 0,
+      damping: 28,
+      stiffness: 280,
+      useNativeDriver: true,
     }).start();
   }, []);
 
   const close = (cb?: () => void) => {
-    Animated.timing(slideAnim, { toValue: 700, duration: 220, useNativeDriver: true })
-      .start(() => { onClose(); cb?.(); });
+    Animated.timing(slideAnim, { toValue: 700, duration: 220, useNativeDriver: true }).start(() => {
+      onClose();
+      cb?.();
+    });
   };
 
   const save = () => {
     if (!content.trim()) return;
-    close(() => onSave({
-      title: title.trim() || undefined,
-      content: content.trim(),
-      tag,
-      pinned: false,
-    }));
+    close(() =>
+      onSave({
+        title: title.trim() || undefined,
+        content: content.trim(),
+        tag,
+        pinned: false,
+      }),
+    );
   };
 
   return (
     <KeyboardAvoidingView
       style={sheetStyles.overlay}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <Pressable style={sheetStyles.backdrop} onPress={() => close()} />
       <Animated.View style={[sheetStyles.sheet, { transform: [{ translateY: slideAnim }] }]}>
@@ -251,11 +271,17 @@ function NewNoteSheet({ onClose, onSave }: {
 
         {/* Tag selection */}
         <View style={sheetStyles.tagRow}>
-          {TAGS.map(t => (
+          {TAGS.map((t) => (
             <Pressable
               key={t.id}
               onPress={() => setTag(t.id)}
-              style={[sheetStyles.tagBtn, tag === t.id && { borderColor: TAG_COLOR[t.id] + '60', backgroundColor: TAG_COLOR[t.id] + '12' }]}
+              style={[
+                sheetStyles.tagBtn,
+                tag === t.id && {
+                  borderColor: TAG_COLOR[t.id] + "60",
+                  backgroundColor: TAG_COLOR[t.id] + "12",
+                },
+              ]}
             >
               <Text style={[sheetStyles.tagBtnText, tag === t.id && { color: TAG_COLOR[t.id] }]}>
                 {t.label}
@@ -265,8 +291,19 @@ function NewNoteSheet({ onClose, onSave }: {
         </View>
 
         <View style={sheetStyles.btnRow}>
-          <Button label="Cancel" variant="ghost" onPress={() => close()} style={{ flex: 0, paddingHorizontal: Spacing.xl }} />
-          <Button label="Save note" variant="primary" onPress={save} disabled={!content.trim()} style={{ flex: 1 }} />
+          <Button
+            label="Cancel"
+            variant="ghost"
+            onPress={() => close()}
+            style={{ flex: 0, paddingHorizontal: Spacing.xl }}
+          />
+          <Button
+            label="Save note"
+            variant="primary"
+            onPress={save}
+            disabled={!content.trim()}
+            style={{ flex: 1 }}
+          />
         </View>
 
         {/* Privacy note */}
@@ -279,8 +316,8 @@ function NewNoteSheet({ onClose, onSave }: {
 }
 
 const sheetStyles = StyleSheet.create({
-  overlay: { ...StyleSheet.absoluteFillObject, zIndex: 100, justifyContent: 'flex-end' },
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.72)' },
+  overlay: { ...StyleSheet.absoluteFillObject, zIndex: 100, justifyContent: "flex-end" },
+  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.72)" },
   sheet: {
     backgroundColor: Colors.bgRaised,
     borderTopLeftRadius: 24,
@@ -290,9 +327,16 @@ const sheetStyles = StyleSheet.create({
     borderColor: Colors.border,
     padding: Spacing.xxl,
     paddingBottom: 40,
-    maxHeight: '85%',
+    maxHeight: "85%",
   },
-  handle: { width: 36, height: 3, backgroundColor: Colors.border, borderRadius: 2, alignSelf: 'center', marginBottom: Spacing.xxl },
+  handle: {
+    width: 36,
+    height: 3,
+    backgroundColor: Colors.border,
+    borderRadius: 2,
+    alignSelf: "center",
+    marginBottom: Spacing.xxl,
+  },
   sheetTitle: { ...Typography.displaySM, color: Colors.textPrimary, marginBottom: Spacing.lg },
   titleInput: {
     ...Typography.labelLG,
@@ -305,11 +349,11 @@ const sheetStyles = StyleSheet.create({
   contentInput: {
     ...Typography.bodyMD,
     color: Colors.textPrimary,
-    fontFamily: 'DMSans_300Light',
+    fontFamily: "DMSans_300Light",
     minHeight: 120,
     marginBottom: Spacing.lg,
   },
-  tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, marginBottom: Spacing.xl },
+  tagRow: { flexDirection: "row", flexWrap: "wrap", gap: Spacing.sm, marginBottom: Spacing.xl },
   tagBtn: {
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs + 2,
@@ -319,13 +363,13 @@ const sheetStyles = StyleSheet.create({
     backgroundColor: Colors.bgElevated,
   },
   tagBtnText: { ...Typography.labelSM, color: Colors.textMuted },
-  btnRow: { flexDirection: 'row', gap: Spacing.md, marginBottom: Spacing.md },
+  btnRow: { flexDirection: "row", gap: Spacing.md, marginBottom: Spacing.md },
   privacyNote: {
     ...Typography.bodyXS,
     color: Colors.textMuted,
-    textAlign: 'center',
-    fontStyle: 'italic',
-    fontFamily: 'DMSans_300Light',
+    textAlign: "center",
+    fontStyle: "italic",
+    fontFamily: "DMSans_300Light",
   },
 });
 
@@ -336,28 +380,28 @@ const sheetStyles = StyleSheet.create({
 export default function RecoveryContextScreen() {
   const [notes, setNotes] = useState(MOCK_NOTES);
   const [showNew, setShowNew] = useState(false);
-  const [filterTag, setFilterTag] = useState<RecoveryNote['tag'] | 'all'>('all');
+  const [filterTag, setFilterTag] = useState<RecoveryNote["tag"] | "all">("all");
 
   const pinNote = (id: string) => {
-    setNotes(prev => prev.map(n => n.id === id ? { ...n, pinned: !n.pinned } : n));
+    setNotes((prev) => prev.map((n) => (n.id === id ? { ...n, pinned: !n.pinned } : n)));
   };
 
-  const addNote = (data: Omit<RecoveryNote, 'id' | 'createdAt'>) => {
-    setNotes(prev => [{
-      ...data,
-      id: Date.now().toString(),
-      createdAt: Date.now(),
-    }, ...prev]);
+  const addNote = (data: Omit<RecoveryNote, "id" | "createdAt">) => {
+    setNotes((prev) => [
+      {
+        ...data,
+        id: Date.now().toString(),
+        createdAt: Date.now(),
+      },
+      ...prev,
+    ]);
   };
 
-  const pinned = notes.filter(n => n.pinned);
-  const unpinned = notes.filter(n =>
-    !n.pinned &&
-    (filterTag === 'all' || n.tag === filterTag)
-  );
+  const pinned = notes.filter((n) => n.pinned);
+  const unpinned = notes.filter((n) => !n.pinned && (filterTag === "all" || n.tag === filterTag));
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={styles.safe} edges={["top"]}>
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
@@ -372,12 +416,16 @@ export default function RecoveryContextScreen() {
         </Pressable>
       </View>
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Privacy notice */}
         <View style={styles.privacyBanner}>
           <Text style={styles.privacyText}>
-            Notes written here are yours alone. The AI does not access this space unless you explicitly choose to share a note with it in the future.
+            Notes written here are yours alone. The AI does not access this space unless you
+            explicitly choose to share a note with it in the future.
           </Text>
         </View>
 
@@ -385,27 +433,22 @@ export default function RecoveryContextScreen() {
         {pinned.length > 0 && (
           <View style={styles.group}>
             <SectionLabel>Pinned</SectionLabel>
-            {pinned.map(n => (
-              <NoteCard
-                key={n.id}
-                note={n}
-                onPress={() => {}}
-                onPin={() => pinNote(n.id)}
-              />
+            {pinned.map((n) => (
+              <NoteCard key={n.id} note={n} onPress={() => {}} onPin={() => pinNote(n.id)} />
             ))}
           </View>
         )}
 
         {/* Filter */}
         <View style={styles.filterRow}>
-          {(['all', ...TAGS.map(t => t.id)] as const).map(f => (
+          {(["all", ...TAGS.map((t) => t.id)] as const).map((f) => (
             <Pressable
               key={f}
-              onPress={() => setFilterTag(f as RecoveryNote['tag'] | 'all')}
+              onPress={() => setFilterTag(f as RecoveryNote["tag"] | "all")}
               style={[styles.filterChip, filterTag === f && styles.filterChipActive]}
             >
               <Text style={[styles.filterChipText, filterTag === f && styles.filterChipTextActive]}>
-                {f === 'all' ? 'All' : TAGS.find(t => t.id === f)?.label}
+                {f === "all" ? "All" : TAGS.find((t) => t.id === f)?.label}
               </Text>
             </Pressable>
           ))}
@@ -419,22 +462,15 @@ export default function RecoveryContextScreen() {
             subtitle="Write your first note when you're ready"
           />
         ) : (
-          unpinned.map(n => (
-            <NoteCard
-              key={n.id}
-              note={n}
-              onPress={() => {}}
-              onPin={() => pinNote(n.id)}
-            />
+          unpinned.map((n) => (
+            <NoteCard key={n.id} note={n} onPress={() => {}} onPin={() => pinNote(n.id)} />
           ))
         )}
 
         <View style={{ height: 48 }} />
       </ScrollView>
 
-      {showNew && (
-        <NewNoteSheet onClose={() => setShowNew(false)} onSave={addNote} />
-      )}
+      {showNew && <NewNoteSheet onClose={() => setShowNew(false)} onSave={addNote} />}
     </SafeAreaView>
   );
 }
@@ -442,8 +478,8 @@ export default function RecoveryContextScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.lg,
     borderBottomWidth: 1,
@@ -456,13 +492,14 @@ const styles = StyleSheet.create({
   title: { ...Typography.displaySM, color: Colors.textPrimary },
   subtitle: { ...Typography.bodyXS, color: Colors.textMuted },
   addBtn: {
-    width: 36, height: 36,
+    width: 36,
+    height: 36,
     backgroundColor: Colors.amberGlow,
     borderRadius: Radius.sm,
     borderWidth: 1,
     borderColor: Colors.amberBorder,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   addBtnText: { fontSize: 20, color: Colors.amber, lineHeight: 24 },
 
@@ -482,16 +519,16 @@ const styles = StyleSheet.create({
   privacyText: {
     ...Typography.bodySM,
     color: Colors.textSecondary,
-    fontFamily: 'DMSans_300Light',
-    fontStyle: 'italic',
+    fontFamily: "DMSans_300Light",
+    fontStyle: "italic",
     lineHeight: 20,
   },
 
   group: { marginBottom: Spacing.xl },
 
   filterRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: Spacing.sm,
     marginBottom: Spacing.xl,
   },

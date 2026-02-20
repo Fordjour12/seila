@@ -1,60 +1,39 @@
-import React from 'react';
-import { Stack } from 'expo-router';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Colors } from '../constants/theme';
+import React from "react";
+import { Stack } from "expo-router";
 
 export default function RootLayout() {
   return (
-    <SafeAreaProvider>
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: Colors.bg },
-          animation: 'slide_from_right',
-        }}
-      >
-        {/* Tab navigator */}
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        animation: "slide_from_right",
+      }}
+    >
+      {/* Tab navigator */}
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 
-        {/* Modal screens */}
-        <Stack.Screen
-          name="hardmode"
-          options={{
-            presentation: 'modal',
-            animation: 'slide_from_bottom',
-          }}
-        />
-        <Stack.Screen
-          name="settings"
-          options={{
-            animation: 'slide_from_right',
-          }}
-        />
-        <Stack.Screen
-          name="settings/aicontext"
-          options={{
-            animation: 'slide_from_right',
-          }}
-        />
-        <Stack.Screen
-          name="settings/eventlog"
-          options={{
-            animation: 'slide_from_right',
-          }}
-        />
-        <Stack.Screen
-          name="settings/notifications"
-          options={{
-            animation: 'slide_from_right',
-          }}
-        />
-        <Stack.Screen
-          name="recovery"
-          options={{
-            animation: 'slide_from_right',
-          }}
-        />
-      </Stack>
-    </SafeAreaProvider>
+      <Stack.Screen
+        name="recovery"
+        options={{
+          presentation: "modal",
+          animation: "slide_from_bottom",
+        }}
+      />
+
+      {/* Modal screens */}
+      <Stack.Screen
+        name="hardmode"
+        options={{
+          presentation: "modal",
+          animation: "slide_from_bottom",
+        }}
+      />
+      <Stack.Screen
+        name="settings"
+        options={{
+          animation: "slide_from_right",
+        }}
+      />
+    </Stack>
   );
 }

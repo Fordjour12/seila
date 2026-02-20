@@ -82,7 +82,7 @@ export function TodayOrchestrationCard() {
       return {
         label: "Add your recovery context",
         hint: "Define hard-day patterns and rest meaning so AI can adapt to you.",
-        onPress: () => router.push("/recovery-context"),
+        onPress: () => router.push("/recovery"),
       };
     }
 

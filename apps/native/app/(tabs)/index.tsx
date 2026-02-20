@@ -13,7 +13,7 @@
  *   - Active pattern (if any)
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -24,11 +24,11 @@ import {
   Animated,
   KeyboardAvoidingView,
   Platform,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import { Colors, Typography, Spacing, Radius } from '../../constants/theme';
-import { SectionLabel, EmptyState } from '../../components/ui';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { router } from "expo-router";
+import { Colors, Typography, Spacing, Radius } from "../../constants/theme";
+import { SectionLabel, EmptyState } from "../../components/ui";
 
 // ─────────────────────────────────────────────
 // MOCK DATA
@@ -37,50 +37,50 @@ import { SectionLabel, EmptyState } from '../../components/ui';
 const MOCK_DATE = new Date();
 const GREETING = (() => {
   const h = MOCK_DATE.getHours();
-  if (h < 12) return 'Good morning';
-  if (h < 17) return 'Good afternoon';
-  return 'Good evening';
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  return "Good evening";
 })();
 
 const MOCK_HABITS = [
-  { id: '1', name: 'Morning walk',    anchor: 'morning',   difficulty: 'low',    done: false },
-  { id: '2', name: 'Journaling',      anchor: 'morning',   difficulty: 'medium', done: true  },
-  { id: '3', name: 'Read 20 pages',   anchor: 'evening',   difficulty: 'low',    done: false },
+  { id: "1", name: "Morning walk", anchor: "morning", difficulty: "low", done: false },
+  { id: "2", name: "Journaling", anchor: "morning", difficulty: "medium", done: true },
+  { id: "3", name: "Read 20 pages", anchor: "evening", difficulty: "low", done: false },
 ];
 
 const MOCK_FOCUS = [
-  { id: '1', text: 'Reply to Dr. Osei email' },
-  { id: '2', text: 'Book therapy appointment' },
+  { id: "1", text: "Reply to Dr. Osei email" },
+  { id: "2", text: "Book therapy appointment" },
 ];
 
 const MOCK_SUGGESTIONS = [
   {
-    id: '1',
-    module: 'checkin',
-    headline: 'How are you feeling today?',
+    id: "1",
+    module: "checkin",
+    headline: "How are you feeling today?",
     subtext: "You haven't checked in yet.",
-    action: 'checkin',
-    priority: 'high',
+    action: "checkin",
+    priority: "high",
   },
   {
-    id: '2',
-    module: 'habits',
-    headline: 'Morning walk is still open',
-    subtext: 'You usually do this before noon.',
-    action: 'habits',
-    priority: 'medium',
+    id: "2",
+    module: "habits",
+    headline: "Morning walk is still open",
+    subtext: "You usually do this before noon.",
+    action: "habits",
+    priority: "medium",
   },
 ];
 
 const MOCK_LAST_CHECKIN = { mood: 3, energy: 4 };
-const MOOD_EMOJI = ['', '😞', '😕', '😐', '🙂', '😊'];
+const MOOD_EMOJI = ["", "😞", "😕", "😐", "🙂", "😊"];
 
 // ─────────────────────────────────────────────
 // CAPTURE INPUT
 // ─────────────────────────────────────────────
 
 function CaptureInput() {
-  const [text, setText] = useState('');
+  const [text, setText] = useState("");
   const [reply, setReply] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const replyOpacity = useRef(new Animated.Value(0)).current;
@@ -89,13 +89,15 @@ function CaptureInput() {
     if (!text.trim()) return;
     setLoading(true);
     const input = text.trim();
-    setText('');
-    await new Promise(r => setTimeout(r, 1000));
+    setText("");
+    await new Promise((r) => setTimeout(r, 1000));
     setLoading(false);
     setReply("Noted. Sounds like a heavy start — that's okay.");
     Animated.timing(replyOpacity, { toValue: 1, duration: 300, useNativeDriver: true }).start();
     setTimeout(() => {
-      Animated.timing(replyOpacity, { toValue: 0, duration: 400, useNativeDriver: true }).start(() => setReply(null));
+      Animated.timing(replyOpacity, { toValue: 0, duration: 400, useNativeDriver: true }).start(
+        () => setReply(null),
+      );
     }, 6000);
   };
 
@@ -150,8 +152,8 @@ const captureStyles = StyleSheet.create({
   replyText: {
     ...Typography.bodySM,
     color: Colors.textSecondary,
-    fontStyle: 'italic',
-    fontFamily: 'DMSans_300Light',
+    fontStyle: "italic",
+    fontFamily: "DMSans_300Light",
     lineHeight: 20,
   },
 });
@@ -166,10 +168,16 @@ interface Suggestion {
   headline: string;
   subtext?: string;
   action?: string;
-  priority: 'low' | 'medium' | 'high';
+  priority: "low" | "medium" | "high";
 }
 
-function SuggestionCard({ suggestion, onDismiss }: { suggestion: Suggestion; onDismiss: () => void }) {
+function SuggestionCard({
+  suggestion,
+  onDismiss,
+}: {
+  suggestion: Suggestion;
+  onDismiss: () => void;
+}) {
   const slideAnim = useRef(new Animated.Value(0)).current;
 
   const dismiss = () => {
@@ -199,8 +207,8 @@ const suggStyles = StyleSheet.create({
     borderColor: Colors.borderSoft,
     borderRadius: Radius.md,
     padding: Spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    alignItems: "flex-start",
     gap: Spacing.md,
     marginBottom: Spacing.sm,
   },
@@ -255,9 +263,7 @@ function TodayHabitRow({ habit, onToggle }: { habit: HabitItem; onToggle: () => 
           {habit.done && <Text style={habitStyles.checkMark}>✓</Text>}
         </View>
         <View style={habitStyles.info}>
-          <Text style={[habitStyles.name, habit.done && habitStyles.nameDone]}>
-            {habit.name}
-          </Text>
+          <Text style={[habitStyles.name, habit.done && habitStyles.nameDone]}>{habit.name}</Text>
           <Text style={habitStyles.anchor}>{habit.anchor}</Text>
         </View>
       </Pressable>
@@ -267,8 +273,8 @@ function TodayHabitRow({ habit, onToggle }: { habit: HabitItem; onToggle: () => 
 
 const habitStyles = StyleSheet.create({
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: Spacing.md,
     paddingVertical: Spacing.md,
     borderBottomWidth: 1,
@@ -280,17 +286,17 @@ const habitStyles = StyleSheet.create({
     borderRadius: Radius.sm,
     borderWidth: 1.5,
     borderColor: Colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   checkDone: {
     backgroundColor: Colors.sage,
     borderColor: Colors.sage,
   },
-  checkMark: { fontSize: 12, color: Colors.bg, fontWeight: '600' },
+  checkMark: { fontSize: 12, color: Colors.bg, fontWeight: "600" },
   info: { flex: 1 },
   name: { ...Typography.bodyMD, color: Colors.textPrimary },
-  nameDone: { color: Colors.textMuted, textDecorationLine: 'line-through' },
+  nameDone: { color: Colors.textMuted, textDecorationLine: "line-through" },
   anchor: { ...Typography.bodyXS, color: Colors.textMuted, marginTop: 1 },
 });
 
@@ -298,7 +304,13 @@ const habitStyles = StyleSheet.create({
 // FOCUS TASK ROW (today view)
 // ─────────────────────────────────────────────
 
-function FocusTaskRow({ task, onComplete }: { task: { id: string; text: string }; onComplete: () => void }) {
+function FocusTaskRow({
+  task,
+  onComplete,
+}: {
+  task: { id: string; text: string };
+  onComplete: () => void;
+}) {
   return (
     <Pressable onPress={onComplete} style={focusStyles.row}>
       <View style={focusStyles.bullet} />
@@ -309,8 +321,8 @@ function FocusTaskRow({ task, onComplete }: { task: { id: string; text: string }
 
 const focusStyles = StyleSheet.create({
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: Spacing.md,
     paddingVertical: Spacing.md,
     borderBottomWidth: 1,
@@ -335,26 +347,28 @@ export default function TodayScreen() {
   const [focus, setFocus] = useState(MOCK_FOCUS);
   const [suggestions, setSuggestions] = useState(MOCK_SUGGESTIONS);
 
-  const dateStr = MOCK_DATE.toLocaleDateString('en-US', {
-    weekday: 'long', month: 'long', day: 'numeric',
+  const dateStr = MOCK_DATE.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
   });
 
   const toggleHabit = (id: string) => {
-    setHabits(prev => prev.map(h => h.id === id ? { ...h, done: !h.done } : h));
+    setHabits((prev) => prev.map((h) => (h.id === id ? { ...h, done: !h.done } : h)));
   };
 
   const completeTask = (id: string) => {
-    setFocus(prev => prev.filter(t => t.id !== id));
+    setFocus((prev) => prev.filter((t) => t.id !== id));
   };
 
   const dismissSuggestion = (id: string) => {
-    setSuggestions(prev => prev.filter(s => s.id !== id));
+    setSuggestions((prev) => prev.filter((s) => s.id !== id));
   };
 
-  const doneCount = habits.filter(h => h.done).length;
+  const doneCount = habits.filter((h) => h.done).length;
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
@@ -373,12 +387,8 @@ export default function TodayScreen() {
         {/* ── SUGGESTIONS ── */}
         {suggestions.length > 0 && (
           <View style={styles.section}>
-            {suggestions.map(s => (
-              <SuggestionCard
-                key={s.id}
-                suggestion={s}
-                onDismiss={() => dismissSuggestion(s.id)}
-              />
+            {suggestions.map((s) => (
+              <SuggestionCard key={s.id} suggestion={s} onDismiss={() => dismissSuggestion(s.id)} />
             ))}
           </View>
         )}
@@ -387,10 +397,12 @@ export default function TodayScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <SectionLabel style={styles.sectionLabelInline}>Habits</SectionLabel>
-            <Text style={styles.sectionMeta}>{doneCount}/{habits.length}</Text>
+            <Text style={styles.sectionMeta}>
+              {doneCount}/{habits.length}
+            </Text>
           </View>
           <View style={styles.card}>
-            {habits.map(h => (
+            {habits.map((h) => (
               <TodayHabitRow key={h.id} habit={h} onToggle={() => toggleHabit(h.id)} />
             ))}
           </View>
@@ -403,10 +415,14 @@ export default function TodayScreen() {
             <Text style={styles.sectionMeta}>{focus.length}/3</Text>
           </View>
           {focus.length === 0 ? (
-            <EmptyState icon="○" title="Focus is clear" subtitle="Add tasks from your inbox when ready" />
+            <EmptyState
+              icon="○"
+              title="Focus is clear"
+              subtitle="Add tasks from your inbox when ready"
+            />
           ) : (
             <View style={styles.card}>
-              {focus.map(t => (
+              {focus.map((t) => (
                 <FocusTaskRow key={t.id} task={t} onComplete={() => completeTask(t.id)} />
               ))}
             </View>
@@ -416,10 +432,7 @@ export default function TodayScreen() {
         {/* ── LAST CHECK-IN ── */}
         <View style={styles.section}>
           <SectionLabel>Last check-in</SectionLabel>
-          <Pressable
-            onPress={() => router.push('/(tabs)/checkin')}
-            style={styles.checkinCard}
-          >
+          <Pressable onPress={() => router.push("/(tabs)/checkin")} style={styles.checkinCard}>
             <Text style={styles.moodEmoji}>{MOOD_EMOJI[MOCK_LAST_CHECKIN.mood]}</Text>
             <View style={styles.checkinInfo}>
               <Text style={styles.checkinLabel}>Mood · Energy</Text>
@@ -443,12 +456,12 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: Spacing.xxl, paddingTop: Spacing.xxl },
   header: { marginBottom: Spacing.xxl },
   greeting: { ...Typography.displayXL, color: Colors.textPrimary, marginBottom: Spacing.xs },
-  date: { ...Typography.bodyMD, color: Colors.textMuted, fontFamily: 'DMSans_300Light' },
+  date: { ...Typography.bodyMD, color: Colors.textMuted, fontFamily: "DMSans_300Light" },
   section: { marginBottom: Spacing.xxl },
   sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 14,
   },
   sectionLabelInline: { marginBottom: 0, flex: 1 },
@@ -459,7 +472,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.borderSoft,
     paddingHorizontal: Spacing.lg,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   checkinCard: {
     backgroundColor: Colors.bgRaised,
@@ -467,8 +480,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.borderSoft,
     padding: Spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: Spacing.md,
   },
   moodEmoji: { fontSize: 28 },
