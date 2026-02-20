@@ -2,7 +2,7 @@ import { api } from "@seila/backend/convex/_generated/api";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { router } from "expo-router";
 import { Button } from "heroui-native";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Modal,
@@ -19,11 +19,11 @@ import { SpicedHeader } from "@/components/ui/SpicedHeader";
 import { CheckinWidget } from "@/components/checkin";
 import { HardModeIndicator } from "@/components/hard-mode/HardModeIndicator";
 import { PatternStrip } from "@/components/patterns";
-import { ConversationalCapture } from "@/components/capture/ConversationalCapture";
 import { SuggestionStrip } from "@/components/suggestions";
 import { QuickCapture, TodayFocus, TaskInbox, FocusNudge } from "@/components/tasks";
-import { TodayOrchestrationCard } from "@/components/today";
+import { ConversationalCapture, TodayOrchestrationCard } from "@/components/today";
 import { WeeklyReview } from "@/components/weekly-review";
+import { initAiContextRef } from "@/lib/ai-refs";
 import { quietTodayRef } from "@/lib/recovery-refs";
 import { SignIn } from "@/components/sign-in";
 import { SignUp } from "@/components/sign-up";
@@ -43,6 +43,7 @@ export default function Home() {
   const todayHabits = useQuery(api.queries.todayHabits.todayHabits);
 
   const appendTestEvent = useMutation(api.events.appendTestEvent);
+  const initAiContext = useMutation(initAiContextRef);
   const createHabit = useMutation(api.commands.createHabit.createHabit);
   const logHabit = useMutation(api.commands.logHabit.logHabit);
   const skipHabit = useMutation(api.commands.skipHabit.skipHabit);
@@ -58,8 +59,20 @@ export default function Home() {
   const [cadence, setCadence] = useState<UiCadence>("daily");
   const [anchor, setAnchor] = useState<UiAnchor>("anytime");
   const [difficulty, setDifficulty] = useState<UiDifficulty>("medium");
+  const aiInitRanRef = useRef(false);
 
   const habits = todayHabits ?? [];
+
+  useEffect(() => {
+    if (!user || aiInitRanRef.current) {
+      return;
+    }
+
+    aiInitRanRef.current = true;
+    void initAiContext({
+      idempotencyKey: getIdempotencyKey("aiContext.init"),
+    });
+  }, [initAiContext, user]);
 
   const emptyHabitLabel = useMemo(() => {
     if (todayHabits === undefined) {
@@ -125,6 +138,7 @@ export default function Home() {
       {user && <View className="h-4" />}
       {user && <HardModeIndicator />}
       {user && <TodayOrchestrationCard />}
+      {user && <ConversationalCapture />}
       {user && !quietToday?.isQuiet && <SuggestionStrip />}
       {user && <PatternStrip />}
 

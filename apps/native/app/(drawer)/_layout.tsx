@@ -1,14 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Drawer } from "expo-router/drawer";
-import { useThemeColor } from "heroui-native";
 import React, { useCallback } from "react";
 import { Text } from "react-native";
 
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useSafeThemeColor } from "@/lib/safe-theme-color";
 
 function DrawerLayout() {
-  const themeColorForeground = useThemeColor("foreground");
-  const themeColorBackground = useThemeColor("background");
+  const themeColorForeground = useSafeThemeColor("foreground", "#111827");
+  const themeColorBackground = useSafeThemeColor("background", "#F7F6F2");
 
   const renderThemeToggle = useCallback(() => <ThemeToggle />, []);
 
@@ -106,7 +106,7 @@ function DrawerLayout() {
         }}
       />
       <Drawer.Screen
-        name="ai-context"
+        name="ai-memory"
         options={{
           headerTitle: "AI Memory",
           drawerLabel: ({ color, focused }) => (
@@ -114,14 +114,14 @@ function DrawerLayout() {
           ),
           drawerIcon: ({ size, color, focused }) => (
             <Ionicons
-              name="bulb-outline"
+              name="sparkles-outline"
               size={size}
               color={focused ? color : themeColorForeground}
             />
           ),
         }}
       />
-    </Drawer >
+    </Drawer>
   );
 }
 
