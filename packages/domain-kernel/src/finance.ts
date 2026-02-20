@@ -1,4 +1,4 @@
-import type { Command, LifeEvent } from "./index";
+import type { Command, LifeEvent } from "./index.js";
 
 export type FinanceSource = "manual" | "imported";
 

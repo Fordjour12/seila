@@ -1,4 +1,4 @@
-import type { Command, LifeEvent } from "./index";
+import type { Command, LifeEvent } from "./index.js";
 
 export type HardModeModule = "habits" | "tasks" | "checkin" | "finance";
 export type HardModeFlag = "not_now" | "not_aligned" | "too_much";

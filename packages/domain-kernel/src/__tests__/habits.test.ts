@@ -1,6 +1,6 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "../test-compat.js";
 
-import { createTraceHarness } from "../trace-harness";
+import { createTraceHarness } from "../trace-harness.js";
 import {
   type HabitCommand,
   habitReducer,
@@ -8,7 +8,7 @@ import {
   replayHabitEvents,
   type HabitEvent,
   type HabitState,
-} from "../habits";
+} from "../habits.js";
 
 const NOW = Date.now();
 

@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "../test-compat.js";
 
 import {
   financeReducer,
@@ -7,8 +7,8 @@ import {
   type FinanceCommand,
   type FinanceEvent,
   type FinanceState,
-} from "../finance";
-import { createTraceHarness } from "../trace-harness";
+} from "../finance.js";
+import { createTraceHarness } from "../trace-harness.js";
 
 const NOW = Date.now();
 

@@ -1,7 +1,7 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "../test-compat.js";
 
-import type { Command, LifeEvent } from "../index";
-import { createTraceHarness } from "../trace-harness";
+import type { Command, LifeEvent } from "../index.js";
+import { createTraceHarness } from "../trace-harness.js";
 
 type CounterState = { count: number };
 type CounterEvent = LifeEvent<"counter.incremented", { delta: number }>;

@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "../test-compat.js";
 
 import {
   PATTERN_TTL_MS,
@@ -6,7 +6,7 @@ import {
   initialPatternState,
   patternReducer,
   type PatternEvent,
-} from "../patterns";
+} from "../patterns.js";
 
 const NOW = Date.now();
 

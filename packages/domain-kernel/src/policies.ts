@@ -1,6 +1,6 @@
-import type { CheckinState } from "./checkin";
-import type { HabitState } from "./habits";
-import type { TaskState } from "./tasks";
+import type { CheckinState } from "./checkin.js";
+import type { HabitState } from "./habits.js";
+import type { TaskState } from "./tasks.js";
 
 export type SuggestionPriority = 1 | 2 | 3 | 4 | 5;
 

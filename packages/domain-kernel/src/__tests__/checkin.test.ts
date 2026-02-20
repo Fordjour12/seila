@@ -1,14 +1,14 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "../test-compat.js";
 
-import type { Command, LifeEvent } from "../index";
+import type { Command, LifeEvent } from "../index.js";
 import {
   checkinReducer,
   handleCheckinCommand,
   initialCheckinState,
   type CheckinCommand as KernelCheckinCommand,
   type CheckinEvent as KernelCheckinEvent,
-} from "../checkin";
-import { createTraceHarness } from "../trace-harness";
+} from "../checkin.js";
+import { createTraceHarness } from "../trace-harness.js";
 
 type CheckinEvent = LifeEvent<
   "checkin.submitted" | "checkin.updated",

@@ -1,4 +1,4 @@
-import type { LifeEvent } from "./index";
+import type { LifeEvent } from "./index.js";
 
 export type PatternType =
   | "mood_habit"

@@ -1,6 +1,6 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "../test-compat.js";
 
-import { createTraceHarness } from "../trace-harness";
+import { createTraceHarness } from "../trace-harness.js";
 import {
   handleHardModeCommand,
   hardModeReducer,
@@ -8,7 +8,7 @@ import {
   type HardModeCommand,
   type HardModeEvent,
   type HardModeState,
-} from "../hard-mode";
+} from "../hard-mode.js";
 
 const harness = createTraceHarness<HardModeState, HardModeEvent, HardModeCommand>({
   initialState: initialHardModeState,

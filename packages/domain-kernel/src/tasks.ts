@@ -1,4 +1,4 @@
-import type { Command, LifeEvent } from "./index";
+import type { Command, LifeEvent } from "./index.js";
 
 export type TaskStatus = "inbox" | "focus" | "deferred" | "completed" | "abandoned";
 
