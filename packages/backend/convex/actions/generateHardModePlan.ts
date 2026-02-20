@@ -13,6 +13,8 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { api } from "../_generated/api";
 import { internalAction } from "../_generated/server";
+import { readAiContext, writeAiContext } from "../lib/aiContext";
+import { callAI } from "../lib/callAI";
 
 const applyGeneratedPlanRef = makeFunctionReference<
   "mutation",
@@ -60,6 +62,41 @@ function scheduleConservativeCadence(dayStart: number, sorted: PlannedItem[]): P
     ...item,
     scheduledAt: dayStart + (index + 1) * 90 * 60 * 1000,
   }));
+}
+
+function adjustForCalibration(input: {
+  items: PlannedItem[];
+  accuracy: number;
+  scope: HardModeScope;
+  inboxTasks: Array<{ _id: Id<"tasks">; title: string }>;
+}): PlannedItem[] {
+  const sorted = input.items.slice().sort(byConfidenceDesc);
+
+  if (input.accuracy < 0.5 && sorted.length > 1) {
+    return sorted.slice(0, sorted.length - 1);
+  }
+
+  if (input.accuracy > 0.85 && input.scope.tasks) {
+    const existingTaskIds = new Set(
+      sorted.filter((item) => item.module === "tasks").map((item) => item.id),
+    );
+    const extraTask = input.inboxTasks.find((task) => !existingTaskIds.has(`task:${task._id}`));
+
+    if (extraTask) {
+      sorted.push({
+        id: `task:${extraTask._id}`,
+        module: "tasks",
+        kind: "task.focus",
+        title: `Focus optional task: ${extraTask.title}`,
+        scheduledAt: 0,
+        confidence: 0.49,
+        rationale: truncateRationale("Calibration suggests one optional extra task may fit today."),
+        status: "planned",
+      });
+    }
+  }
+
+  return sorted;
 }
 
 function buildCandidates(input: {
@@ -145,6 +182,14 @@ export const generateHardModePlan = internalAction({
     dayStart: v.number(),
   },
   handler: async (ctx, args) => {
+    const aiContext = await readAiContext(ctx);
+    await callAI({
+      promptKey: "hardModePlan",
+      context: aiContext,
+      payload: {
+        dayStart: args.dayStart,
+      },
+    });
     const session = await ctx.runQuery(getSessionByIdRef, {
       sessionId: args.sessionId,
     });
@@ -167,9 +212,16 @@ export const generateHardModePlan = internalAction({
       recoveryContext,
     });
 
+    const calibratedCandidates = adjustForCalibration({
+      items: candidates,
+      accuracy: aiContext.calibration.hardModePlanAccuracy,
+      scope: session.scope as HardModeScope,
+      inboxTasks,
+    });
+
     const conservative = scheduleConservativeCadence(
       args.dayStart,
-      candidates.slice().sort(byConfidenceDesc),
+      calibratedCandidates.slice().sort(byConfidenceDesc),
     );
 
     const basePlan: HardModePlan = {
@@ -185,6 +237,17 @@ export const generateHardModePlan = internalAction({
     await ctx.runMutation(applyGeneratedPlanRef, {
       sessionId: args.sessionId,
       plan: safePlan,
+    });
+
+    await writeAiContext(ctx, {
+      memoryEntries: [
+        {
+          module: "hard_mode",
+          observation: `Generated hard mode plan with ${safePlan.items.length} items at accuracy ${aiContext.calibration.hardModePlanAccuracy.toFixed(2)}.`,
+          confidence: "medium",
+          source: "generateHardModePlan",
+        },
+      ],
     });
 
     return { generated: true };

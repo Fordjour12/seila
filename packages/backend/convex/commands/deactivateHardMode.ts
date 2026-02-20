@@ -1,6 +1,14 @@
 import { v } from "convex/values";
+import { makeFunctionReference } from "convex/server";
+import type { Id } from "../_generated/dataModel";
 
 import { mutation } from "../_generated/server";
+
+const closeHardModeDayRef = makeFunctionReference<
+  "action",
+  { now?: number; sessionId?: Id<"hardModeSessions"> },
+  { ran: boolean; reason?: string }
+>("actions/closeHardModeDay:closeHardModeDay");
 
 export const deactivateHardMode = mutation({
   args: {
@@ -36,6 +44,11 @@ export const deactivateHardMode = mutation({
       payload: {
         sessionId: args.sessionId,
       },
+    });
+
+    await ctx.scheduler.runAfter(0, closeHardModeDayRef, {
+      now,
+      sessionId: args.sessionId,
     });
 
     return { deactivated: true, deduplicated: false };

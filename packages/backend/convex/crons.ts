@@ -18,4 +18,11 @@ crons.cron(
   {},
 );
 
+crons.cron(
+  "close hard mode day",
+  "0 23 * * *",
+  internal.actions.closeHardModeDay.closeHardModeDay,
+  {},
+);
+
 export default crons;

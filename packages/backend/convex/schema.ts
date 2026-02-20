@@ -5,6 +5,11 @@ import {
   hardModePlanValidator,
   hardModeScopeValidator,
 } from "./hardMode/validators";
+import {
+  aiCalibrationValidator,
+  aiMemoryEntryValidator,
+  aiWorkingModelValidator,
+} from "./aiContext/validators";
 
 export default defineSchema({
   events: defineTable({
@@ -76,6 +81,7 @@ export default defineSchema({
     ),
     createdAt: v.number(),
     dismissedAt: v.optional(v.number()),
+    expiresAt: v.optional(v.number()),
   })
     .index("by_dismissed_at", ["dismissedAt"])
     .index("by_priority", ["priority"]),
@@ -179,4 +185,10 @@ export default defineSchema({
     setAt: v.number(),
     reason: v.optional(v.string()),
   }).index("by_day_start", ["dayStart"]),
+  aiContext: defineTable({
+    lastUpdated: v.number(),
+    workingModel: aiWorkingModelValidator,
+    memory: v.array(aiMemoryEntryValidator),
+    calibration: aiCalibrationValidator,
+  }).index("by_last_updated", ["lastUpdated"]),
 });

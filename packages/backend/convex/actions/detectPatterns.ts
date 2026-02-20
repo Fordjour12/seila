@@ -5,6 +5,8 @@ import { internal } from "../_generated/api";
 import { makeFunctionReference } from "convex/server";
 
 import { passesPatternTonePolicy } from "../patterns/tonePolicy";
+import { readAiContext, writeAiContext } from "../lib/aiContext";
+import { callAI } from "../lib/callAI";
 
 type Candidate = {
   type: "mood_habit" | "energy_checkin_timing" | "spending_mood";
@@ -208,6 +210,12 @@ function createSpendingMoodCandidate(input: {
 export const detectPatterns: ReturnType<typeof internalAction> = internalAction({
   args: {},
   handler: async (ctx): Promise<{ scanned: number; created: number }> => {
+    const aiContext = await readAiContext(ctx);
+    await callAI({
+      promptKey: "patternDetect",
+      context: aiContext,
+      payload: {},
+    });
     const now = Date.now();
     const since = now - THIRTY_DAYS_MS;
 
@@ -278,6 +286,24 @@ export const detectPatterns: ReturnType<typeof internalAction> = internalAction(
     await ctx.runMutation(internal.queries.activePatterns.expireOldPatterns, {
       now,
     });
+
+    if (candidates.length > 0) {
+      await writeAiContext(ctx, {
+        workingModelPatch: {
+          habitResonance: candidates.some((candidate) => candidate.type === "mood_habit")
+            ? "Habit completion continues to correlate with better mood windows."
+            : aiContext.workingModel.habitResonance,
+        },
+        memoryEntries: [
+          {
+            module: "patterns",
+            observation: `Pattern scan surfaced ${candidates.length} candidates and created ${created}.`,
+            confidence: "medium",
+            source: "detectPatterns",
+          },
+        ],
+      });
+    }
 
     return {
       scanned: candidates.length,

@@ -5,6 +5,8 @@ import { makeFunctionReference } from "convex/server";
 
 import { api, internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
+import { readAiContext, writeAiContext } from "../lib/aiContext";
+import { callAI } from "../lib/callAI";
 
 type WeeklySummary = {
   bullets: string[];
@@ -59,6 +61,15 @@ export const generateWeeklySummary = internalAction({
     weekEnd: v.number(),
   },
   handler: async (ctx, args): Promise<WeeklySummary> => {
+    const aiContext = await readAiContext(ctx);
+    await callAI({
+      promptKey: "weeklySummary",
+      context: aiContext,
+      payload: {
+        weekStart: args.weekStart,
+        weekEnd: args.weekEnd,
+      },
+    });
     const [events, checkins, recoveryContext] = await Promise.all([
       ctx.runQuery(api.queries.weeklySummaryQueries.eventsByDateRange, {
         since: args.weekStart,
@@ -151,6 +162,24 @@ export const generateWeeklySummary = internalAction({
       bullets: safeSummary.bullets,
       brightSpot: safeSummary.brightSpot,
       worthNoticing: safeSummary.worthNoticing,
+    });
+
+    await writeAiContext(ctx, {
+      workingModelPatch: {
+        reviewEngagement: "Weekly summaries are being generated and reflected in ongoing context.",
+      },
+      memoryEntries: [
+        {
+          module: "weekly_review",
+          observation: `Weekly summary generated with ${safeSummary.bullets.length} bullets.`,
+          confidence: "medium",
+          source: "generateWeeklySummary",
+        },
+      ],
+      calibrationPatch: {
+        preferredSuggestionVolume:
+          aiContext.calibration.preferredSuggestionVolume === "full" ? "moderate" : aiContext.calibration.preferredSuggestionVolume,
+      },
     });
 
     return safeSummary;
