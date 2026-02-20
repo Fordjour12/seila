@@ -18,8 +18,15 @@ const LABEL_MAP: Record<string, string> = {
     financeRelationship: "Spending & Mood",
 };
 
+type AiMemoryEntry = {
+    occurredAt: number;
+    observation: string;
+    confidence: "low" | "medium" | "high";
+    source: string;
+};
+
 export default function AiContextScreen() {
-    const aiContext = useQuery(api.queries.aiContext.aiContext);
+    const aiContext = useQuery(api.queries.aiContext.aiContext, {});
     const clearAiContext = useMutation(api.commands.clearAiContext.clearAiContext);
     const themeColorForeground = useThemeColor("foreground");
     const themeColorBackground = useThemeColor("background");
@@ -88,7 +95,7 @@ export default function AiContextScreen() {
                 {(aiContext.memory ?? []).length === 0 ? (
                     <Text style={{ color: themeColorForeground, opacity: 0.5 }}>No memory entries yet.</Text>
                 ) : (
-                    (aiContext.memory ?? []).map((entry, index) => (
+                    (aiContext.memory ?? []).map((entry: AiMemoryEntry, index: number) => (
                         <SpicedCard key={index} style={styles.card}>
                             <View style={styles.memoryHeader}>
                                 <Ionicons

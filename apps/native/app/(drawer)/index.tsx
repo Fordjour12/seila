@@ -32,15 +32,20 @@ import { authClient } from "@/lib/auth-client";
 type UiCadence = "daily" | "weekdays";
 type UiAnchor = "morning" | "afternoon" | "evening" | "anytime";
 type UiDifficulty = "low" | "medium" | "high";
+type TodayHabit = {
+  habitId: string;
+  name: string;
+  todayStatus?: "completed" | "skipped" | "snoozed";
+};
 
 function getIdempotencyKey(prefix: string) {
   return `${prefix}:${Date.now()}:${Math.random().toString(36).slice(2, 10)}`;
 }
 
 export default function Home() {
-  const healthCheck = useQuery(api.healthCheck.get);
-  const eventCount = useQuery(api.events.count);
-  const todayHabits = useQuery(api.queries.todayHabits.todayHabits);
+  const healthCheck = useQuery(api.healthCheck.get, {});
+  const eventCount = useQuery(api.events.count, {});
+  const todayHabits = useQuery(api.queries.todayHabits.todayHabits, {});
 
   const appendTestEvent = useMutation(api.events.appendTestEvent);
   const initAiContext = useMutation(initAiContextRef);
@@ -61,7 +66,7 @@ export default function Home() {
   const [difficulty, setDifficulty] = useState<UiDifficulty>("medium");
   const aiInitRanRef = useRef(false);
 
-  const habits = todayHabits ?? [];
+  const habits = (todayHabits ?? []) as TodayHabit[];
 
   useEffect(() => {
     if (!user || aiInitRanRef.current) {
@@ -204,7 +209,7 @@ export default function Home() {
           <Text className="text-muted text-xs">{emptyHabitLabel}</Text>
         ) : (
           <View className="gap-3">
-            {habits.map((habit) => (
+            {habits.map((habit: TodayHabit) => (
               <Swipeable
                 key={habit.habitId}
                 renderRightActions={() => (
