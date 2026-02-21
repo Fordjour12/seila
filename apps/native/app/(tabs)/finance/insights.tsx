@@ -25,7 +25,6 @@ import {
 } from "../../../lib/finance-refs";
 import { formatGhs } from "../../../lib/ghs";
 import { Button, SectionLabel } from "../../../components/ui";
-import { styles } from "../../../components/finance/routeShared";
 
 export default function FinanceInsightsScreen() {
   const { toast } = useToast();
@@ -150,46 +149,52 @@ export default function FinanceInsightsScreen() {
   };
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Insights</Text>
-      <Text style={styles.subtitle}>
-        Advanced analytics, anomaly controls, and finance diagnostics.
-      </Text>
+    <ScrollView className="flex-1 bg-background" contentContainerClassName="p-6 pb-24 gap-6">
+      <View className="mb-2">
+        <Text className="text-3xl font-serif text-foreground tracking-tight">Insights</Text>
+        <Text className="text-sm text-muted-foreground mt-1">
+          Advanced analytics, anomaly controls, and diagnostics.
+        </Text>
+      </View>
 
       {isLoading ? (
-        <View style={styles.loading}>
-          <Text style={styles.loadingText}>Loading...</Text>
+        <View className="py-12 items-center justify-center">
+          <Text className="text-base text-muted-foreground">Loading...</Text>
         </View>
       ) : (
         <>
-          <View style={styles.section}>
+          <View className="gap-3">
             <SectionLabel>Budget Depth</SectionLabel>
-            <View style={styles.recurringCard}>
-              {(budgetDepth || []).slice(0, 8).map((row) => (
-                <View key={`budget-depth:${row.envelopeId}`} style={styles.hintReviewRow}>
-                  <Text style={styles.recurringTitle}>{row.name}</Text>
-                  <Text style={styles.recurringMeta}>
-                    Ceiling {formatGhs(row.ceiling)} · Spent {formatGhs(row.currentSpent)} ·
-                    Rollover {formatGhs(row.rollover)} · Available {formatGhs(row.available)}
-                  </Text>
+            <View className="bg-surface rounded-2xl border border-border p-4 gap-4 shadow-sm">
+              {(budgetDepth || []).slice(0, 8).map((row, idx) => (
+                <View key={`budget-depth:${row.envelopeId}`} className={`gap-1 ${idx > 0 ? "pt-3 border-t border-border/50" : ""}`}>
+                  <Text className="text-base font-medium text-foreground">{row.name}</Text>
+                  <View className="flex-row flex-wrap gap-x-3 gap-y-1">
+                    <Text className="text-xs text-muted-foreground">Budget: {formatGhs(row.ceiling)}</Text>
+                    <Text className="text-xs text-muted-foreground">Spent: {formatGhs(row.currentSpent)}</Text>
+                    <Text className="text-xs text-warning font-medium">Available: {formatGhs(row.available)}</Text>
+                  </View>
                 </View>
               ))}
             </View>
           </View>
 
-          <View style={styles.section}>
+          <View className="gap-3">
             <SectionLabel>Anomalies & Reset</SectionLabel>
-            <View style={styles.recurringCard}>
-              {(spendingAnomalies?.anomalies || []).length === 0 ? (
-                <Text style={styles.recurringMeta}>No spending anomalies detected.</Text>
-              ) : (
-                (spendingAnomalies?.anomalies || []).map((anomaly) => (
-                  <Text key={anomaly.type} style={styles.recurringMeta}>
-                    {anomaly.headline}
-                  </Text>
-                ))
-              )}
+            <View className="bg-surface rounded-2xl border border-border p-5 gap-4 shadow-sm">
+              <View className="gap-2">
+                {(spendingAnomalies?.anomalies || []).length === 0 ? (
+                  <Text className="text-sm text-muted-foreground italic">No spending anomalies detected.</Text>
+                ) : (
+                  (spendingAnomalies?.anomalies || []).map((anomaly) => (
+                    <View key={anomaly.type} className="bg-danger/5 border border-danger/20 rounded-xl p-3">
+                      <Text className="text-sm text-danger font-medium">{anomaly.headline}</Text>
+                    </View>
+                  ))
+                )}
+              </View>
               <Button
+                variant="primary"
                 label={isStartingReset ? "Starting..." : "Start 2-Day Low Spend Reset"}
                 onPress={handleStartLowSpendReset}
                 disabled={isStartingReset}
@@ -197,15 +202,20 @@ export default function FinanceInsightsScreen() {
             </View>
           </View>
 
-          <View style={styles.section}>
+          <View className="gap-3">
             <SectionLabel>Weekly Money Check-in</SectionLabel>
-            <View style={styles.recurringCard}>
+            <View className="bg-surface rounded-2xl border border-border p-5 gap-4 shadow-sm">
               {weeklyMoneyCheckin ? (
-                <Text style={styles.recurringMeta}>Focus: {weeklyMoneyCheckin.focus}</Text>
+                <View className="bg-warning/10 border border-warning/20 rounded-xl p-3">
+                  <Text className="text-xs text-warning leading-relaxed">
+                    <Text className="font-bold">Latest Focus:</Text> {weeklyMoneyCheckin.focus}
+                  </Text>
+                </View>
               ) : (
-                <Text style={styles.recurringMeta}>No weekly money check-in saved yet.</Text>
+                <Text className="text-sm text-muted-foreground">No weekly check-in saved yet.</Text>
               )}
               <Button
+                variant="outline"
                 label={isSavingWeeklyCheckin ? "Saving..." : "Save Weekly Check-in"}
                 onPress={handleSaveWeeklyMoneyCheckin}
                 disabled={isSavingWeeklyCheckin}
@@ -213,88 +223,69 @@ export default function FinanceInsightsScreen() {
             </View>
           </View>
 
-          <View style={styles.section}>
+          <View className="gap-3">
             <SectionLabel>Monthly Close Export</SectionLabel>
-            <View style={styles.recurringCard}>
-              <Text style={styles.recurringMeta}>{monthlyCloseExport?.shareText}</Text>
-              <Text style={styles.recurringMeta}>
-                CSV rows: {Math.max((monthlyCloseExport?.csv || "").split("\n").length - 1, 0)}
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.section}>
-            <SectionLabel>Security & Sync</SectionLabel>
-            <View style={styles.recurringCard}>
-              <View style={styles.chipRow}>
-                <Pressable
-                  style={[
-                    styles.cadenceChip,
-                    securitySettings?.biometricLockEnabled && styles.cadenceChipSelected,
-                  ]}
-                  onPress={() => handleToggleSecurity("biometricLockEnabled")}
-                >
-                  <Text style={styles.cadenceChipText}>Biometric Lock</Text>
-                </Pressable>
-                <Pressable
-                  style={[
-                    styles.cadenceChip,
-                    securitySettings?.offlineModeEnabled && styles.cadenceChipSelected,
-                  ]}
-                  onPress={() => handleToggleSecurity("offlineModeEnabled")}
-                >
-                  <Text style={styles.cadenceChipText}>Offline Mode</Text>
-                </Pressable>
-                <Pressable
-                  style={[
-                    styles.cadenceChip,
-                    securitySettings?.conflictSafeSyncEnabled && styles.cadenceChipSelected,
-                  ]}
-                  onPress={() => handleToggleSecurity("conflictSafeSyncEnabled")}
-                >
-                  <Text style={styles.cadenceChipText}>Conflict-safe Sync</Text>
-                </Pressable>
+            <View className="bg-surface rounded-2xl border border-border p-4 gap-2 shadow-sm">
+              <Text className="text-sm text-foreground leading-relaxed">{monthlyCloseExport?.shareText}</Text>
+              <View className="flex-row items-center gap-2 mt-1">
+                <View className="bg-muted/10 rounded-full px-2 py-0.5 border border-border/50">
+                  <Text className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
+                    CSV rows: {Math.max((monthlyCloseExport?.csv || "").split("\n").length - 1, 0)}
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
 
-          <View style={styles.section}>
+          <View className="gap-3">
+            <SectionLabel>Security & Sync</SectionLabel>
+            <View className="bg-surface rounded-2xl border border-border p-4 shadow-sm">
+              <View className="flex-row flex-wrap gap-2">
+                {[
+                  { key: "biometricLockEnabled", label: "Biometric Lock" },
+                  { key: "offlineModeEnabled", label: "Offline Mode" },
+                  { key: "conflictSafeSyncEnabled", label: "Conflict-safe Sync" },
+                ].map((item) => (
+                  <Pressable
+                    key={item.key}
+                    className={`rounded-full px-4 py-2 border ${securitySettings?.[item.key as keyof typeof securitySettings] ? "bg-warning/10 border-warning/30" : "bg-background border-border"}`}
+                    onPress={() => handleToggleSecurity(item.key as any)}
+                  >
+                    <Text className={`text-xs font-medium ${securitySettings?.[item.key as keyof typeof securitySettings] ? "text-warning" : "text-foreground"}`}>
+                      {item.label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          </View>
+
+          <View className="gap-3 pb-8">
             <SectionLabel>Advanced Overview</SectionLabel>
-            <View style={styles.recurringCard}>
-              <Text style={styles.recurringMeta}>
-                Subscriptions: {subscriptionsOverview?.count || 0} (
-                {subscriptionsOverview?.dueSoonCount || 0} due soon) · Monthly{" "}
-                {formatGhs(subscriptionsOverview?.monthlyEquivalent || 0)}
-              </Text>
-              <Text style={styles.recurringMeta}>
-                Debt: {formatGhs(debtOverview?.totalBalance || 0)} · Next{" "}
-                {debtOverview?.nextFocus?.name || "none"}
-              </Text>
-              <Text style={styles.recurringMeta}>
-                Investments: {formatGhs(investmentOverview?.totalValue || 0)} · PnL{" "}
-                {formatGhs(investmentOverview?.unrealizedPnl || 0)}
-              </Text>
-              <Text style={styles.recurringMeta}>
-                Tax Est.: {formatGhs(taxOverview?.estimatedTax || 0)} on income{" "}
-                {formatGhs(taxOverview?.ytdIncome || 0)}
-              </Text>
-              <Text style={styles.recurringMeta}>
-                Shared Budget: {formatGhs(sharedBudgetOverview?.totalSpent || 0)} /{" "}
-                {formatGhs(sharedBudgetOverview?.totalBudget || 0)}
-              </Text>
-              <Text style={styles.recurringMeta}>
-                Bills due soon: {(billReminders?.dueSoon || []).length}
-              </Text>
-              <Text style={styles.recurringMeta}>
-                Net worth: {formatGhs(netWorthView?.netWorth || 0)} (assets{" "}
-                {formatGhs(netWorthView?.assets || 0)} / liabilities{" "}
-                {formatGhs(netWorthView?.liabilities || 0)})
-              </Text>
-              <Text style={styles.recurringMeta}>
-                Multi-currency ({multiCurrencySummary?.baseCurrency || "GHS"}):{" "}
-                {formatGhs(multiCurrencySummary?.estimatedTotalInBase || 0)}
-              </Text>
-              <Button label="Set FX Preset (USD/GHS)" onPress={handleSetFxRatePreset} />
+            <View className="bg-surface rounded-2xl border border-border p-5 gap-4 shadow-sm">
+              <View className="gap-3">
+                {[
+                  { label: "Subscriptions", value: `${subscriptionsOverview?.count || 0} active`, meta: formatGhs(subscriptionsOverview?.monthlyEquivalent || 0) + " / mo" },
+                  { label: "Debt Strategy", value: debtOverview?.nextFocus?.name || "None", meta: formatGhs(debtOverview?.totalBalance || 0) + " total" },
+                  { label: "Investments", value: formatGhs(investmentOverview?.totalValue || 0), meta: "PnL: " + formatGhs(investmentOverview?.unrealizedPnl || 0) },
+                  { label: "Tax Estimate", value: formatGhs(taxOverview?.estimatedTax || 0), meta: "On income: " + formatGhs(taxOverview?.ytdIncome || 0) },
+                  { label: "Net Worth", value: formatGhs(netWorthView?.netWorth || 0), meta: `A: ${formatGhs(netWorthView?.assets || 0)} / L: ${formatGhs(netWorthView?.liabilities || 0)}` },
+                ].map((item, idx) => (
+                  <View key={item.label} className={`flex-row justify-between items-center ${idx > 0 ? "pt-3 border-t border-border/10" : ""}`}>
+                    <View>
+                      <Text className="text-xs text-muted-foreground font-medium uppercase tracking-wider">{item.label}</Text>
+                      <Text className="text-base font-medium text-foreground mt-0.5">{item.value}</Text>
+                    </View>
+                    <Text className="text-xs text-muted-foreground italic">{item.meta}</Text>
+                  </View>
+                ))}
+              </View>
+              <View className="h-px bg-border/50" />
+              <Button
+                variant="ghost"
+                label="Set FX Preset (USD/GHS)"
+                onPress={handleSetFxRatePreset}
+              />
             </View>
           </View>
         </>

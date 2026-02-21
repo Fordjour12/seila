@@ -5,7 +5,6 @@ import { useMutation } from "convex/react";
 import { useToast } from "heroui-native";
 
 import { AddAccountForm } from "../../../components/finance/FinanceComponents";
-import { styles } from "../../../components/finance/routeShared";
 import { setAccountRef } from "../../../lib/finance-refs";
 
 export default function AddAccountRoute() {
@@ -38,6 +37,7 @@ export default function AddAccountRoute() {
         institution,
       });
       toast.show({ variant: "success", label: "Account added" });
+      closeRoute();
     } catch {
       toast.show({ variant: "danger", label: "Failed to add account" });
       throw new Error("Failed to add account");
@@ -47,16 +47,14 @@ export default function AddAccountRoute() {
   };
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <View style={styles.section}>
-        <Text style={styles.title}>Add Account</Text>
-        <Text style={styles.subtitle}>
+    <ScrollView className="flex-1 bg-background" contentContainerClassName="p-6 pb-24 gap-6">
+      <View className="mb-2">
+        <Text className="text-3xl font-serif text-foreground tracking-tight">Add Account</Text>
+        <Text className="text-sm text-muted-foreground mt-1">
           Create a new account to track your balances and cashflow.
         </Text>
       </View>
-      <View style={styles.recurringCard}>
-        <AddAccountForm onAdd={handleAddAccount} onClose={closeRoute} />
-      </View>
+      <AddAccountForm onAdd={handleAddAccount} onClose={closeRoute} />
     </ScrollView>
   );
 }

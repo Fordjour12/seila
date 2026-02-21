@@ -18,7 +18,6 @@ import {
 import { formatGhs } from "../../../lib/ghs";
 import { AccountsList } from "../../../components/finance/FinanceComponents";
 import { Button, SectionLabel } from "../../../components/ui";
-import { styles } from "../../../components/finance/routeShared";
 
 export default function FinanceAccountsScreen() {
   const router = useRouter();
@@ -99,101 +98,135 @@ export default function FinanceAccountsScreen() {
   };
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Accounts & Goals</Text>
-      <Text style={styles.subtitle}>Track balances, runway, and savings progress.</Text>
+    <ScrollView className="flex-1 bg-background" contentContainerClassName="p-6 pb-24 gap-6">
+      <View className="mb-2">
+        <Text className="text-3xl font-serif text-foreground tracking-tight">Accounts & Goals</Text>
+        <Text className="text-sm text-muted-foreground mt-1">Track balances, runway, and savings progress.</Text>
+      </View>
 
       {isLoading ? (
-        <View style={styles.loading}>
-          <Text style={styles.loadingText}>Loading...</Text>
+        <View className="py-12 items-center justify-center">
+          <Text className="text-base text-muted-foreground">Loading...</Text>
         </View>
       ) : (
         <>
-          <View style={styles.section}>
+          <View className="gap-3">
             <SectionLabel>Cashflow & Runway</SectionLabel>
-            <View style={styles.monthlyCloseCard}>
-              <Text style={styles.monthlyCloseMetric}>
-                Income {formatGhs(cashflow?.monthIncome || 0)} · Expense{" "}
-                {formatGhs(cashflow?.monthExpense || 0)}
-              </Text>
-              <Text style={styles.monthlyCloseWin}>
-                Net {formatGhs(cashflow?.netCashflow || 0)} · Balance{" "}
-                {formatGhs(cashflow?.totalBalance || 0)}
-              </Text>
-              <Text style={styles.monthlyCloseFocus}>
-                Runway: {cashflow?.runwayDays === null ? "stable" : `${cashflow?.runwayDays} days`}
-              </Text>
-              <Text style={styles.monthlyCloseMetric}>
-                Forecast 30d: {formatGhs(cashflowForecast?.forecast30Net || 0)} (in{" "}
-                {formatGhs(cashflowForecast?.expectedIncome30 || 0)} / out{" "}
-                {formatGhs(cashflowForecast?.expectedExpense30 || 0)})
-              </Text>
-              <View style={styles.chipRow}>
+            <View className="bg-surface rounded-2xl border border-border p-4 gap-3 shadow-sm">
+              <View className="flex-row justify-between items-center">
+                <View>
+                  <Text className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-1">Monthly Close</Text>
+                  <Text className="text-xl font-medium text-foreground">
+                    Net {formatGhs(cashflow?.netCashflow || 0)}
+                  </Text>
+                </View>
+                <View className="items-end">
+                  <Text className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-1">Balance</Text>
+                  <Text className="text-xl font-medium text-foreground">
+                    {formatGhs(cashflow?.totalBalance || 0)}
+                  </Text>
+                </View>
+              </View>
+
+              <View className="h-[1px] bg-border my-1" />
+
+              <View className="flex-row justify-between items-center">
+                <Text className="text-sm text-muted-foreground">
+                  In {formatGhs(cashflow?.monthIncome || 0)} · Out {formatGhs(cashflow?.monthExpense || 0)}
+                </Text>
+                <Text className="text-sm text-warning font-medium">
+                  Runway: {cashflow?.runwayDays === null ? "Stable" : `${cashflow?.runwayDays} days`}
+                </Text>
+              </View>
+
+              <View className="flex-row flex-wrap gap-2 mt-2">
                 {incomePresets.map((preset) => (
                   <Pressable
                     key={preset}
-                    style={[styles.cadenceChip, isLoggingIncome && styles.pendingDisabled]}
+                    className={`border border-border rounded-full px-3 py-1.5 bg-background ${isLoggingIncome ? "opacity-50" : "active:bg-muted"}`}
                     onPress={() => handleLogIncome(preset)}
                     disabled={isLoggingIncome}
                   >
-                    <Text style={styles.cadenceChipText}>+{formatGhs(preset)}</Text>
+                    <Text className="text-xs text-foreground font-medium">+{formatGhs(preset)}</Text>
                   </Pressable>
                 ))}
               </View>
             </View>
           </View>
 
-          <View style={styles.section}>
-            <SectionLabel>Accounts</SectionLabel>
-            <Button
-              label="Add Account"
-              onPress={() => router.push("/(tabs)/finance/add-account")}
-            />
+          <View className="gap-3">
+            <View className="flex-row justify-between items-center">
+              <SectionLabel>Accounts</SectionLabel>
+              <Pressable onPress={() => router.push("/(tabs)/finance/add-account")}>
+                <Text className="text-sm text-warning font-medium">Add</Text>
+              </Pressable>
+            </View>
             <AccountsList accounts={accountSummary?.accounts || []} />
           </View>
 
-          <View style={styles.section}>
+          <View className="gap-3">
             <SectionLabel>Savings Goals</SectionLabel>
-            <View style={styles.recurringCard}>
+            <View className="bg-surface rounded-2xl border border-border p-4 shadow-sm">
               {(goals || []).length === 0 ? (
-                <View style={styles.chipRow}>
-                  {goalPresets.map((preset) => (
-                    <Pressable
-                      key={preset.name}
-                      style={[styles.cadenceChip, isAddingGoal && styles.pendingDisabled]}
-                      onPress={() => handleQuickAddGoal(preset.name, preset.targetAmount)}
-                      disabled={isAddingGoal}
-                    >
-                      <Text style={styles.cadenceChipText}>{preset.name}</Text>
-                    </Pressable>
-                  ))}
+                <View className="gap-3">
+                  <Text className="text-sm text-muted-foreground">No active goals. Start saving with a preset.</Text>
+                  <View className="flex-row flex-wrap gap-2">
+                    {goalPresets.map((preset) => (
+                      <Pressable
+                        key={preset.name}
+                        className={`border border-border rounded-full px-3 py-1.5 bg-background ${isAddingGoal ? "opacity-50" : "active:bg-muted"}`}
+                        onPress={() => handleQuickAddGoal(preset.name, preset.targetAmount)}
+                        disabled={isAddingGoal}
+                      >
+                        <Text className="text-xs text-foreground font-medium">{preset.name}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
                 </View>
               ) : (
-                (goals || []).map((goal) => (
-                  <View key={goal.goalId} style={styles.hintReviewRow}>
-                    <Text style={styles.recurringTitle}>{goal.name}</Text>
-                    <Text style={styles.recurringMeta}>
-                      {formatGhs(goal.currentAmount)} / {formatGhs(goal.targetAmount)} ·{" "}
-                      {Math.round(goal.progress * 100)}%
-                    </Text>
-                    <View style={styles.chipRow}>
-                      {[1000, 5000, 10000].map((amount) => (
-                        <Pressable
-                          key={`${goal.goalId}:${amount}`}
-                          style={styles.cadenceChip}
-                          onPress={() => handleContributeGoal(goal.goalId, amount)}
-                        >
-                          <Text style={styles.cadenceChipText}>+{formatGhs(amount)}</Text>
-                        </Pressable>
-                      ))}
+                <View className="gap-4">
+                  {(goals || []).map((goal, index) => (
+                    <View key={goal.goalId} className={`${index > 0 ? "border-t border-border pt-4" : ""} gap-3`}>
+                      <View className="flex-row justify-between items-center">
+                        <View>
+                          <Text className="text-base text-foreground font-medium">{goal.name}</Text>
+                          <Text className="text-xs text-muted-foreground mt-0.5">
+                            {formatGhs(goal.currentAmount)} / {formatGhs(goal.targetAmount)}
+                          </Text>
+                        </View>
+                        <View className="items-end">
+                          <Text className="text-sm font-medium text-warning">{Math.round((goal.progress || 0) * 100)}%</Text>
+                        </View>
+                      </View>
+                      
+                      <View className="h-1.5 bg-border rounded-full overflow-hidden">
+                        <View 
+                          className="h-full bg-warning rounded-full" 
+                          style={{ width: `${Math.min(100, Math.max(0, (goal.progress || 0) * 100))}%` }} 
+                        />
+                      </View>
+
+                      <View className="flex-row flex-wrap gap-2 mt-1">
+                        {[1000, 5000, 10000].map((amount) => (
+                          <Pressable
+                            key={`${goal.goalId}:${amount}`}
+                            className="bg-background border border-border rounded-full px-3 py-1.5 active:bg-muted"
+                            onPress={() => handleContributeGoal(goal.goalId, amount)}
+                          >
+                            <Text className="text-xs text-foreground font-medium">+{formatGhs(amount)}</Text>
+                          </Pressable>
+                        ))}
+                      </View>
                     </View>
-                  </View>
-                ))
+                  ))}
+                </View>
               )}
-              <Text style={styles.recurringMeta}>
-                Micro-savings simulation: {formatGhs(savingsSimulation?.microSavingsMonthly || 0)} /
-                month · {formatGhs(savingsSimulation?.allocationPerGoal || 0)} per goal
-              </Text>
+              
+              <View className="mt-5 pt-4 border-t border-border">
+                <Text className="text-xs text-muted-foreground leading-relaxed">
+                  Micro-savings simulation: <Text className="text-foreground font-medium">{formatGhs(savingsSimulation?.microSavingsMonthly || 0)}</Text> / month · <Text className="text-foreground font-medium">{formatGhs(savingsSimulation?.allocationPerGoal || 0)}</Text> per goal
+                </Text>
+              </View>
             </View>
           </View>
         </>

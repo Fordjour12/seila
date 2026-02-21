@@ -13,7 +13,7 @@ export default function FinanceLayout() {
       <Stack.Screen
         name="index"
         options={{
-          headerShown: true,
+          headerShown: false,
           title: "Finance",
           headerBackVisible: true,
           headerStyle: { backgroundColor: Colors.bgRaised },

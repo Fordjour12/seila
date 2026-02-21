@@ -6,8 +6,6 @@ import { useMutation, useQuery } from "convex/react";
 import { useToast } from "heroui-native";
 
 import { merchantHintReviewRef, setMerchantEnvelopeHintRef } from "../../../lib/finance-refs";
-import { SectionLabel } from "../../../components/ui";
-import { confidenceLabel, styles } from "../../../components/finance/routeShared";
 
 export default function FinanceMerchantHintsScreen() {
   const { toast } = useToast();
@@ -34,60 +32,67 @@ export default function FinanceMerchantHintsScreen() {
     }
   };
 
+  const confidenceLabel = (confidence: number) => {
+    if (confidence > 0.8) return "High";
+    if (confidence > 0.5) return "Medium";
+    return "Low";
+  };
+
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Merchant Hints</Text>
-      <Text style={styles.subtitle}>Review and correct merchant-to-envelope suggestions.</Text>
+    <ScrollView className="flex-1 bg-background" contentContainerClassName="p-6 pb-24 gap-6">
+      <View className="mb-2">
+        <Text className="text-3xl font-serif text-foreground tracking-tight">Merchant Hints</Text>
+        <Text className="text-sm text-muted-foreground mt-1">Review and correct merchant-to-envelope suggestions.</Text>
+      </View>
 
       {isLoading ? (
-        <View style={styles.loading}>
-          <Text style={styles.loadingText}>Loading...</Text>
+        <View className="py-12 items-center justify-center">
+          <Text className="text-base text-muted-foreground">Loading...</Text>
         </View>
       ) : (
-        <View style={styles.section}>
-          <SectionLabel>Merchant Hint Review</SectionLabel>
-          <View style={styles.recurringCard}>
+        <View className="gap-6">
+          <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold ml-1">Merchant Hint Review</Text>
+
+          <View className="gap-4">
             {(merchantHintReview || []).length === 0 ? (
-              <Text style={styles.recurringMeta}>No merchant hints to review yet.</Text>
+              <View className="bg-surface rounded-2xl border border-border p-8 items-center justify-center">
+                <Text className="text-sm text-muted-foreground">No merchant hints to review yet.</Text>
+              </View>
             ) : (
               (merchantHintReview || []).map((hint) => (
-                <View key={hint.merchantKey} style={styles.hintReviewRow}>
-                  <View style={styles.recurringTopRow}>
-                    <View style={styles.recurringInfo}>
-                      <Text style={styles.recurringTitle}>{hint.merchantKey}</Text>
-                      <Text style={styles.recurringMeta}>
-                        Confidence {confidenceLabel(hint.confidence)} (
-                        {Math.round(hint.confidence * 100)}%) · samples {hint.sampleSize}
-                      </Text>
-                    </View>
+                <View key={hint.merchantKey} className="bg-surface rounded-2xl border border-border p-5 gap-4 shadow-sm">
+                  <View>
+                    <Text className="text-lg font-medium text-foreground">{hint.merchantKey}</Text>
+                    <Text className="text-xs text-muted-foreground mt-1">
+                      Confidence <Text className={hint.confidence > 0.8 ? "text-success" : hint.confidence > 0.5 ? "text-warning" : "text-danger"}>{confidenceLabel(hint.confidence)}</Text> ({Math.round(hint.confidence * 100)}%) · samples {hint.sampleSize}
+                    </Text>
                   </View>
+
                   <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
-                    style={styles.pendingEnvelopePicker}
+                    className="flex-row"
                   >
-                    {(envelopes || []).map((envelope) => {
-                      const selected = envelope.envelopeId === hint.envelopeId;
-                      return (
-                        <Pressable
-                          key={`${hint.merchantKey}:${envelope.envelopeId}`}
-                          style={[
-                            styles.pendingEnvelopeChip,
-                            selected && styles.pendingEnvelopeChipSelected,
-                            busyMerchantKey === hint.merchantKey && styles.pendingDisabled,
-                          ]}
-                          onPress={() =>
-                            handleSetMerchantHint(hint.merchantKey, envelope.envelopeId)
-                          }
-                          disabled={busyMerchantKey === hint.merchantKey}
-                        >
-                          <Text style={styles.pendingEnvelopeChipText}>
-                            {envelope.emoji ? `${envelope.emoji} ` : ""}
-                            {envelope.name}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
+                    <View className="flex-row gap-2">
+                      {(envelopes || []).map((envelope) => {
+                        const selected = envelope.envelopeId === hint.envelopeId;
+                        return (
+                          <Pressable
+                            key={`${hint.merchantKey}:${envelope.envelopeId}`}
+                            className={`rounded-full px-4 py-2 border ${selected ? "bg-warning/10 border-warning/30" : "bg-background border-border"} ${busyMerchantKey === hint.merchantKey ? "opacity-50" : ""}`}
+                            onPress={() =>
+                              handleSetMerchantHint(hint.merchantKey, envelope.envelopeId)
+                            }
+                            disabled={busyMerchantKey === hint.merchantKey}
+                          >
+                            <Text className={`text-xs font-medium ${selected ? "text-warning" : "text-foreground"}`}>
+                              {envelope.emoji ? `${envelope.emoji} ` : ""}
+                              {envelope.name}
+                            </Text>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
                   </ScrollView>
                 </View>
               ))

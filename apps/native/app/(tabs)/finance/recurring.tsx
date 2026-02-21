@@ -13,7 +13,7 @@ import {
 } from "../../../lib/finance-refs";
 import { formatGhs } from "../../../lib/ghs";
 import { Button, SectionLabel } from "../../../components/ui";
-import { formatDueDate, styles } from "../../../components/finance/routeShared";
+import { formatDueDate } from "../../../components/finance/routeShared";
 import { api } from "@seila/backend/convex/_generated/api";
 
 function cadenceMonthlyEquivalent(amount: number, cadence: "weekly" | "biweekly" | "monthly") {
@@ -58,25 +58,8 @@ export default function FinanceRecurringScreen() {
     return sortedRecurring.filter((item) => item.nextDueAt <= soon).length;
   }, [sortedRecurring]);
 
-  const handleDelayRecurring = async (recurringId: string, currentDueAt: number) => {
-    setBusyRecurringId(recurringId);
-    try {
-      await updateRecurringTransaction({
-        idempotencyKey: `finance.recurring.delay:${recurringId}:${Date.now()}`,
-        recurringId,
-        nextDueAt: currentDueAt + 7 * 24 * 60 * 60 * 1000,
-      });
-      toast.show({ variant: "success", label: "Moved due date by 7 days" });
-    } catch {
-      toast.show({ variant: "danger", label: "Failed to update due date" });
-    } finally {
-      setBusyRecurringId(null);
-    }
-  };
-
   const handleSetDateRecurring = async (
     recurringId: string,
-    currentDueAt: number,
     daysFromNow: number,
   ) => {
     setBusyRecurringId(recurringId);
@@ -112,7 +95,6 @@ export default function FinanceRecurringScreen() {
     if (date && currentRecurring) {
       await handleSetDateRecurring(
         selectedRecurringId!,
-        currentRecurring.nextDueAt,
         Math.round((date.getTime() - Date.now()) / (24 * 60 * 60 * 1000)),
       );
     }
@@ -129,28 +111,6 @@ export default function FinanceRecurringScreen() {
       toast.show({ variant: "success", label: "Recurring schedule canceled" });
     } catch {
       toast.show({ variant: "danger", label: "Failed to cancel recurring schedule" });
-    } finally {
-      setBusyRecurringId(null);
-    }
-  };
-
-  const handleRecurringCadenceCycle = async (
-    recurringId: string,
-    cadence: "weekly" | "biweekly" | "monthly",
-  ) => {
-    const nextCadence: "weekly" | "biweekly" | "monthly" =
-      cadence === "weekly" ? "biweekly" : cadence === "biweekly" ? "monthly" : "weekly";
-
-    setBusyRecurringId(recurringId);
-    try {
-      await updateRecurringTransaction({
-        idempotencyKey: `finance.recurring.cadence:${recurringId}:${Date.now()}`,
-        recurringId,
-        cadence: nextCadence,
-      });
-      toast.show({ variant: "success", label: `Cadence set to ${nextCadence}` });
-    } catch {
-      toast.show({ variant: "danger", label: "Failed to update cadence" });
     } finally {
       setBusyRecurringId(null);
     }
@@ -173,196 +133,157 @@ export default function FinanceRecurringScreen() {
   };
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Recurring</Text>
-      <Text style={styles.subtitle}>Manage your active schedules and update timing fast.</Text>
+    <ScrollView className="flex-1 bg-background" contentContainerClassName="p-6 pb-24 gap-6">
+      <View className="mb-2">
+        <Text className="text-3xl font-serif text-foreground tracking-tight">Recurring</Text>
+        <Text className="text-sm text-muted-foreground mt-1">Manage active schedules and update timing fast.</Text>
+      </View>
 
       {isLoading ? (
-        <View style={styles.loading}>
-          <Text style={styles.loadingText}>Loading...</Text>
+        <View className="py-12 items-center justify-center">
+          <Text className="text-base text-muted-foreground">Loading...</Text>
         </View>
       ) : (
         <>
-          <View style={styles.section}>
+          <View className="gap-3">
             <Button
               label="Add Recurring"
               onPress={() => router.push("/(tabs)/finance/add-recurring")}
             />
           </View>
 
-          <View style={styles.section}>
+          <View className="gap-3">
             <SectionLabel>Overview</SectionLabel>
-            <View style={styles.snapshotGrid}>
-              <View style={styles.snapshotCard}>
-                <Text style={styles.snapshotLabel}>Active</Text>
-                <Text style={styles.snapshotValue}>{sortedRecurring.length}</Text>
+            <View className="flex-row gap-2">
+              <View className="flex-1 bg-surface rounded-2xl border border-border p-4 gap-1 shadow-sm">
+                <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Active</Text>
+                <Text className="text-xl font-medium text-foreground">{sortedRecurring.length}</Text>
               </View>
-              <View style={styles.snapshotCard}>
-                <Text style={styles.snapshotLabel}>Due Soon</Text>
-                <Text style={styles.snapshotValue}>{dueSoonCount}</Text>
+              <View className="flex-1 bg-surface rounded-2xl border border-border p-4 gap-1 shadow-sm">
+                <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Due Soon</Text>
+                <Text className="text-xl font-medium text-foreground">{dueSoonCount}</Text>
               </View>
-              <View style={styles.snapshotCard}>
-                <Text style={styles.snapshotLabel}>Monthly Eq.</Text>
-                <Text style={styles.snapshotValue}>{formatGhs(monthlyEquivalent)}</Text>
+              <View className="flex-1 bg-surface rounded-2xl border border-border p-4 gap-1 shadow-sm">
+                <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Monthly Eq.</Text>
+                <Text className="text-xl font-medium text-foreground">{formatGhs(monthlyEquivalent)}</Text>
               </View>
             </View>
           </View>
 
-          <View style={styles.section}>
+          <View className="gap-3">
             <SectionLabel>Active Schedules</SectionLabel>
             {sortedRecurring.length === 0 ? (
-              <View style={styles.recurringCard}>
-                <Text style={styles.recurringTitle}>No recurring schedules yet</Text>
-                <Text style={styles.recurringMeta}>
+              <View className="bg-surface rounded-2xl border border-border p-6 items-center justify-center gap-2 shadow-sm">
+                <Text className="text-base font-medium text-foreground">No recurring schedules yet</Text>
+                <Text className="text-sm text-muted-foreground text-center">
                   Create one to automate regular expenses and planning.
                 </Text>
               </View>
             ) : (
-              <View style={styles.recurringList}>
+              <View className="gap-3">
                 {sortedRecurring.map((item) => {
                   const isBusy = busyRecurringId === item.recurringId;
                   const now = Date.now();
                   const dueSoon = item.nextDueAt <= now + 7 * 24 * 60 * 60 * 1000;
 
                   return (
-                    <View key={item.recurringId} style={styles.recurringCard}>
+                    <View key={item.recurringId} className="bg-surface rounded-2xl border border-border p-4 gap-4 shadow-sm">
                       <Pressable
-                        style={styles.recurringTopRow}
                         onPress={() =>
                           router.push(
                             `/(tabs)/finance/edit-recurring?recurringId=${item.recurringId}`,
                           )
                         }
                       >
-                        <View style={styles.recurringInfo}>
-                          <Text style={styles.recurringTitle}>
-                            {item.merchantHint || item.note || "Recurring expense"}
-                          </Text>
-                          <Text style={styles.recurringMeta}>
-                            {formatGhs(item.amount)} · {item.cadence} · due{" "}
-                            {formatDueDate(item.nextDueAt)}
-                          </Text>
-                          {dueSoon ? (
-                            <Text style={styles.pendingSuggestedText}>Due in the next 7 days</Text>
-                          ) : null}
+                        <View className="flex-row justify-between items-start">
+                          <View className="flex-1">
+                            <Text className="text-base font-medium text-foreground">
+                              {item.merchantHint || item.note || "Recurring expense"}
+                            </Text>
+                            <Text className="text-xs text-muted-foreground mt-1">
+                              {formatGhs(item.amount)} · <Text className="capitalize">{item.cadence}</Text> · <Text className={dueSoon ? "text-warning font-medium" : ""}>due {formatDueDate(item.nextDueAt)}</Text>
+                            </Text>
+                          </View>
+                          {dueSoon && (
+                            <View className="bg-warning/10 border border-warning/20 rounded-full px-2 py-0.5">
+                              <Text className="text-[10px] text-warning font-bold uppercase tracking-tighter">Soon</Text>
+                            </View>
+                          )}
                         </View>
                       </Pressable>
 
-                      <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        style={styles.pendingEnvelopePicker}
-                      >
-                        <View style={styles.cadenceRow}>
-                          <Pressable
-                            style={[
-                              styles.pendingEnvelopeChip,
-                              !item.envelopeId && styles.pendingEnvelopeChipSelected,
-                              isBusy && styles.pendingDisabled,
-                            ]}
-                            onPress={() => handleAssignEnvelope(item.recurringId, undefined)}
-                            disabled={isBusy}
-                          >
-                            <Text style={styles.pendingEnvelopeChipText}>Unassigned</Text>
-                          </Pressable>
-                          {(envelopes || []).map((envelope) => (
+                      <View className="h-px bg-border" />
+
+                      <View className="gap-2">
+                        <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Assigned Envelope</Text>
+                        <ScrollView
+                          horizontal
+                          showsHorizontalScrollIndicator={false}
+                          className="flex-row"
+                        >
+                          <View className="flex-row gap-2">
                             <Pressable
-                              key={`${item.recurringId}:${envelope.envelopeId}`}
-                              style={[
-                                styles.pendingEnvelopeChip,
-                                item.envelopeId === envelope.envelopeId &&
-                                  styles.pendingEnvelopeChipSelected,
-                                isBusy && styles.pendingDisabled,
-                              ]}
-                              onPress={() =>
-                                handleAssignEnvelope(item.recurringId, envelope.envelopeId)
-                              }
+                              className={`rounded-full px-3 py-1.5 border ${!item.envelopeId ? "bg-warning/10 border-warning/30" : "bg-background border-border"} ${isBusy ? "opacity-50" : ""}`}
+                              onPress={() => handleAssignEnvelope(item.recurringId, undefined)}
                               disabled={isBusy}
                             >
-                              <Text style={styles.pendingEnvelopeChipText}>
-                                {envelope.emoji ? `${envelope.emoji} ` : ""}
-                                {envelope.name}
-                              </Text>
+                              <Text className={`text-xs font-medium ${!item.envelopeId ? "text-warning" : "text-foreground"}`}>Unassigned</Text>
+                            </Pressable>
+                            {(envelopes || []).map((envelope) => (
+                              <Pressable
+                                key={`${item.recurringId}:${envelope.envelopeId}`}
+                                className={`rounded-full px-3 py-1.5 border ${item.envelopeId === envelope.envelopeId ? "bg-warning/10 border-warning/30" : "bg-background border-border"} ${isBusy ? "opacity-50" : ""}`}
+                                onPress={() =>
+                                  handleAssignEnvelope(item.recurringId, envelope.envelopeId)
+                                }
+                                disabled={isBusy}
+                              >
+                                <Text className={`text-xs font-medium ${item.envelopeId === envelope.envelopeId ? "text-warning" : "text-foreground"}`}>
+                                  {envelope.emoji ? `${envelope.emoji} ` : ""}
+                                  {envelope.name}
+                                </Text>
+                              </Pressable>
+                            ))}
+                          </View>
+                        </ScrollView>
+                      </View>
+
+                      <View className="h-px bg-border" />
+
+                      <View className="gap-2">
+                        <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Update Timing</Text>
+                        <View className="flex-row flex-wrap gap-2">
+                          {[
+                            { label: "Today", days: 0 },
+                            { label: "+1d", days: 1 },
+                            { label: "+7d", days: 7 },
+                            { label: "+14d", days: 14 },
+                          ].map((opt) => (
+                            <Pressable
+                              key={opt.label}
+                              className={`bg-background border border-border rounded-full px-3 py-1.5 active:bg-muted ${isBusy ? "opacity-50" : ""}`}
+                              onPress={() => handleSetDateRecurring(item.recurringId, opt.days)}
+                              disabled={isBusy}
+                            >
+                              <Text className="text-xs text-foreground font-medium">{opt.label}</Text>
                             </Pressable>
                           ))}
+                          <Pressable
+                            className={`bg-background border border-border rounded-full px-3 py-1.5 active:bg-muted ${isBusy ? "opacity-50" : ""}`}
+                            onPress={() => handleCustomDateRecurring(item.recurringId)}
+                            disabled={isBusy}
+                          >
+                            <Text className="text-xs text-foreground font-medium">Custom</Text>
+                          </Pressable>
+                          <View className="flex-1" />
+                          <Pressable
+                            className={`bg-danger/10 border border-danger/20 rounded-full px-3 py-1.5 active:bg-danger/20 ${isBusy ? "opacity-50" : ""}`}
+                            onPress={() => handleCancelRecurring(item.recurringId)}
+                            disabled={isBusy}
+                          >
+                            <Text className="text-xs text-danger font-medium">Cancel</Text>
+                          </Pressable>
                         </View>
-                      </ScrollView>
-
-                      <View style={styles.recurringActions}>
-                        <Pressable
-                          style={[
-                            styles.pendingActionButton,
-                            styles.pendingVoidButton,
-                            isBusy && styles.pendingDisabled,
-                          ]}
-                          onPress={() =>
-                            handleSetDateRecurring(item.recurringId, item.nextDueAt, 0)
-                          }
-                          disabled={isBusy}
-                        >
-                          <Text style={styles.pendingVoidText}>Today</Text>
-                        </Pressable>
-                        <Pressable
-                          style={[
-                            styles.pendingActionButton,
-                            styles.pendingVoidButton,
-                            isBusy && styles.pendingDisabled,
-                          ]}
-                          onPress={() =>
-                            handleSetDateRecurring(item.recurringId, item.nextDueAt, 1)
-                          }
-                          disabled={isBusy}
-                        >
-                          <Text style={styles.pendingVoidText}>+1d</Text>
-                        </Pressable>
-                        <Pressable
-                          style={[
-                            styles.pendingActionButton,
-                            styles.pendingVoidButton,
-                            isBusy && styles.pendingDisabled,
-                          ]}
-                          onPress={() =>
-                            handleSetDateRecurring(item.recurringId, item.nextDueAt, 7)
-                          }
-                          disabled={isBusy}
-                        >
-                          <Text style={styles.pendingVoidText}>+7d</Text>
-                        </Pressable>
-                        <Pressable
-                          style={[
-                            styles.pendingActionButton,
-                            styles.pendingVoidButton,
-                            isBusy && styles.pendingDisabled,
-                          ]}
-                          onPress={() =>
-                            handleSetDateRecurring(item.recurringId, item.nextDueAt, 14)
-                          }
-                          disabled={isBusy}
-                        >
-                          <Text style={styles.pendingVoidText}>+14d</Text>
-                        </Pressable>
-                        <Pressable
-                          style={[
-                            styles.pendingActionButton,
-                            styles.pendingVoidButton,
-                            isBusy && styles.pendingDisabled,
-                          ]}
-                          onPress={() => handleCustomDateRecurring(item.recurringId)}
-                          disabled={isBusy}
-                        >
-                          <Text style={styles.pendingVoidText}>Custom</Text>
-                        </Pressable>
-                        <Pressable
-                          style={[
-                            styles.pendingActionButton,
-                            styles.pendingConfirmButton,
-                            isBusy && styles.pendingDisabled,
-                          ]}
-                          onPress={() => handleCancelRecurring(item.recurringId)}
-                          disabled={isBusy}
-                        >
-                          <Text style={styles.pendingConfirmText}>Cancel</Text>
-                        </Pressable>
                       </View>
                     </View>
                   );

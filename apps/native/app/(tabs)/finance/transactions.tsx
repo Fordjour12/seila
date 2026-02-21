@@ -16,7 +16,7 @@ import {
 import { formatGhs } from "../../../lib/ghs";
 import { TransactionsList } from "../../../components/finance/FinanceComponents";
 import { Button, SectionLabel } from "../../../components/ui";
-import { normalizeMerchant, styles } from "../../../components/finance/routeShared";
+import { normalizeMerchant } from "../../../components/finance/routeShared";
 
 export default function FinanceTransactionsScreen() {
   const router = useRouter();
@@ -241,31 +241,34 @@ export default function FinanceTransactionsScreen() {
   };
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Transactions</Text>
-      <Text style={styles.subtitle}>Handle imports, search, and apply bulk actions.</Text>
+    <ScrollView className="flex-1 bg-background" contentContainerClassName="p-6 pb-24 gap-6">
+      <View className="mb-2">
+        <Text className="text-3xl font-serif text-foreground tracking-tight">Transactions</Text>
+        <Text className="text-sm text-muted-foreground mt-1">Handle imports, search, and apply bulk actions.</Text>
+      </View>
 
       {isLoading ? (
-        <View style={styles.loading}>
-          <Text style={styles.loadingText}>Loading...</Text>
+        <View className="py-12 items-center justify-center">
+          <Text className="text-base text-muted-foreground">Loading...</Text>
         </View>
       ) : (
         <>
-          <View style={styles.section}>
+          <View className="gap-3">
             <Button
               label="Log Transaction"
               onPress={() => router.push("/(tabs)/finance/add-transaction")}
             />
           </View>
+
           {(pendingTransactions || []).length > 0 ? (
-            <View style={styles.section}>
-              <View style={styles.pendingHeaderRow}>
+            <View className="gap-3">
+              <View className="flex-row justify-between items-center">
                 <SectionLabel>Pending Imports</SectionLabel>
-                <Pressable style={styles.applySuggestedButton} onPress={handleApplySuggestedToAll}>
-                  <Text style={styles.applySuggestedText}>Apply Suggested</Text>
+                <Pressable onPress={handleApplySuggestedToAll}>
+                  <Text className="text-sm text-warning font-medium">Apply Suggested</Text>
                 </Pressable>
               </View>
-              <View style={styles.pendingCard}>
+              <View className="gap-3">
                 {(pendingTransactions || []).map((transaction) => {
                   const isBusy = busyTransactionId === transaction._id;
                   const manualChoice = pendingEnvelopeByTransaction[transaction._id];
@@ -276,86 +279,84 @@ export default function FinanceTransactionsScreen() {
                   const isSuggested = manualChoice === undefined && Boolean(selectedEnvelopeId);
 
                   return (
-                    <View key={transaction._id} style={styles.pendingRow}>
-                      <View style={styles.pendingInfo}>
-                        <Text style={styles.pendingMerchant}>
+                    <View key={transaction._id} className="bg-surface rounded-2xl border border-border p-4 gap-4 shadow-sm">
+                      <View className="gap-1">
+                        <Text className="text-base font-medium text-foreground">
                           {transaction.merchantHint || transaction.note || "Imported transaction"}
                         </Text>
-                        <View style={styles.pendingMetaRow}>
-                          <Text style={styles.pendingAmount}>{formatGhs(transaction.amount)}</Text>
+                        <View className="flex-row items-center gap-2">
+                          <Text className="text-base font-semibold text-danger">{formatGhs(transaction.amount)}</Text>
                           {isSuggested && selectedEnvelope ? (
-                            <Text style={styles.pendingSuggestedText}>
-                              Suggested:{" "}
-                              {selectedEnvelope.emoji ? `${selectedEnvelope.emoji} ` : ""}
-                              {selectedEnvelope.name}
-                            </Text>
+                            <View className="bg-warning/10 border border-warning/20 rounded-full px-2 py-0.5">
+                              <Text className="text-[10px] text-warning font-bold uppercase tracking-widest">
+                                Suggested: {selectedEnvelope.name}
+                              </Text>
+                            </View>
                           ) : null}
                         </View>
+                      </View>
+
+                      <View className="h-px bg-border" />
+
+                      <View className="gap-2">
+                        <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Assign Envelope</Text>
                         <ScrollView
                           horizontal
                           showsHorizontalScrollIndicator={false}
-                          style={styles.pendingEnvelopePicker}
+                          className="flex-row"
                         >
-                          <Pressable
-                            style={[
-                              styles.pendingEnvelopeChip,
-                              manualChoice === null && styles.pendingEnvelopeChipSelected,
-                            ]}
-                            onPress={() =>
-                              setPendingEnvelopeByTransaction((current) => ({
-                                ...current,
-                                [transaction._id]: null,
-                              }))
-                            }
-                          >
-                            <Text style={styles.pendingEnvelopeChipText}>Unassigned</Text>
-                          </Pressable>
-                          {(envelopes || []).map((envelope) => (
+                          <View className="flex-row gap-2">
                             <Pressable
-                              key={`${transaction._id}:${envelope.envelopeId}`}
-                              style={[
-                                styles.pendingEnvelopeChip,
-                                selectedEnvelopeId === envelope.envelopeId &&
-                                  styles.pendingEnvelopeChipSelected,
-                              ]}
+                              className={`rounded-full px-3 py-1.5 border ${manualChoice === null ? "bg-warning/10 border-warning/30" : "bg-background border-border"} ${isBusy ? "opacity-50" : ""}`}
                               onPress={() =>
                                 setPendingEnvelopeByTransaction((current) => ({
                                   ...current,
-                                  [transaction._id]: envelope.envelopeId as Id<"envelopes">,
+                                  [transaction._id]: null,
                                 }))
                               }
+                              disabled={isBusy}
                             >
-                              <Text style={styles.pendingEnvelopeChipText}>
-                                {envelope.emoji ? `${envelope.emoji} ` : ""}
-                                {envelope.name}
-                              </Text>
+                              <Text className={`text-xs font-medium ${manualChoice === null ? "text-warning" : "text-foreground"}`}>Unassigned</Text>
                             </Pressable>
-                          ))}
+                            {(envelopes || []).map((envelope) => (
+                              <Pressable
+                                key={`${transaction._id}:${envelope.envelopeId}`}
+                                className={`rounded-full px-3 py-1.5 border ${selectedEnvelopeId === envelope.envelopeId ? "bg-warning/10 border-warning/30" : "bg-background border-border"} ${isBusy ? "opacity-50" : ""}`}
+                                onPress={() =>
+                                  setPendingEnvelopeByTransaction((current) => ({
+                                    ...current,
+                                    [transaction._id]: envelope.envelopeId as Id<"envelopes">,
+                                  }))
+                                }
+                                disabled={isBusy}
+                              >
+                                <Text className={`text-xs font-medium ${selectedEnvelopeId === envelope.envelopeId ? "text-warning" : "text-foreground"}`}>
+                                  {envelope.emoji ? `${envelope.emoji} ` : ""}
+                                  {envelope.name}
+                                </Text>
+                              </Pressable>
+                            ))}
+                          </View>
                         </ScrollView>
                       </View>
-                      <View style={styles.pendingActions}>
+
+                      <View className="h-px bg-border" />
+
+                      <View className="flex-row gap-2">
                         <Pressable
-                          style={[
-                            styles.pendingActionButton,
-                            styles.pendingVoidButton,
-                            isBusy && styles.pendingDisabled,
-                          ]}
+                          className={`flex-1 bg-background border border-border rounded-xl py-2.5 active:bg-muted ${isBusy ? "opacity-50" : ""}`}
                           onPress={() => handleVoidImport(transaction._id)}
                           disabled={isBusy}
                         >
-                          <Text style={styles.pendingVoidText}>Void</Text>
+                          <Text className="text-sm text-foreground text-center font-medium">Void</Text>
                         </Pressable>
                         <Pressable
-                          style={[
-                            styles.pendingActionButton,
-                            styles.pendingConfirmButton,
-                            isBusy && styles.pendingDisabled,
-                          ]}
+                          className={`flex-2 bg-foreground rounded-xl py-2.5 active:opacity-90 ${isBusy ? "opacity-50" : ""}`}
                           onPress={() => handleConfirmImport(transaction)}
                           disabled={isBusy}
                         >
-                          <Text style={styles.pendingConfirmText}>
-                            {isBusy ? "..." : "Confirm"}
+                          <Text className="text-sm text-background text-center font-bold">
+                            {isBusy ? "Processing..." : "Confirm"}
                           </Text>
                         </Pressable>
                       </View>
@@ -366,73 +367,74 @@ export default function FinanceTransactionsScreen() {
             </View>
           ) : null}
 
-          <View style={styles.section}>
+          <View className="gap-3">
             <SectionLabel>Recent Transactions</SectionLabel>
             <TransactionsList transactions={(transactions || []).slice(0, 10)} />
           </View>
 
-          <View style={styles.section}>
+          <View className="gap-3">
             <SectionLabel>Search & Bulk Edit</SectionLabel>
-            <View style={styles.recurringCard}>
-              <View style={styles.chipRow}>
-                <Pressable style={styles.cadenceChip}>
-                  <Text style={styles.cadenceChipText}>
-                    Showing {Math.min((transactionSearch || []).length, 20)} results
+            <View className="bg-surface rounded-2xl border border-border p-4 gap-4 shadow-sm">
+              <View className="flex-row justify-between items-center">
+                <Text className="text-xs text-muted-foreground italic">
+                  Showing {Math.min((transactionSearch || []).length, 20)} results
+                </Text>
+                {selectedTransactionIds.length > 0 && (
+                  <Text className="text-xs text-warning font-bold uppercase tracking-widest">
+                    {selectedTransactionIds.length} Selected
                   </Text>
-                </Pressable>
+                )}
               </View>
-              {(transactionSearch || []).slice(0, 20).map((transaction) => {
-                const selected = selectedTransactionIds.includes(transaction._id);
-                return (
-                  <Pressable
-                    key={`search:${transaction._id}`}
-                    style={[styles.searchRow, selected && styles.pendingEnvelopeChipSelected]}
-                    onPress={() => toggleTransactionSelection(transaction._id)}
-                  >
-                    <View style={styles.recurringInfo}>
-                      <Text style={styles.recurringTitle}>
-                        {transaction.merchantHint || transaction.note || "Expense"}
-                      </Text>
-                      <Text style={styles.recurringMeta}>{formatGhs(transaction.amount)}</Text>
-                    </View>
+
+              <View className="gap-2">
+                {(transactionSearch || []).slice(0, 20).map((transaction) => {
+                  const selected = selectedTransactionIds.includes(transaction._id);
+                  return (
                     <Pressable
-                      style={styles.pendingActionButton}
-                      onPress={() => handleAttachReceiptStub(transaction._id)}
+                      key={`search:${transaction._id}`}
+                      className={`flex-row justify-between items-center p-3 rounded-xl border ${selected ? "bg-warning/5 border-warning/30" : "bg-background border-border"}`}
+                      onPress={() => toggleTransactionSelection(transaction._id)}
                     >
-                      <Text style={styles.pendingVoidText}>Receipt</Text>
+                      <View className="flex-1 mr-4">
+                        <Text className="text-sm font-medium text-foreground">
+                          {transaction.merchantHint || transaction.note || "Expense"}
+                        </Text>
+                        <Text className="text-xs text-muted-foreground mt-0.5">{formatGhs(transaction.amount)}</Text>
+                      </View>
+                      <View className="flex-row gap-2">
+                        <Pressable
+                          className="bg-surface p-2 rounded-lg border border-border"
+                          onPress={() => handleAttachReceiptStub(transaction._id)}
+                        >
+                          <Text className="text-[10px] font-bold text-foreground uppercase tracking-widest">Receipt</Text>
+                        </Pressable>
+                        <Pressable
+                          className="bg-surface p-2 rounded-lg border border-border"
+                          onPress={() => handleTagTransaction(transaction._id, "review")}
+                        >
+                          <Text className="text-[10px] font-bold text-foreground uppercase tracking-widest">Tag</Text>
+                        </Pressable>
+                      </View>
                     </Pressable>
-                    <Pressable
-                      style={styles.pendingActionButton}
-                      onPress={() => handleTagTransaction(transaction._id, "review")}
-                    >
-                      <Text style={styles.pendingVoidText}>Tag</Text>
-                    </Pressable>
-                  </Pressable>
-                );
-              })}
+                  );
+                })}
+              </View>
+
               {selectedTransactionIds.length > 0 ? (
-                <View style={styles.recurringActions}>
+                <View className="flex-row gap-2 pt-2">
                   <Pressable
-                    style={[
-                      styles.pendingActionButton,
-                      styles.pendingVoidButton,
-                      isBulkApplying && styles.pendingDisabled,
-                    ]}
+                    className={`flex-1 bg-danger/10 border border-danger/20 rounded-xl py-2.5 active:bg-danger/20 ${isBulkApplying ? "opacity-50" : ""}`}
                     onPress={handleBulkVoid}
                     disabled={isBulkApplying}
                   >
-                    <Text style={styles.pendingVoidText}>Void Selected</Text>
+                    <Text className="text-xs text-danger text-center font-bold uppercase tracking-widest">Void Selected</Text>
                   </Pressable>
                   <Pressable
-                    style={[
-                      styles.pendingActionButton,
-                      styles.pendingConfirmButton,
-                      isBulkApplying && styles.pendingDisabled,
-                    ]}
+                    className={`flex-1 bg-foreground rounded-xl py-2.5 active:opacity-90 ${isBulkApplying ? "opacity-50" : ""}`}
                     onPress={handleBulkAssignFirstEnvelope}
                     disabled={isBulkApplying}
                   >
-                    <Text style={styles.pendingConfirmText}>Assign First Envelope</Text>
+                    <Text className="text-xs text-background text-center font-bold uppercase tracking-widest">Assign First</Text>
                   </Pressable>
                 </View>
               ) : null}

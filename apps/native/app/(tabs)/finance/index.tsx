@@ -50,41 +50,43 @@ export default function FinanceScreen() {
   const trendMax = Math.max(...(spendingTrend || []).map((point) => point.total), 1);
 
   return (
-    <ScrollView className="flex-1 bg-zinc-950" contentContainerStyle={{ padding: 24, gap: 24 }}>
-      <Text className="text-3xl font-bold text-zinc-100">Finance</Text>
-      <Text className="text-sm text-zinc-400">
-        Hub for spending, accounts, recurring bills, and insights.
-      </Text>
+    <ScrollView className="flex-1 bg-background" contentContainerClassName="p-6 pb-24 gap-6">
+      <View className="mb-2">
+        <Text className="text-3xl font-serif text-foreground tracking-tight">Finance</Text>
+        <Text className="text-sm text-muted-foreground mt-1">
+          Hub for spending, accounts, recurring bills, and insights.
+        </Text>
+      </View>
 
       {isLoading ? (
-        <View className="p-8 items-center">
-          <Text className="text-base text-zinc-500">Loading...</Text>
+        <View className="py-12 items-center justify-center">
+          <Text className="text-base text-muted-foreground">Loading...</Text>
         </View>
       ) : (
         <>
-          <View className="gap-6">
+          <View className="gap-3">
             <SectionLabel>Monthly Snapshot</SectionLabel>
-            <View className="flex-row gap-3">
-              <View className="flex-1 bg-zinc-900/50 rounded-2xl border border-zinc-800 p-4 gap-1">
-                <Text className="text-xs text-zinc-500 uppercase font-medium tracking-wider">Spent</Text>
-                <Text className="text-xl font-semibold text-zinc-100">{formatGhs(monthlySpent)}</Text>
+            <View className="flex-row gap-2">
+              <View className="flex-1 bg-surface rounded-2xl border border-border p-4 gap-1 shadow-sm">
+                <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Spent</Text>
+                <Text className="text-xl font-medium text-foreground">{formatGhs(monthlySpent)}</Text>
               </View>
-              <View className="flex-1 bg-zinc-900/50 rounded-2xl border border-zinc-800 p-4 gap-1">
-                <Text className="text-xs text-zinc-500 uppercase font-medium tracking-wider">Budget</Text>
-                <Text className="text-xl font-semibold text-zinc-100">{formatGhs(monthlyBudget)}</Text>
+              <View className="flex-1 bg-surface rounded-2xl border border-border p-4 gap-1 shadow-sm">
+                <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Budget</Text>
+                <Text className="text-xl font-medium text-foreground">{formatGhs(monthlyBudget)}</Text>
               </View>
-              <View className="flex-1 bg-zinc-900/50 rounded-2xl border border-zinc-800 p-4 gap-1">
-                <Text className="text-xs text-zinc-500 uppercase font-medium tracking-wider">Over</Text>
-                <Text className="text-xl font-semibold text-zinc-100">{overspentCount}</Text>
+              <View className="flex-1 bg-surface rounded-2xl border border-border p-4 gap-1 shadow-sm">
+                <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Over</Text>
+                <Text className="text-xl font-medium text-foreground">{overspentCount}</Text>
               </View>
             </View>
-            <View className="bg-zinc-900/50 rounded-2xl border border-zinc-800 p-5 gap-4">
-              <Text className="text-base font-semibold text-zinc-100">6-Week Spend Trend</Text>
+            <View className="bg-surface rounded-2xl border border-border p-4 gap-4 shadow-sm mt-1">
+              <Text className="text-sm font-medium text-foreground">6-Week Spend Trend</Text>
               <View className="h-24 flex-row items-end gap-2">
                 {(spendingTrend || []).map((point) => (
-                  <View key={point.weekStart} className="flex-1 h-full justify-end bg-zinc-950 rounded-lg overflow-hidden">
+                  <View key={point.weekStart} className="flex-1 h-full justify-end bg-background rounded-lg overflow-hidden border border-border/50">
                     <View
-                      className="w-full bg-amber-500 rounded-lg"
+                      className="w-full bg-warning rounded-lg"
                       style={[{ height: `${Math.max((point.total / trendMax) * 100, 8)}%` }]}
                     />
                   </View>
@@ -93,113 +95,108 @@ export default function FinanceScreen() {
             </View>
           </View>
 
-          <View className="gap-4">
-            <SectionLabel>Budget Envelopes</SectionLabel>
-            <Button
-              label="Add Envelope"
-              onPress={() => router.push("/(tabs)/finance/add-envelope")}
-            />
+          <View className="gap-3">
+            <View className="flex-row justify-between items-center">
+              <SectionLabel>Budget Envelopes</SectionLabel>
+              <Pressable onPress={() => router.push("/(tabs)/finance/add-envelope")}>
+                <Text className="text-sm text-warning font-medium">Add</Text>
+              </Pressable>
+            </View>
             <EnvelopesList envelopes={envelopes || []} />
           </View>
 
-          <View className="gap-4 mt-6">
-            <SectionLabel>Create</SectionLabel>
-            <Pressable
-              className="bg-zinc-900/50 rounded-2xl border border-zinc-800 p-4 gap-1 active:bg-zinc-800/80"
-              onPress={() => router.push("/(tabs)/finance/add-transaction")}
-            >
-              <Text className="text-base font-semibold text-zinc-100">Log Transaction</Text>
-              <Text className="text-sm text-zinc-400">Add a new manual expense entry</Text>
-            </Pressable>
-            <Pressable
-              className="bg-zinc-900/50 rounded-2xl border border-zinc-800 p-4 gap-1 active:bg-zinc-800/80"
-              onPress={() => router.push("/(tabs)/finance/add-envelope")}
-            >
-              <Text className="text-base font-semibold text-zinc-100">Add Envelope</Text>
-              <Text className="text-sm text-zinc-400">Create a new category budget bucket</Text>
-            </Pressable>
-            <Pressable
-              className="bg-zinc-900/50 rounded-2xl border border-zinc-800 p-4 gap-1 active:bg-zinc-800/80"
-              onPress={() => router.push("/(tabs)/finance/add-recurring")}
-            >
-              <Text className="text-base font-semibold text-zinc-100">Add Recurring</Text>
-              <Text className="text-sm text-zinc-400">Create a recurring payment schedule</Text>
-            </Pressable>
-            <Pressable
-              className="bg-zinc-900/50 rounded-2xl border border-zinc-800 p-4 gap-1 active:bg-zinc-800/80"
-              onPress={() => router.push("/(tabs)/finance/add-account")}
-            >
-              <Text className="text-base font-semibold text-zinc-100">Add Account</Text>
-              <Text className="text-sm text-zinc-400">Create a balance-tracking account</Text>
-            </Pressable>
+          <View className="gap-3">
+            <SectionLabel>Actions</SectionLabel>
+            <View className="flex-row flex-wrap gap-2">
+              <Pressable
+                className="bg-surface rounded-2xl border border-border p-4 flex-1 min-w-[140] gap-1 shadow-sm active:bg-muted/10"
+                onPress={() => router.push("/(tabs)/finance/add-transaction")}
+              >
+                <Text className="text-base font-medium text-foreground">Log Transaction</Text>
+                <Text className="text-xs text-muted-foreground">Manual expense entry</Text>
+              </Pressable>
+              <Pressable
+                className="bg-surface rounded-2xl border border-border p-4 flex-1 min-w-[140] gap-1 shadow-sm active:bg-muted/10"
+                onPress={() => router.push("/(tabs)/finance/add-recurring")}
+              >
+                <Text className="text-base font-medium text-foreground">Add Recurring</Text>
+                <Text className="text-xs text-muted-foreground">Payment schedule</Text>
+              </Pressable>
+            </View>
           </View>
 
-          <View className="gap-4 mt-6">
+          <View className="gap-3">
             <SectionLabel>Quick Navigation</SectionLabel>
-            <Pressable
-              className="bg-zinc-900/50 rounded-2xl border border-zinc-800 p-4 gap-1 active:bg-zinc-800/80"
-              onPress={() => router.push("/(tabs)/finance/transactions")}
-            >
-              <Text className="text-base font-semibold text-zinc-100">Transactions</Text>
-              <Text className="text-sm text-zinc-400">Pending imports: {(transactions || []).length}</Text>
-            </Pressable>
-            <Pressable
-              className="bg-zinc-900/50 rounded-2xl border border-zinc-800 p-4 gap-1 active:bg-zinc-800/80"
-              onPress={() => router.push("/(tabs)/finance/recurring")}
-            >
-              <Text className="text-base font-semibold text-zinc-100">Recurring</Text>
-              <Text className="text-sm text-zinc-400">
-                Active schedules: {(recurringTransactions || []).length}
-              </Text>
-            </Pressable>
-            <Pressable
-              className="bg-zinc-900/50 rounded-2xl border border-zinc-800 p-4 gap-1 active:bg-zinc-800/80"
-              onPress={() => router.push("/(tabs)/finance/accounts")}
-            >
-              <Text className="text-base font-semibold text-zinc-100">Accounts</Text>
-              <Text className="text-sm text-zinc-400">
-                Tracked accounts: {(accountSummary?.accounts || []).length}
-              </Text>
-            </Pressable>
-            <Pressable
-              className="bg-zinc-900/50 rounded-2xl border border-zinc-800 p-4 gap-1 active:bg-zinc-800/80"
-              onPress={() => router.push("/(tabs)/finance/merchant-hints")}
-            >
-              <Text className="text-base font-semibold text-zinc-100">Merchant Hints</Text>
-              <Text className="text-sm text-zinc-400">
-                Review rows: {(merchantHintReview || []).length}
-              </Text>
-            </Pressable>
-            <Pressable
-              className="bg-zinc-900/50 rounded-2xl border border-zinc-800 p-4 gap-1 active:bg-zinc-800/80"
-              onPress={() => router.push("/(tabs)/finance/insights")}
-            >
-              <Text className="text-base font-semibold text-zinc-100">Insights</Text>
-              <Text className="text-sm text-zinc-400">Advanced metrics and anomaly controls</Text>
-            </Pressable>
+            <View className="gap-3">
+              {[
+                {
+                  label: "Transactions",
+                  meta: `Pending imports: ${(transactions || []).length}`,
+                  route: "/(tabs)/finance/transactions"
+                },
+                {
+                  label: "Recurring",
+                  meta: `Active schedules: ${(recurringTransactions || []).length}`,
+                  route: "/(tabs)/finance/recurring"
+                },
+                {
+                  label: "Accounts",
+                  meta: `Tracked accounts: ${(accountSummary?.accounts || []).length}`,
+                  route: "/(tabs)/finance/accounts"
+                },
+                {
+                  label: "Merchant Hints",
+                  meta: `Review rows: ${(merchantHintReview || []).length}`,
+                  route: "/(tabs)/finance/merchant-hints"
+                },
+                {
+                  label: "Insights",
+                  meta: "Advanced metrics and anomalies",
+                  route: "/(tabs)/finance/insights"
+                },
+              ].map((nav) => (
+                <Pressable
+                  key={nav.route}
+                  className="bg-surface rounded-2xl border border-border p-4 flex-row justify-between items-center shadow-sm active:bg-muted/10"
+                  onPress={() => router.push(nav.route as any)}
+                >
+                  <View>
+                    <Text className="text-base font-medium text-foreground">{nav.label}</Text>
+                    <Text className="text-xs text-muted-foreground mt-0.5">{nav.meta}</Text>
+                  </View>
+                  <Text className="text-muted-foreground opacity-50">→</Text>
+                </Pressable>
+              ))}
+            </View>
           </View>
 
-          <View className="gap-4 mt-6">
+          <View className="gap-3 pb-8">
             <SectionLabel>Monthly Close</SectionLabel>
-            <View className="bg-zinc-900/50 rounded-2xl border border-zinc-800 p-5 gap-2">
-              <Text className="text-lg font-semibold text-zinc-100">{monthlyClose?.win}</Text>
-              <Text className="text-sm text-zinc-400">
-                Spent {formatGhs(monthlyClose?.totalSpent || 0)} / Budget{" "}
-                {formatGhs(monthlyClose?.totalBudget || 0)}
-              </Text>
+            <View className="bg-surface rounded-2xl border border-border p-5 gap-3 shadow-sm">
+              <Text className="text-lg font-medium text-foreground">{monthlyClose?.win}</Text>
+              <View className="h-px bg-border" />
+              <View className="flex-row justify-between items-center">
+                <Text className="text-sm text-muted-foreground">
+                  Spent {formatGhs(monthlyClose?.totalSpent || 0)} / Budget{" "}
+                  {formatGhs(monthlyClose?.totalBudget || 0)}
+                </Text>
+              </View>
               {(monthlyClose?.overspendAreas || []).length > 0 ? (
-                <Text className="text-sm font-medium text-red-400 mt-1">
+                <Text className="text-sm font-medium text-danger">
                   Overspend: {(monthlyClose?.overspendAreas || []).join(", ")}
                 </Text>
-              ) : (
-                <Text className="text-sm text-zinc-500 mt-1">No overspend areas this month.</Text>
-              )}
-              <Text className="text-sm font-medium text-amber-500 mt-1">Focus: {monthlyClose?.focus}</Text>
+              ) : null}
+              <View className="bg-warning/10 border border-warning/20 rounded-xl p-3">
+                <Text className="text-xs text-warning leading-relaxed">
+                  <Text className="font-bold">Focus:</Text> {monthlyClose?.focus}
+                </Text>
+              </View>
+              <Button
+                variant="ghost"
+                label="View Full Insights"
+                onPress={() => router.push("/(tabs)/finance/insights")}
+              />
             </View>
-            <Button
-              label="Open Full Insights"
-              onPress={() => router.push("/(tabs)/finance/insights")}
-            />
           </View>
         </>
       )}

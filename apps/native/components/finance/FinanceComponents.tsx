@@ -49,17 +49,17 @@ const ACCOUNT_TYPE_LABELS: Record<string, string> = {
 
 export function AccountCard({ account }: { account: Account }) {
   return (
-    <View style={styles.accountCard}>
-      <View style={styles.accountIcon}>
-        <Text style={styles.accountIconText}>{ACCOUNT_TYPE_ICONS[account.type] || "📁"}</Text>
+    <View className="flex-row items-center bg-surface rounded-2xl p-4 border border-border shadow-sm">
+      <View className="w-10 h-10 rounded-xl bg-background items-center justify-center">
+        <Text className="text-xl">{ACCOUNT_TYPE_ICONS[account.type] || "📁"}</Text>
       </View>
-      <View style={styles.accountInfo}>
-        <Text style={styles.accountName}>{account.name}</Text>
-        <Text style={styles.accountType}>
+      <View className="flex-1 ml-4 justify-center">
+        <Text className="text-base font-medium text-foreground">{account.name}</Text>
+        <Text className="text-xs text-muted-foreground mt-0.5">
           {account.institution || ACCOUNT_TYPE_LABELS[account.type]}
         </Text>
       </View>
-      <Text style={[styles.accountBalance, account.balance < 0 && styles.accountBalanceNegative]}>
+      <Text className={`text-base font-medium ${account.balance < 0 ? "text-danger" : "text-success"}`}>
         {formatGhs(account.balance)}
       </Text>
     </View>
@@ -79,12 +79,12 @@ export function AccountsList({ accounts }: { accounts: Account[] }) {
   const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
 
   return (
-    <View style={styles.accountsContainer}>
-      <View style={styles.totalBalance}>
-        <Text style={styles.totalBalanceLabel}>Total Balance</Text>
-        <Text style={styles.totalBalanceValue}>{formatGhs(totalBalance)}</Text>
+    <View className="gap-4">
+      <View className="items-center py-5">
+        <Text className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Total Balance</Text>
+        <Text className="text-3xl font-serif text-foreground mt-1">{formatGhs(totalBalance)}</Text>
       </View>
-      <View style={styles.accountsList}>
+      <View className="gap-3">
         {accounts.map((account) => (
           <AccountCard key={account.accountId} account={account} />
         ))}
@@ -99,41 +99,34 @@ export function EnvelopeCard({ envelope }: { envelope: EnvelopeSummary }) {
   const isOverBudget = hasCeiling && envelope.utilization > 1;
 
   return (
-    <View style={styles.envelopeCard}>
-      <View style={styles.envelopeHeader}>
-        <View style={styles.envelopeInfo}>
-          {envelope.emoji ? <Text style={styles.envelopeEmoji}>{envelope.emoji}</Text> : null}
-          <Text style={styles.envelopeName}>{envelope.name}</Text>
+    <View className="bg-surface rounded-2xl border border-border p-4 gap-3 shadow-sm">
+      <View className="flex-row justify-between items-center">
+        <View className="flex-row items-center gap-2">
+          {envelope.emoji ? <Text className="text-xl">{envelope.emoji}</Text> : null}
+          <Text className="text-base font-medium text-foreground">{envelope.name}</Text>
         </View>
-        <View style={styles.envelopeAmounts}>
-          <Text style={styles.envelopeSpent}>{formatGhs(envelope.spent)}</Text>
+        <View className="flex-row items-center">
+          <Text className="text-base font-medium text-foreground">{formatGhs(envelope.spent)}</Text>
           {hasCeiling ? (
-            <Text
-              style={[styles.envelopeCeiling, isOverBudget ? styles.envelopeOverBudget : undefined]}
-            >
+            <Text className={`text-xs ml-1 ${isOverBudget ? "text-danger" : "text-muted-foreground"}`}>
               / {formatGhs(envelope.softCeiling!)}
             </Text>
           ) : null}
         </View>
       </View>
-      {hasCeiling ? (
-        <View style={styles.progressTrack}>
-          <View
-            style={[
-              styles.progressFill,
-              { width: `${progressPercent}%` },
-              isOverBudget ? styles.progressFillOverBudget : undefined,
-            ]}
-          />
+      {hasCeiling && (
+        <View className="gap-1.5">
+          <View className="h-2 bg-background rounded-full overflow-hidden">
+            <View
+              className={`h-full rounded-full ${isOverBudget ? "bg-danger" : "bg-warning"}`}
+              style={{ width: `${progressPercent}%` }}
+            />
+          </View>
+          <Text className={`text-[10px] uppercase tracking-widest font-bold ${isOverBudget ? "text-danger" : "text-muted-foreground"}`}>
+            {Math.round(envelope.utilization * 100)}% utilized
+          </Text>
         </View>
-      ) : null}
-      {hasCeiling ? (
-        <Text
-          style={[styles.utilizationText, isOverBudget ? styles.utilizationTextOver : undefined]}
-        >
-          {Math.round(envelope.utilization * 100)}% used
-        </Text>
-      ) : null}
+      )}
     </View>
   );
 }
@@ -144,7 +137,7 @@ export function EnvelopesList({ envelopes }: { envelopes: EnvelopeSummary[] }) {
   }
 
   return (
-    <View style={styles.envelopesList}>
+    <View className="gap-3">
       {envelopes.map((envelope) => (
         <EnvelopeCard key={envelope.envelopeId} envelope={envelope} />
       ))}
@@ -160,14 +153,14 @@ export function TransactionItem({ transaction }: { transaction: Transaction }) {
   });
 
   return (
-    <View style={styles.transactionItem}>
-      <View style={styles.transactionInfo}>
-        <Text style={styles.transactionMerchant}>
+    <View className="flex-row justify-between items-center py-3 border-b border-border/50 last:border-b-0">
+      <View className="flex-1 mr-4">
+        <Text className="text-base font-medium text-foreground" numberOfLines={1}>
           {transaction.merchantHint || transaction.note || "Expense"}
         </Text>
-        <Text style={styles.transactionDate}>{formattedDate}</Text>
+        <Text className="text-xs text-muted-foreground mt-0.5">{formattedDate}</Text>
       </View>
-      <Text style={styles.transactionAmount}>-{formatGhs(transaction.amount)}</Text>
+      <Text className="text-base font-medium text-danger">-{formatGhs(transaction.amount)}</Text>
     </View>
   );
 }
@@ -180,7 +173,7 @@ export function TransactionsList({ transactions }: { transactions: Transaction[]
   }
 
   return (
-    <View style={styles.transactionsList}>
+    <View className="bg-surface rounded-2xl border border-border p-4 shadow-sm">
       {transactions.map((transaction) => (
         <TransactionItem key={transaction._id} transaction={transaction} />
       ))}
@@ -212,13 +205,13 @@ export function AddTransactionSheet({ onAdd, onClose, envelopes }: AddTransactio
   };
 
   return (
-    <View style={styles.sheet}>
-      <Text style={styles.sheetTitle}>Log Expense</Text>
+    <View className="bg-surface rounded-2xl border border-border p-6 gap-6 shadow-sm">
+      <Text className="text-xl font-medium text-foreground">Log Expense</Text>
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.inputLabel}>Amount (GHS)</Text>
+      <View className="gap-2">
+        <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Amount (GHS)</Text>
         <TextInput
-          style={styles.input}
+          className="bg-background border border-border rounded-xl p-4 text-base text-foreground font-medium"
           value={amount}
           onChangeText={setAmount}
           placeholder="0.00"
@@ -227,51 +220,57 @@ export function AddTransactionSheet({ onAdd, onClose, envelopes }: AddTransactio
         />
       </View>
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.inputLabel}>Envelope (optional)</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.envelopePicker}>
-          {envelopes.map((env) => (
-            <Pressable
-              key={env.envelopeId}
-              style={[
-                styles.envelopeChip,
-                selectedEnvelope === env.envelopeId && styles.envelopeChipSelected,
-              ]}
-              onPress={() =>
-                setSelectedEnvelope(
-                  selectedEnvelope === env.envelopeId ? undefined : env.envelopeId,
-                )
-              }
-            >
-              <Text style={styles.envelopeChipText}>
-                {env.emoji ? `${env.emoji} ` : ""}
-                {env.name}
-              </Text>
-            </Pressable>
-          ))}
+      <View className="gap-2">
+        <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Envelope (optional)</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
+          <View className="flex-row gap-2">
+            {envelopes.map((env) => (
+              <Pressable
+                key={env.envelopeId}
+                className={`rounded-full px-4 py-2 border ${selectedEnvelope === env.envelopeId ? "bg-warning/10 border-warning/30" : "bg-background border-border"}`}
+                onPress={() =>
+                  setSelectedEnvelope(
+                    selectedEnvelope === env.envelopeId ? undefined : env.envelopeId,
+                  )
+                }
+              >
+                <Text className={`text-xs font-medium ${selectedEnvelope === env.envelopeId ? "text-warning" : "text-foreground"}`}>
+                  {env.emoji ? `${env.emoji} ` : ""}
+                  {env.name}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
         </ScrollView>
       </View>
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.inputLabel}>Note (optional)</Text>
+      <View className="gap-2">
+        <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Note (optional)</Text>
         <TextInput
-          style={[styles.input, styles.inputMultiline]}
+          className="bg-background border border-border rounded-xl p-4 text-base text-foreground min-h-[100]"
           value={note}
           onChangeText={setNote}
           placeholder="What was this for?"
           placeholderTextColor={Colors.textMuted}
           multiline
+          textAlignVertical="top"
         />
       </View>
 
-      <View style={styles.sheetActions}>
-        <Button label="Cancel" variant="ghost" onPress={onClose} />
-        <Button
-          label="Add Expense"
-          variant="primary"
+      <View className="flex-row gap-3 pt-2">
+        <Pressable
+          className="flex-1 bg-background border border-border rounded-xl py-3 active:bg-muted"
+          onPress={onClose}
+        >
+          <Text className="text-sm text-foreground text-center font-medium">Cancel</Text>
+        </Pressable>
+        <Pressable
+          className={`flex-1 bg-foreground rounded-xl py-3 active:opacity-90 ${(!amount || parseFloat(amount) <= 0) ? "opacity-50" : ""}`}
           onPress={handleAdd}
           disabled={!amount || parseFloat(amount) <= 0}
-        />
+        >
+          <Text className="text-sm text-background text-center font-bold">Add Expense</Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -303,13 +302,13 @@ export function AddEnvelopeSheet({ onAdd, onClose }: AddEnvelopeSheetProps) {
   };
 
   return (
-    <View style={styles.sheet}>
-      <Text style={styles.sheetTitle}>New Envelope</Text>
+    <View className="bg-surface rounded-2xl border border-border p-6 gap-6 shadow-sm">
+      <Text className="text-xl font-medium text-foreground">New Envelope</Text>
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.inputLabel}>Name</Text>
+      <View className="gap-2">
+        <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Name</Text>
         <TextInput
-          style={styles.input}
+          className="bg-background border border-border rounded-xl p-4 text-base text-foreground font-medium"
           value={name}
           onChangeText={setName}
           placeholder="e.g., Food, Transport"
@@ -317,10 +316,10 @@ export function AddEnvelopeSheet({ onAdd, onClose }: AddEnvelopeSheetProps) {
         />
       </View>
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.inputLabel}>Monthly Budget (GHS)</Text>
+      <View className="gap-2">
+        <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Monthly Budget (GHS)</Text>
         <TextInput
-          style={styles.input}
+          className="bg-background border border-border rounded-xl p-4 text-base text-foreground font-medium"
           value={softCeiling}
           onChangeText={setSoftCeiling}
           placeholder="Optional"
@@ -329,10 +328,10 @@ export function AddEnvelopeSheet({ onAdd, onClose }: AddEnvelopeSheetProps) {
         />
       </View>
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.inputLabel}>Emoji</Text>
+      <View className="gap-2">
+        <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Emoji</Text>
         <TextInput
-          style={[styles.input, styles.inputSmall]}
+          className="bg-background border border-border rounded-xl p-4 text-xl text-center w-20"
           value={emoji}
           onChangeText={setEmoji}
           placeholder="🍔"
@@ -341,14 +340,20 @@ export function AddEnvelopeSheet({ onAdd, onClose }: AddEnvelopeSheetProps) {
         />
       </View>
 
-      <View style={styles.sheetActions}>
-        <Button label="Cancel" variant="ghost" onPress={onClose} />
-        <Button
-          label="Create Envelope"
-          variant="primary"
+      <View className="flex-row gap-3 pt-2">
+        <Pressable
+          className="flex-1 bg-background border border-border rounded-xl py-3 active:bg-muted"
+          onPress={onClose}
+        >
+          <Text className="text-sm text-foreground text-center font-medium">Cancel</Text>
+        </Pressable>
+        <Pressable
+          className={`flex-1 bg-foreground rounded-xl py-3 active:opacity-90 ${(!name.trim()) ? "opacity-50" : ""}`}
           onPress={handleAdd}
           disabled={!name.trim()}
-        />
+        >
+          <Text className="text-sm text-background text-center font-bold">Create Envelope</Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -406,19 +411,21 @@ export function AddAccountSheet({
   }
 
   return (
-    <View style={styles.actionsRow}>
-      <Pressable style={styles.actionButton} onPress={() => setShowTransactionForm(true)}>
-        <Text style={styles.actionButtonIcon}>💸</Text>
-        <Text style={styles.actionButtonLabel}>Log Expense</Text>
-      </Pressable>
-      <Pressable style={styles.actionButton} onPress={() => setShowEnvelopeForm(true)}>
-        <Text style={styles.actionButtonIcon}>📊</Text>
-        <Text style={styles.actionButtonLabel}>New Envelope</Text>
-      </Pressable>
-      <Pressable style={styles.actionButton} onPress={() => setShowAccountForm(true)}>
-        <Text style={styles.actionButtonIcon}>🏦</Text>
-        <Text style={styles.actionButtonLabel}>Add Account</Text>
-      </Pressable>
+    <View className="flex-row gap-3">
+      {[
+        { label: "Log Expense", icon: "💸", onPress: () => setShowTransactionForm(true) },
+        { label: "New Envelope", icon: "📊", onPress: () => setShowEnvelopeForm(true) },
+        { label: "Add Account", icon: "🏦", onPress: () => setShowAccountForm(true) },
+      ].map((action) => (
+        <Pressable
+          key={action.label}
+          className="flex-1 bg-surface border border-border rounded-2xl p-6 items-center gap-3 shadow-sm active:bg-muted/10"
+          onPress={action.onPress}
+        >
+          <Text className="text-3xl">{action.icon}</Text>
+          <Text className="text-xs font-bold text-foreground text-center uppercase tracking-widest">{action.label}</Text>
+        </Pressable>
+      ))}
     </View>
   );
 }
@@ -464,30 +471,32 @@ export function AddAccountForm({ onAdd, onClose }: AddAccountFormProps) {
   ];
 
   return (
-    <View style={styles.sheet}>
-      <Text style={styles.sheetTitle}>Add Account</Text>
+    <View className="bg-surface rounded-2xl border border-border p-6 gap-6 shadow-sm">
+      <Text className="text-xl font-medium text-foreground">Add Account</Text>
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.inputLabel}>Account Type</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.typePicker}>
-          {accountTypes.map((accType) => (
-            <Pressable
-              key={accType.value}
-              style={[styles.typeChip, type === accType.value && styles.typeChipSelected]}
-              onPress={() => setType(accType.value)}
-            >
-              <Text style={styles.typeChipText}>
-                {accType.icon} {accType.label}
-              </Text>
-            </Pressable>
-          ))}
+      <View className="gap-2">
+        <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Account Type</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
+          <View className="flex-row gap-2">
+            {accountTypes.map((accType) => (
+              <Pressable
+                key={accType.value}
+                className={`rounded-full px-4 py-2 border ${type === accType.value ? "bg-warning/10 border-warning/30" : "bg-background border-border"}`}
+                onPress={() => setType(accType.value)}
+              >
+                <Text className={`text-xs font-medium ${type === accType.value ? "text-warning" : "text-foreground"}`}>
+                  {accType.icon} {accType.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
         </ScrollView>
       </View>
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.inputLabel}>Account Name</Text>
+      <View className="gap-2">
+        <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Account Name</Text>
         <TextInput
-          style={styles.input}
+          className="bg-background border border-border rounded-xl p-4 text-base text-foreground font-medium"
           value={name}
           onChangeText={setName}
           placeholder="e.g., Main Checking"
@@ -495,10 +504,10 @@ export function AddAccountForm({ onAdd, onClose }: AddAccountFormProps) {
         />
       </View>
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.inputLabel}>Current Balance (GHS)</Text>
+      <View className="gap-2">
+        <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Current Balance (GHS)</Text>
         <TextInput
-          style={styles.input}
+          className="bg-background border border-border rounded-xl p-4 text-base text-foreground font-medium"
           value={balance}
           onChangeText={setBalance}
           placeholder="0.00"
@@ -507,10 +516,10 @@ export function AddAccountForm({ onAdd, onClose }: AddAccountFormProps) {
         />
       </View>
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.inputLabel}>Institution (optional)</Text>
+      <View className="gap-2">
+        <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Institution (optional)</Text>
         <TextInput
-          style={styles.input}
+          className="bg-background border border-border rounded-xl p-4 text-base text-foreground font-medium"
           value={institution}
           onChangeText={setInstitution}
           placeholder="e.g., Ecobank, Fidelity"
@@ -518,9 +527,20 @@ export function AddAccountForm({ onAdd, onClose }: AddAccountFormProps) {
         />
       </View>
 
-      <View style={styles.sheetActions}>
-        <Button label="Cancel" variant="ghost" onPress={onClose} />
-        <Button label="Add Account" variant="primary" onPress={handleAdd} disabled={!name.trim()} />
+      <View className="flex-row gap-3 pt-2">
+        <Pressable
+          className="flex-1 bg-background border border-border rounded-xl py-3 active:bg-muted"
+          onPress={onClose}
+        >
+          <Text className="text-sm text-foreground text-center font-medium">Cancel</Text>
+        </Pressable>
+        <Pressable
+          className={`flex-1 bg-foreground rounded-xl py-3 active:opacity-90 ${(!name.trim()) ? "opacity-50" : ""}`}
+          onPress={handleAdd}
+          disabled={!name.trim()}
+        >
+          <Text className="text-sm text-background text-center font-bold">Add Account</Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -528,285 +548,13 @@ export function AddAccountForm({ onAdd, onClose }: AddAccountFormProps) {
 
 export function AccountsOverview() {
   return (
-    <View style={styles.card}>
-      <Text style={styles.heading}>Accounts</Text>
-      <Text style={styles.body}>No accounts connected yet.</Text>
+    <View className="bg-surface rounded-2xl border border-border p-6 gap-2 shadow-sm">
+      <Text className="text-lg font-medium text-foreground">Accounts</Text>
+      <Text className="text-sm text-muted-foreground">No accounts connected yet.</Text>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: Colors.bgRaised,
-    borderColor: Colors.borderSoft,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    gap: Spacing.xs,
-    padding: Spacing.lg,
-  },
-  heading: { ...Typography.labelLG, color: Colors.textPrimary },
-  body: { ...Typography.bodySM, color: Colors.textSecondary },
+const styles = StyleSheet.create({});
 
-  actionsRow: {
-    flexDirection: "row",
-    gap: Spacing.md,
-  },
-  actionButton: {
-    flex: 1,
-    backgroundColor: Colors.bgFloat,
-    borderRadius: Radius.md,
-    padding: Spacing.lg,
-    alignItems: "center",
-    gap: Spacing.sm,
-    borderWidth: 1,
-    borderColor: Colors.borderSoft,
-  },
-  actionButtonIcon: {
-    fontSize: 24,
-  },
-  actionButtonLabel: {
-    ...Typography.labelMD,
-    color: Colors.textPrimary,
-  },
 
-  envelopeCard: {
-    backgroundColor: Colors.bgFloat,
-    borderRadius: Radius.md,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: Colors.borderSoft,
-  },
-  envelopeHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  envelopeInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.sm,
-  },
-  envelopeEmoji: {
-    fontSize: 20,
-  },
-  envelopeName: {
-    ...Typography.labelMD,
-    color: Colors.textPrimary,
-  },
-  envelopeAmounts: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  envelopeSpent: {
-    ...Typography.labelMD,
-    color: Colors.textPrimary,
-  },
-  envelopeCeiling: {
-    ...Typography.bodySM,
-    color: Colors.textMuted,
-  },
-  envelopeOverBudget: {
-    color: Colors.danger,
-  },
-  progressTrack: {
-    height: 4,
-    backgroundColor: Colors.borderSoft,
-    borderRadius: 2,
-    marginTop: Spacing.sm,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    backgroundColor: Colors.warning,
-    borderRadius: 2,
-  },
-  progressFillOverBudget: {
-    backgroundColor: Colors.danger,
-  },
-  utilizationText: {
-    ...Typography.bodyXS,
-    color: Colors.textMuted,
-    marginTop: Spacing.xs,
-  },
-  utilizationTextOver: {
-    color: Colors.danger,
-  },
-  envelopesList: {
-    gap: Spacing.sm,
-  },
-
-  transactionItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: Spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.borderSoft,
-  },
-  transactionInfo: {
-    flex: 1,
-  },
-  transactionMerchant: {
-    ...Typography.bodyMD,
-    color: Colors.textPrimary,
-  },
-  transactionDate: {
-    ...Typography.bodyXS,
-    color: Colors.textMuted,
-  },
-  transactionAmount: {
-    ...Typography.labelMD,
-    color: Colors.danger,
-  },
-  transactionsList: {
-    backgroundColor: Colors.bgFloat,
-    borderRadius: Radius.md,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: Colors.borderSoft,
-  },
-
-  sheet: {
-    backgroundColor: Colors.bgRaised,
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
-    gap: Spacing.md,
-    borderWidth: 1,
-    borderColor: Colors.borderSoft,
-  },
-  sheetTitle: {
-    ...Typography.labelLG,
-    color: Colors.textPrimary,
-    marginBottom: Spacing.sm,
-  },
-  inputGroup: {
-    gap: Spacing.xs,
-  },
-  inputLabel: {
-    ...Typography.bodyXS,
-    color: Colors.textMuted,
-    textTransform: "uppercase",
-  },
-  input: {
-    backgroundColor: Colors.bg,
-    borderWidth: 1,
-    borderColor: Colors.borderSoft,
-    borderRadius: Radius.sm,
-    padding: Spacing.md,
-    ...Typography.bodyMD,
-    color: Colors.textPrimary,
-  },
-  inputSmall: {
-    width: 80,
-  },
-  inputMultiline: {
-    minHeight: 80,
-    textAlignVertical: "top",
-  },
-  envelopePicker: {
-    flexDirection: "row",
-    gap: Spacing.xs,
-  },
-  envelopeChip: {
-    backgroundColor: Colors.bg,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    borderColor: Colors.borderSoft,
-  },
-  envelopeChipSelected: {
-    backgroundColor: Colors.amberGlow,
-    borderColor: Colors.amberBorder,
-  },
-  envelopeChipText: {
-    ...Typography.bodySM,
-    color: Colors.textPrimary,
-  },
-  sheetActions: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    gap: Spacing.md,
-    marginTop: Spacing.md,
-  },
-
-  /* Account Styles */
-  accountCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: Colors.bgFloat,
-    borderRadius: Radius.md,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: Colors.borderSoft,
-  },
-  accountIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.bg,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  accountIconText: {
-    fontSize: 20,
-  },
-  accountInfo: {
-    flex: 1,
-    marginLeft: Spacing.md,
-  },
-  accountName: {
-    ...Typography.labelMD,
-    color: Colors.textPrimary,
-  },
-  accountType: {
-    ...Typography.bodyXS,
-    color: Colors.textMuted,
-  },
-  accountBalance: {
-    ...Typography.labelMD,
-    color: Colors.success,
-  },
-  accountBalanceNegative: {
-    color: Colors.danger,
-  },
-  accountsContainer: {
-    gap: Spacing.md,
-  },
-  totalBalance: {
-    alignItems: "center",
-    paddingVertical: Spacing.lg,
-  },
-  totalBalanceLabel: {
-    ...Typography.bodyXS,
-    color: Colors.textMuted,
-    textTransform: "uppercase",
-  },
-  totalBalanceValue: {
-    ...Typography.displaySM,
-    color: Colors.textPrimary,
-  },
-  accountsList: {
-    gap: Spacing.sm,
-  },
-  typePicker: {
-    flexDirection: "row",
-    gap: Spacing.xs,
-  },
-  typeChip: {
-    backgroundColor: Colors.bg,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    borderColor: Colors.borderSoft,
-  },
-  typeChipSelected: {
-    backgroundColor: Colors.amberGlow,
-    borderColor: Colors.amberBorder,
-  },
-  typeChipText: {
-    ...Typography.bodySM,
-    color: Colors.textPrimary,
-  },
-});

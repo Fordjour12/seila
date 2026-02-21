@@ -7,7 +7,6 @@ import { useMutation, useQuery } from "convex/react";
 import { useToast } from "heroui-native";
 
 import { AddTransactionSheet } from "../../../components/finance/FinanceComponents";
-import { styles } from "../../../components/finance/routeShared";
 
 export default function AddTransactionRoute() {
   const router = useRouter();
@@ -38,26 +37,24 @@ export default function AddTransactionRoute() {
   };
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <View style={styles.section}>
-        <Text style={styles.title}>Log Expense</Text>
-        <Text style={styles.subtitle}>
+    <ScrollView className="flex-1 bg-background" contentContainerClassName="p-6 pb-24 gap-6">
+      <View className="mb-2">
+        <Text className="text-3xl font-serif text-foreground tracking-tight">Log Expense</Text>
+        <Text className="text-sm text-muted-foreground mt-1">
           Capture a transaction and optionally assign it to an envelope.
         </Text>
       </View>
 
       {envelopes === undefined ? (
-        <View style={styles.loading}>
-          <Text style={styles.loadingText}>Loading...</Text>
+        <View className="py-12 items-center justify-center">
+          <Text className="text-base text-muted-foreground">Loading...</Text>
         </View>
       ) : (
-        <View style={styles.recurringCard}>
-          <AddTransactionSheet
-            onAdd={handleAddTransaction}
-            onClose={() => router.back()}
-            envelopes={envelopes || []}
-          />
-        </View>
+        <AddTransactionSheet
+          onAdd={handleAddTransaction}
+          onClose={() => router.back()}
+          envelopes={envelopes || []}
+        />
       )}
     </ScrollView>
   );

@@ -6,7 +6,6 @@ import { useMutation } from "convex/react";
 import { useToast } from "heroui-native";
 
 import { AddEnvelopeSheet } from "../../../components/finance/FinanceComponents";
-import { styles } from "../../../components/finance/routeShared";
 
 export default function AddEnvelopeRoute() {
   const router = useRouter();
@@ -24,25 +23,26 @@ export default function AddEnvelopeRoute() {
         softCeiling,
         emoji,
       });
-      toast.show({ variant: "success", label: "Envelope added" });
+      toast.show({ variant: "success", label: "Envelope created" });
       router.back();
     } catch {
-      toast.show({ variant: "danger", label: "Failed to add envelope" });
-      throw new Error("Failed to add envelope");
+      toast.show({ variant: "danger", label: "Failed to create envelope" });
+      throw new Error("Failed to create envelope");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <View style={styles.section}>
-        <Text style={styles.title}>Add Envelope</Text>
-        <Text style={styles.subtitle}>Create a budget envelope to track category spending.</Text>
+    <ScrollView className="flex-1 bg-background" contentContainerClassName="p-6 pb-24 gap-6">
+      <View className="mb-2">
+        <Text className="text-3xl font-serif text-foreground tracking-tight">New Envelope</Text>
+        <Text className="text-sm text-muted-foreground mt-1">
+          Create a bucket to track spending for a specific category.
+        </Text>
       </View>
-      <View style={styles.recurringCard}>
-        <AddEnvelopeSheet onAdd={handleAddEnvelope} onClose={() => router.back()} />
-      </View>
+
+      <AddEnvelopeSheet onAdd={handleAddEnvelope} onClose={() => router.back()} />
     </ScrollView>
   );
 }
