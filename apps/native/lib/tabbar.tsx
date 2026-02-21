@@ -1,109 +1,68 @@
-import { useEffect, useRef, useState } from "react";
+import { useMemo } from "react";
+import type { ReactNode } from "react";
 import {
    View,
-   Text,
    TouchableOpacity,
    StyleSheet,
-   Animated,
-   Dimensions,
-   LayoutChangeEvent,
 } from "react-native";
-import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useSemanticColors } from "./theme";
 
-const PILL_H_PADDING = 16;
-const TAB_HEIGHT = 64;
-const PILL_RADIUS = 32;
+const BAR_HORIZONTAL_PADDING = 18;
+const TAB_HEIGHT = 58;
+const PILL_RADIUS = 30;
 
-export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+type TabBarOptions = {
+   title?: string;
+   tabBarAccessibilityLabel?: string;
+   tabBarIcon?: (props: { focused: boolean; color: string; size: number }) => ReactNode;
+};
+
+type LocalBottomTabBarProps = {
+   state: {
+      index: number;
+      routes: Array<{ key: string; name: string }>;
+   };
+   descriptors: Record<string, { options: TabBarOptions }>;
+   navigation: {
+      emit: (event: { type: "tabPress"; target: string; canPreventDefault: true }) => {
+         defaultPrevented: boolean;
+      };
+      navigate: (name: string) => void;
+   };
+};
+
+export function TabBar({ state, descriptors, navigation }: LocalBottomTabBarProps) {
    const insets = useSafeAreaInsets();
    const colors = useSemanticColors();
 
-   // We measure the width of the pill dynamically so orientation changes work perfectly
-   const [pillWidth, setPillWidth] = useState(Dimensions.get("window").width - PILL_H_PADDING * 2);
-
-   const slideAnim = useRef(new Animated.Value(0)).current;
-   const scaleAnims = useRef(state.routes.map(() => new Animated.Value(1))).current;
-
-   const tabCount = state.routes.length;
-   const tabWidth = pillWidth / (tabCount || 1);
-
-   useEffect(() => {
-      // Slide the active indicator
-      Animated.spring(slideAnim, {
-         toValue: state.index * tabWidth,
-         useNativeDriver: true,
-         tension: 75,
-         friction: 12,
-      }).start();
-
-      // Bounce the active icon
-      scaleAnims.forEach((anim, i) => {
-         Animated.spring(anim, {
-            toValue: i === state.index ? 1.05 : 0.95,
-            useNativeDriver: true,
-            tension: 220,
-            friction: 14,
-         }).start();
-      });
-   }, [state.index, tabWidth]); // re-run if width changes
-
-   const onLayout = (e: LayoutChangeEvent) => {
-      setPillWidth(e.nativeEvent.layout.width);
-   };
+   const containerStyle = useMemo(
+      () => [
+         styles.wrapper,
+         {
+            paddingBottom: Math.max(insets.bottom, 12),
+         },
+      ],
+      [insets.bottom],
+   );
 
    return (
-      <View
-         style={[
-            styles.wrapper,
-            { paddingBottom: Math.max(insets.bottom, 16) },
-         ]}
-      >
+      <View style={containerStyle}>
          <View
-            onLayout={onLayout}
-            style={[
+               style={[
                styles.pill,
                {
                   backgroundColor: colors.surface,
                   borderWidth: StyleSheet.hairlineWidth,
                   borderColor: colors.border,
+                  boxShadow: "0 8px 22px rgba(0, 0, 0, 0.10)",
                }
             ]}
          >
-            {/* Sliding backdrop for active tab */}
-            <Animated.View
-               style={[
-                  styles.activeSlider,
-                  {
-                     width: tabWidth,
-                     transform: [{ translateX: slideAnim }],
-                  },
-               ]}
-            >
-               <View
-                  style={[
-                     styles.activeSliderInner,
-                     { backgroundColor: colors.accent }
-                  ]}
-               />
-            </Animated.View>
-
             {state.routes.map((route, index) => {
                const { options } = descriptors[route.key];
                const isActive = state.index === index;
-
-               // Try to pick up the label passed by Expo / React Nav
-               const label =
-                  options.tabBarLabel !== undefined
-                     ? options.tabBarLabel
-                     : options.title !== undefined
-                        ? options.title
-                        : route.name.replace(/\/index$/, ""); // sanitize fallback
-
-               const activeColor = colors.accent;
-               const inactiveColor = colors.muted;
-               const iconColor = isActive ? activeColor : inactiveColor;
+               const iconColor = isActive ? colors.foreground : colors.muted;
 
                const onPress = () => {
                   const event = navigation.emit({
@@ -126,33 +85,15 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                      accessibilityLabel={
                         typeof options.tabBarAccessibilityLabel === "string"
                            ? options.tabBarAccessibilityLabel
-                           : typeof label === "string" ? label : route.name
+                           : typeof options.title === "string" ? options.title : route.name
                      }
                      accessibilityState={{ selected: isActive }}
                   >
-                     <Animated.View
-                        style={[
-                           styles.tabInner,
-                           { transform: [{ scale: scaleAnims[index] }] },
-                        ]}
-                     >
+                     <View style={styles.tabInner}>
                         {options.tabBarIcon
                            ? options.tabBarIcon({ focused: isActive, color: iconColor, size: 24 })
                            : null}
-
-                        {(typeof label === 'string' && label) ? (
-                           <Text
-                              style={[
-                                 styles.label,
-                                 { color: iconColor }
-                              ]}
-                              numberOfLines={1}
-                              adjustsFontSizeToFit
-                           >
-                              {label}
-                           </Text>
-                        ) : null}
-                     </Animated.View>
+                     </View>
                   </TouchableOpacity>
                );
             })}
@@ -167,10 +108,10 @@ const styles = StyleSheet.create({
       bottom: 0,
       left: 0,
       right: 0,
-      paddingHorizontal: PILL_H_PADDING,
+      paddingHorizontal: BAR_HORIZONTAL_PADDING,
       backgroundColor: "transparent",
       zIndex: 100,
-      elevation: 2,
+      elevation: 0,
    },
    pill: {
       flexDirection: "row",
@@ -178,19 +119,7 @@ const styles = StyleSheet.create({
       borderRadius: PILL_RADIUS,
       alignItems: "center",
       overflow: "hidden",
-   },
-   activeSlider: {
-      position: "absolute",
-      top: 0,
-      bottom: 0,
-      justifyContent: "center",
-      alignItems: "center",
-   },
-   activeSliderInner: {
-      width: "74%",
-      height: "68%",
-      borderRadius: PILL_RADIUS - 8,
-      opacity: 0.12,
+      paddingHorizontal: 8,
    },
    tab: {
       flex: 1,
@@ -201,13 +130,5 @@ const styles = StyleSheet.create({
    tabInner: {
       alignItems: "center",
       justifyContent: "center",
-      gap: 3,
-   },
-   label: {
-      fontSize: 9,
-      fontWeight: "600",
-      letterSpacing: 0.2,
-      width: "95%",
-      textAlign: "center",
    },
 });
