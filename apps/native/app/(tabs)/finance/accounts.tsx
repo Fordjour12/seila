@@ -128,7 +128,7 @@ export default function FinanceAccountsScreen() {
                 </View>
               </View>
 
-              <View className="h-[1px] bg-border my-1" />
+              <View className="h-px bg-border my-1" />
 
               <View className="flex-row justify-between items-center">
                 <Text className="text-sm text-muted-foreground">
