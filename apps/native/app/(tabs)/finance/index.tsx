@@ -13,7 +13,6 @@ import {
 import { formatGhs } from "../../../lib/ghs";
 import { EnvelopesList } from "../../../components/finance/FinanceComponents";
 import { Button, SectionLabel } from "../../../components/ui";
-import { styles } from "../../../components/finance/routeShared";
 
 export default function FinanceScreen() {
   const router = useRouter();
@@ -51,44 +50,42 @@ export default function FinanceScreen() {
   const trendMax = Math.max(...(spendingTrend || []).map((point) => point.total), 1);
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Finance</Text>
-      <Text style={styles.subtitle}>
+    <ScrollView className="flex-1 bg-zinc-950" contentContainerStyle={{ padding: 24, gap: 24 }}>
+      <Text className="text-3xl font-bold text-zinc-100">Finance</Text>
+      <Text className="text-sm text-zinc-400">
         Hub for spending, accounts, recurring bills, and insights.
       </Text>
 
       {isLoading ? (
-        <View style={styles.loading}>
-          <Text style={styles.loadingText}>Loading...</Text>
+        <View className="p-8 items-center">
+          <Text className="text-base text-zinc-500">Loading...</Text>
         </View>
       ) : (
         <>
-          <View style={styles.section}>
+          <View className="gap-6">
             <SectionLabel>Monthly Snapshot</SectionLabel>
-            <View style={styles.snapshotGrid}>
-              <View style={styles.snapshotCard}>
-                <Text style={styles.snapshotLabel}>Spent</Text>
-                <Text style={styles.snapshotValue}>{formatGhs(monthlySpent)}</Text>
+            <View className="flex-row gap-3">
+              <View className="flex-1 bg-zinc-900/50 rounded-2xl border border-zinc-800 p-4 gap-1">
+                <Text className="text-xs text-zinc-500 uppercase font-medium tracking-wider">Spent</Text>
+                <Text className="text-xl font-semibold text-zinc-100">{formatGhs(monthlySpent)}</Text>
               </View>
-              <View style={styles.snapshotCard}>
-                <Text style={styles.snapshotLabel}>Budget</Text>
-                <Text style={styles.snapshotValue}>{formatGhs(monthlyBudget)}</Text>
+              <View className="flex-1 bg-zinc-900/50 rounded-2xl border border-zinc-800 p-4 gap-1">
+                <Text className="text-xs text-zinc-500 uppercase font-medium tracking-wider">Budget</Text>
+                <Text className="text-xl font-semibold text-zinc-100">{formatGhs(monthlyBudget)}</Text>
               </View>
-              <View style={styles.snapshotCard}>
-                <Text style={styles.snapshotLabel}>Over Budget</Text>
-                <Text style={styles.snapshotValue}>{overspentCount}</Text>
+              <View className="flex-1 bg-zinc-900/50 rounded-2xl border border-zinc-800 p-4 gap-1">
+                <Text className="text-xs text-zinc-500 uppercase font-medium tracking-wider">Over</Text>
+                <Text className="text-xl font-semibold text-zinc-100">{overspentCount}</Text>
               </View>
             </View>
-            <View style={styles.trendCard}>
-              <Text style={styles.trendTitle}>6-Week Spend Trend</Text>
-              <View style={styles.trendBars}>
+            <View className="bg-zinc-900/50 rounded-2xl border border-zinc-800 p-5 gap-4">
+              <Text className="text-base font-semibold text-zinc-100">6-Week Spend Trend</Text>
+              <View className="h-24 flex-row items-end gap-2">
                 {(spendingTrend || []).map((point) => (
-                  <View key={point.weekStart} style={styles.trendBarWrap}>
+                  <View key={point.weekStart} className="flex-1 h-full justify-end bg-zinc-950 rounded-lg overflow-hidden">
                     <View
-                      style={[
-                        styles.trendBar,
-                        { height: `${Math.max((point.total / trendMax) * 100, 8)}%` },
-                      ]}
+                      className="w-full bg-amber-500 rounded-lg"
+                      style={[{ height: `${Math.max((point.total / trendMax) * 100, 8)}%` }]}
                     />
                   </View>
                 ))}
@@ -96,7 +93,7 @@ export default function FinanceScreen() {
             </View>
           </View>
 
-          <View style={styles.section}>
+          <View className="gap-4">
             <SectionLabel>Budget Envelopes</SectionLabel>
             <Button
               label="Add Envelope"
@@ -105,99 +102,99 @@ export default function FinanceScreen() {
             <EnvelopesList envelopes={envelopes || []} />
           </View>
 
-          <View style={styles.section}>
+          <View className="gap-4 mt-6">
             <SectionLabel>Create</SectionLabel>
             <Pressable
-              style={styles.navCard}
+              className="bg-zinc-900/50 rounded-2xl border border-zinc-800 p-4 gap-1 active:bg-zinc-800/80"
               onPress={() => router.push("/(tabs)/finance/add-transaction")}
             >
-              <Text style={styles.navCardTitle}>Log Transaction</Text>
-              <Text style={styles.navCardMeta}>Add a new manual expense entry</Text>
+              <Text className="text-base font-semibold text-zinc-100">Log Transaction</Text>
+              <Text className="text-sm text-zinc-400">Add a new manual expense entry</Text>
             </Pressable>
             <Pressable
-              style={styles.navCard}
+              className="bg-zinc-900/50 rounded-2xl border border-zinc-800 p-4 gap-1 active:bg-zinc-800/80"
               onPress={() => router.push("/(tabs)/finance/add-envelope")}
             >
-              <Text style={styles.navCardTitle}>Add Envelope</Text>
-              <Text style={styles.navCardMeta}>Create a new category budget bucket</Text>
+              <Text className="text-base font-semibold text-zinc-100">Add Envelope</Text>
+              <Text className="text-sm text-zinc-400">Create a new category budget bucket</Text>
             </Pressable>
             <Pressable
-              style={styles.navCard}
+              className="bg-zinc-900/50 rounded-2xl border border-zinc-800 p-4 gap-1 active:bg-zinc-800/80"
               onPress={() => router.push("/(tabs)/finance/add-recurring")}
             >
-              <Text style={styles.navCardTitle}>Add Recurring</Text>
-              <Text style={styles.navCardMeta}>Create a recurring payment schedule</Text>
+              <Text className="text-base font-semibold text-zinc-100">Add Recurring</Text>
+              <Text className="text-sm text-zinc-400">Create a recurring payment schedule</Text>
             </Pressable>
             <Pressable
-              style={styles.navCard}
+              className="bg-zinc-900/50 rounded-2xl border border-zinc-800 p-4 gap-1 active:bg-zinc-800/80"
               onPress={() => router.push("/(tabs)/finance/add-account")}
             >
-              <Text style={styles.navCardTitle}>Add Account</Text>
-              <Text style={styles.navCardMeta}>Create a balance-tracking account</Text>
+              <Text className="text-base font-semibold text-zinc-100">Add Account</Text>
+              <Text className="text-sm text-zinc-400">Create a balance-tracking account</Text>
             </Pressable>
           </View>
 
-          <View style={styles.section}>
+          <View className="gap-4 mt-6">
             <SectionLabel>Quick Navigation</SectionLabel>
             <Pressable
-              style={styles.navCard}
+              className="bg-zinc-900/50 rounded-2xl border border-zinc-800 p-4 gap-1 active:bg-zinc-800/80"
               onPress={() => router.push("/(tabs)/finance/transactions")}
             >
-              <Text style={styles.navCardTitle}>Transactions</Text>
-              <Text style={styles.navCardMeta}>Pending imports: {(transactions || []).length}</Text>
+              <Text className="text-base font-semibold text-zinc-100">Transactions</Text>
+              <Text className="text-sm text-zinc-400">Pending imports: {(transactions || []).length}</Text>
             </Pressable>
             <Pressable
-              style={styles.navCard}
+              className="bg-zinc-900/50 rounded-2xl border border-zinc-800 p-4 gap-1 active:bg-zinc-800/80"
               onPress={() => router.push("/(tabs)/finance/recurring")}
             >
-              <Text style={styles.navCardTitle}>Recurring</Text>
-              <Text style={styles.navCardMeta}>
+              <Text className="text-base font-semibold text-zinc-100">Recurring</Text>
+              <Text className="text-sm text-zinc-400">
                 Active schedules: {(recurringTransactions || []).length}
               </Text>
             </Pressable>
             <Pressable
-              style={styles.navCard}
+              className="bg-zinc-900/50 rounded-2xl border border-zinc-800 p-4 gap-1 active:bg-zinc-800/80"
               onPress={() => router.push("/(tabs)/finance/accounts")}
             >
-              <Text style={styles.navCardTitle}>Accounts</Text>
-              <Text style={styles.navCardMeta}>
+              <Text className="text-base font-semibold text-zinc-100">Accounts</Text>
+              <Text className="text-sm text-zinc-400">
                 Tracked accounts: {(accountSummary?.accounts || []).length}
               </Text>
             </Pressable>
             <Pressable
-              style={styles.navCard}
+              className="bg-zinc-900/50 rounded-2xl border border-zinc-800 p-4 gap-1 active:bg-zinc-800/80"
               onPress={() => router.push("/(tabs)/finance/merchant-hints")}
             >
-              <Text style={styles.navCardTitle}>Merchant Hints</Text>
-              <Text style={styles.navCardMeta}>
+              <Text className="text-base font-semibold text-zinc-100">Merchant Hints</Text>
+              <Text className="text-sm text-zinc-400">
                 Review rows: {(merchantHintReview || []).length}
               </Text>
             </Pressable>
             <Pressable
-              style={styles.navCard}
+              className="bg-zinc-900/50 rounded-2xl border border-zinc-800 p-4 gap-1 active:bg-zinc-800/80"
               onPress={() => router.push("/(tabs)/finance/insights")}
             >
-              <Text style={styles.navCardTitle}>Insights</Text>
-              <Text style={styles.navCardMeta}>Advanced metrics and anomaly controls</Text>
+              <Text className="text-base font-semibold text-zinc-100">Insights</Text>
+              <Text className="text-sm text-zinc-400">Advanced metrics and anomaly controls</Text>
             </Pressable>
           </View>
 
-          <View style={styles.section}>
+          <View className="gap-4 mt-6">
             <SectionLabel>Monthly Close</SectionLabel>
-            <View style={styles.monthlyCloseCard}>
-              <Text style={styles.monthlyCloseWin}>{monthlyClose?.win}</Text>
-              <Text style={styles.monthlyCloseMetric}>
+            <View className="bg-zinc-900/50 rounded-2xl border border-zinc-800 p-5 gap-2">
+              <Text className="text-lg font-semibold text-zinc-100">{monthlyClose?.win}</Text>
+              <Text className="text-sm text-zinc-400">
                 Spent {formatGhs(monthlyClose?.totalSpent || 0)} / Budget{" "}
                 {formatGhs(monthlyClose?.totalBudget || 0)}
               </Text>
               {(monthlyClose?.overspendAreas || []).length > 0 ? (
-                <Text style={styles.monthlyCloseOverspend}>
+                <Text className="text-sm font-medium text-red-400 mt-1">
                   Overspend: {(monthlyClose?.overspendAreas || []).join(", ")}
                 </Text>
               ) : (
-                <Text style={styles.monthlyCloseOnTrack}>No overspend areas this month.</Text>
+                <Text className="text-sm text-zinc-500 mt-1">No overspend areas this month.</Text>
               )}
-              <Text style={styles.monthlyCloseFocus}>Focus: {monthlyClose?.focus}</Text>
+              <Text className="text-sm font-medium text-amber-500 mt-1">Focus: {monthlyClose?.focus}</Text>
             </View>
             <Button
               label="Open Full Insights"
