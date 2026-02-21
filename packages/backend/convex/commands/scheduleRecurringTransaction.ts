@@ -2,15 +2,15 @@ import { ConvexError, v } from "convex/values";
 
 import { mutation } from "../_generated/server";
 
-export const logTransaction = mutation({
+export const scheduleRecurringTransaction = mutation({
   args: {
     idempotencyKey: v.string(),
     amount: v.number(),
+    cadence: v.union(v.literal("weekly"), v.literal("biweekly"), v.literal("monthly")),
+    nextDueAt: v.number(),
     envelopeId: v.optional(v.id("envelopes")),
-    source: v.union(v.literal("manual"), v.literal("imported")),
     merchantHint: v.optional(v.string()),
     note: v.optional(v.string()),
-    tags: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const dedupe = await ctx.db
@@ -28,6 +28,10 @@ export const logTransaction = mutation({
       throw new ConvexError("amount must be a positive integer in cents");
     }
 
+    if (!Number.isInteger(args.nextDueAt) || args.nextDueAt <= 0) {
+      throw new ConvexError("nextDueAt must be a valid timestamp");
+    }
+
     if (args.envelopeId) {
       const envelope = await ctx.db.get(args.envelopeId);
       if (!envelope) {
@@ -36,27 +40,16 @@ export const logTransaction = mutation({
     }
 
     const now = Date.now();
-    const transactionId = await ctx.db.insert("transactions", {
-      amount: args.amount,
-      envelopeId: args.envelopeId,
-      source: args.source,
-      merchantHint: args.merchantHint,
-      note: args.note,
-      tags: args.tags,
-      occurredAt: now,
-      pendingImport: false,
-      createdAt: now,
-      updatedAt: now,
-    });
-
+    const recurringId = `${args.cadence}:${args.nextDueAt}:${now}:${Math.random().toString(36).slice(2, 10)}`;
     await ctx.db.insert("events", {
-      type: "finance.transactionLogged",
+      type: "finance.recurringTransactionScheduled",
       occurredAt: now,
       idempotencyKey: args.idempotencyKey,
       payload: {
-        transactionId,
+        recurringId,
         amount: args.amount,
-        source: args.source,
+        cadence: args.cadence,
+        nextDueAt: args.nextDueAt,
         ...(args.envelopeId ? { envelopeId: args.envelopeId } : {}),
         ...(args.merchantHint ? { merchantHint: args.merchantHint } : {}),
         ...(args.note ? { note: args.note } : {}),
@@ -64,7 +57,7 @@ export const logTransaction = mutation({
     });
 
     return {
-      transactionId,
+      recurringId,
       deduplicated: false,
     };
   },

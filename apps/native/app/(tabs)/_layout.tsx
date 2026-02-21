@@ -21,9 +21,8 @@ const TABS = [
    { name: 'finance/index', label: 'Finance', icon: 'wallet-outline' },
    { name: 'patterns/index', label: 'Patterns', icon: 'analytics-outline' },
    { name: 'review/index', label: 'Review', icon: 'document-text-outline' },
-   { name: 'two', label: 'Two', icon: "search" }
-
 ] as const satisfies ReadonlyArray<{ name: string; label: string; icon: IconName }>;
+const TAB_MAP: Record<string, (typeof TABS)[number]> = Object.fromEntries(TABS.map(tab => [tab.name, tab]));
 
 function getTabIconName(icon: IconName, isFocused: boolean): IconName {
    if (isFocused && icon.endsWith('-outline')) {
@@ -33,15 +32,17 @@ function getTabIconName(icon: IconName, isFocused: boolean): IconName {
 }
 
 function LifeOSTabBar({ state, navigation }: LifeOSTabBarProps) {
+   const visibleRoutes = state.routes.filter(route => Boolean(TAB_MAP[route.name]));
+
    return (
       <SafeAreaView edges={['bottom']} style={styles.tabSafeArea}>
          <View style={styles.tabBar}>
             <View style={styles.tabBarBorder} />
             <View style={styles.tabRow}>
-               {state.routes.map((route, index) => {
-                  const tab = TABS[index];
+               {visibleRoutes.map(route => {
+                  const tab = TAB_MAP[route.name];
                   if (!tab) return null;
-                  const isFocused = state.index === index;
+                  const isFocused = state.routes[state.index]?.key === route.key;
 
                   const onPress = () => {
                      const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
@@ -77,6 +78,7 @@ export default function TabLayout() {
          <Tabs.Screen name="finance/index" options={{ title: 'Finance' }} />
          <Tabs.Screen name="patterns/index" options={{ title: 'Patterns' }} />
          <Tabs.Screen name="review/index" options={{ title: 'Review' }} />
+         <Tabs.Screen name="two" options={{ href: null }} />
       </Tabs>
    );
 }

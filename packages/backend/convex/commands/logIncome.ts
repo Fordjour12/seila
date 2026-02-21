@@ -2,13 +2,13 @@ import { ConvexError, v } from "convex/values";
 
 import { mutation } from "../_generated/server";
 
-export const importTransaction = mutation({
+export const logIncome = mutation({
   args: {
     idempotencyKey: v.string(),
     amount: v.number(),
-    merchantHint: v.optional(v.string()),
+    source: v.optional(v.string()),
     note: v.optional(v.string()),
-    tags: v.optional(v.array(v.string())),
+    occurredAt: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const dedupe = await ctx.db
@@ -17,9 +17,7 @@ export const importTransaction = mutation({
       .first();
 
     if (dedupe) {
-      return {
-        deduplicated: true,
-      };
+      return { deduplicated: true };
     }
 
     if (!Number.isInteger(args.amount) || args.amount <= 0) {
@@ -27,33 +25,27 @@ export const importTransaction = mutation({
     }
 
     const now = Date.now();
-    const transactionId = await ctx.db.insert("transactions", {
+    const occurredAt = args.occurredAt ?? now;
+    const incomeId = await ctx.db.insert("incomes", {
       amount: args.amount,
-      source: "imported",
-      merchantHint: args.merchantHint,
+      source: args.source,
       note: args.note,
-      tags: args.tags,
-      occurredAt: now,
-      pendingImport: true,
+      occurredAt,
       createdAt: now,
       updatedAt: now,
     });
 
     await ctx.db.insert("events", {
-      type: "finance.transactionImported",
+      type: "finance.income.logged",
       occurredAt: now,
       idempotencyKey: args.idempotencyKey,
       payload: {
-        transactionId,
+        incomeId,
         amount: args.amount,
-        ...(args.merchantHint ? { merchantHint: args.merchantHint } : {}),
-        ...(args.note ? { note: args.note } : {}),
+        ...(args.source ? { source: args.source } : {}),
       },
     });
 
-    return {
-      transactionId,
-      deduplicated: false,
-    };
+    return { incomeId, deduplicated: false };
   },
 });
