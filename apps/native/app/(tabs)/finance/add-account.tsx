@@ -6,6 +6,8 @@ import { useToast } from "heroui-native";
 
 import { AddAccountForm } from "../../../components/finance/FinanceComponents";
 import { setAccountRef } from "../../../lib/finance-refs";
+import { Container } from "@/components/container";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function AddAccountRoute() {
   const router = useRouter();
@@ -46,15 +48,24 @@ export default function AddAccountRoute() {
     }
   };
 
+  const inset = useSafeAreaInsets();
+
   return (
-    <ScrollView className="flex-1 bg-background" contentContainerClassName="p-6 pb-24 gap-6">
+    <Container
+      className="p-6 pb-24 gap-6"
+      style={{
+        paddingTop: inset.top,
+      }}
+    >
       <View className="mb-2">
-        <Text className="text-3xl font-serif text-foreground tracking-tight">Add Account</Text>
+        <Text className="text-3xl font-serif text-foreground tracking-tight">
+          Add Account
+        </Text>
         <Text className="text-sm text-muted-foreground mt-1">
           Create a new account to track your balances and cashflow.
         </Text>
       </View>
       <AddAccountForm onAdd={handleAddAccount} onClose={closeRoute} />
-    </ScrollView>
+    </Container>
   );
 }

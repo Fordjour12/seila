@@ -4,13 +4,14 @@ import {
    View,
    TouchableOpacity,
    StyleSheet,
+   Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useSemanticColors } from "./theme";
 
-const BAR_HORIZONTAL_PADDING = 18;
-const TAB_HEIGHT = 58;
-const PILL_RADIUS = 30;
+const BAR_HORIZONTAL_PADDING = 14;
+const TAB_HEIGHT = 64;
+const PILL_RADIUS = 32;
 
 type TabBarOptions = {
    title?: string;
@@ -35,12 +36,14 @@ type LocalBottomTabBarProps = {
 export function TabBar({ state, descriptors, navigation }: LocalBottomTabBarProps) {
    const insets = useSafeAreaInsets();
    const colors = useSemanticColors();
+   const tabCount = Math.max(state.routes.length, 1);
+   const activeIndex = Math.max(Math.min(state.index, tabCount - 1), 0);
 
    const containerStyle = useMemo(
       () => [
          styles.wrapper,
          {
-            paddingBottom: Math.max(insets.bottom, 12),
+            paddingBottom: Math.max(insets.bottom, 10),
          },
       ],
       [insets.bottom],
@@ -49,16 +52,24 @@ export function TabBar({ state, descriptors, navigation }: LocalBottomTabBarProp
    return (
       <View style={containerStyle}>
          <View
-               style={[
+            style={[
                styles.pill,
                {
-                  backgroundColor: colors.surface,
-                  borderWidth: StyleSheet.hairlineWidth,
-                  borderColor: colors.border,
-                  boxShadow: "0 8px 22px rgba(0, 0, 0, 0.10)",
+                  backgroundColor: colors.overlay,
                }
             ]}
          >
+            <View
+               pointerEvents="none"
+               style={[
+                  styles.activeTrack,
+                  {
+                     width: `${100 / tabCount}%`,
+                     left: `${(activeIndex * 100) / tabCount}%`,
+                     backgroundColor: colors.surface,
+                  },
+               ]}
+            />
             {state.routes.map((route, index) => {
                const { options } = descriptors[route.key];
                const isActive = state.index === index;
@@ -110,8 +121,8 @@ const styles = StyleSheet.create({
       right: 0,
       paddingHorizontal: BAR_HORIZONTAL_PADDING,
       backgroundColor: "transparent",
-      zIndex: 100,
-      elevation: 0,
+      zIndex: 40,
+      elevation: 10,
    },
    pill: {
       flexDirection: "row",
@@ -119,7 +130,24 @@ const styles = StyleSheet.create({
       borderRadius: PILL_RADIUS,
       alignItems: "center",
       overflow: "hidden",
-      paddingHorizontal: 8,
+      paddingHorizontal: 6,
+      ...Platform.select({
+         ios: {
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 8 },
+            shadowOpacity: 0.12,
+            shadowRadius: 20,
+         },
+         android: {
+            elevation: 8,
+         },
+      }),
+   },
+   activeTrack: {
+      position: "absolute",
+      top: 6,
+      bottom: 6,
+      borderRadius: PILL_RADIUS - 10,
    },
    tab: {
       flex: 1,

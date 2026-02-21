@@ -12,21 +12,14 @@ import {
   View,
   Text,
   ScrollView,
-  StyleSheet,
   Pressable,
   TextInput,
   Animated,
   Dimensions,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Colors, Typography, Spacing, Radius } from "../../../constants/theme";
 import { Button } from "../../../components/ui";
 
 const { width: SCREEN_W } = Dimensions.get("window");
-
-// ─────────────────────────────────────────────
-// MOCK AI SUMMARY
-// ─────────────────────────────────────────────
 
 const MOCK_SUMMARY = {
   bullets: [
@@ -47,41 +40,20 @@ const REFLECT_PROMPTS = [
   "What do you want to carry into next week?",
 ];
 
-// ─────────────────────────────────────────────
-// PHASE INDICATOR
-// ─────────────────────────────────────────────
-
 function PhaseIndicator({ current, total }: { current: number; total: number }) {
   return (
-    <View style={phaseStyles.row}>
+    <View className="flex-row gap-2 mb-8">
       {Array.from({ length: total }, (_, i) => (
         <View
           key={i}
-          style={[
-            phaseStyles.dot,
-            i < current
-              ? phaseStyles.dotDone
-              : i === current
-                ? phaseStyles.dotActive
-                : phaseStyles.dotPending,
-          ]}
+          className={`h-0.75 flex-1 rounded-sm ${
+            i < current ? "bg-emerald-500" : i === current ? "bg-amber-500" : "bg-border"
+          }`}
         />
       ))}
     </View>
   );
 }
-
-const phaseStyles = StyleSheet.create({
-  row: { flexDirection: "row", gap: Spacing.sm, marginBottom: Spacing.xxl },
-  dot: { height: 3, flex: 1, borderRadius: 2 },
-  dotDone: { backgroundColor: Colors.sage },
-  dotActive: { backgroundColor: Colors.amber },
-  dotPending: { backgroundColor: Colors.borderSoft },
-});
-
-// ─────────────────────────────────────────────
-// PHASE 1: LOOK BACK
-// ─────────────────────────────────────────────
 
 function LookBackPhase({ onNext }: { onNext: () => void }) {
   const [loading, setLoading] = useState(true);
@@ -92,36 +64,33 @@ function LookBackPhase({ onNext }: { onNext: () => void }) {
   }, []);
 
   return (
-    <View style={phaseContentStyles.wrap}>
-      <Text style={phaseContentStyles.phaseLabel}>Look back</Text>
-      <Text style={phaseContentStyles.title}>Your week{"\n"}in brief.</Text>
+    <View className="flex-1">
+      <Text className="text-xs text-muted-foreground uppercase tracking-widest font-bold mb-2">Look back</Text>
+      <Text className="text-3xl font-serif text-foreground tracking-tight mb-2">Your week{"\n"}in brief.</Text>
 
       {loading ? (
-        <View style={lookStyles.loading}>
-          <Animated.Text style={lookStyles.loadingText}>The AI is reading your week…</Animated.Text>
+        <View className="py-12 items-center">
+          <Text className="text-sm text-muted-foreground italic">The AI is reading your week…</Text>
         </View>
       ) : (
-        <View style={lookStyles.summaryCard}>
-          {/* Bullets */}
-          <View style={lookStyles.bullets}>
+        <View className="bg-surface rounded-2xl border border-border overflow-hidden mb-8">
+          <View className="p-5 gap-3 border-b border-border">
             {MOCK_SUMMARY.bullets.map((b, i) => (
-              <View key={i} style={lookStyles.bulletRow}>
-                <View style={lookStyles.bulletDot} />
-                <Text style={lookStyles.bulletText}>{b}</Text>
+              <View key={i} className="flex-row items-start gap-3">
+                <View className="w-1.5 h-1.5 rounded-full bg-muted-foreground mt-1.5" />
+                <Text className="text-base text-muted-foreground flex-1 leading-6">{b}</Text>
               </View>
             ))}
           </View>
 
-          {/* Bright spot */}
-          <View style={lookStyles.highlight}>
-            <Text style={lookStyles.highlightLabel}>Bright spot</Text>
-            <Text style={lookStyles.highlightText}>{MOCK_SUMMARY.brightSpot}</Text>
+          <View className="p-5 gap-2 border-b border-border bg-emerald-500/10">
+            <Text className="text-xs text-muted-foreground uppercase tracking-widest font-bold">Bright spot</Text>
+            <Text className="text-sm text-muted-foreground italic leading-5">{MOCK_SUMMARY.brightSpot}</Text>
           </View>
 
-          {/* Worth noticing */}
-          <View style={[lookStyles.highlight, lookStyles.highlightAlt]}>
-            <Text style={lookStyles.highlightLabel}>Worth noticing</Text>
-            <Text style={lookStyles.highlightText}>{MOCK_SUMMARY.worthNoticing}</Text>
+          <View className="p-5 gap-2 bg-amber-500/10">
+            <Text className="text-xs text-muted-foreground uppercase tracking-widest font-bold">Worth noticing</Text>
+            <Text className="text-sm text-muted-foreground italic leading-5">{MOCK_SUMMARY.worthNoticing}</Text>
           </View>
         </View>
       )}
@@ -130,60 +99,6 @@ function LookBackPhase({ onNext }: { onNext: () => void }) {
     </View>
   );
 }
-
-const lookStyles = StyleSheet.create({
-  loading: { paddingVertical: 48, alignItems: "center" },
-  loadingText: {
-    ...Typography.bodySM,
-    color: Colors.textMuted,
-    fontStyle: "italic",
-    fontFamily: "DMSans_300Light",
-  },
-  summaryCard: {
-    backgroundColor: Colors.bgRaised,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.borderSoft,
-    overflow: "hidden",
-    marginBottom: Spacing.xxl,
-  },
-  bullets: {
-    padding: Spacing.xl,
-    gap: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.borderSoft,
-  },
-  bulletRow: { flexDirection: "row", alignItems: "flex-start", gap: Spacing.md },
-  bulletDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: Colors.textMuted,
-    marginTop: 7,
-    flexShrink: 0,
-  },
-  bulletText: { ...Typography.bodyMD, color: Colors.textSecondary, flex: 1, lineHeight: 22 },
-  highlight: {
-    padding: Spacing.xl,
-    gap: Spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.borderSoft,
-    backgroundColor: Colors.sageGlow,
-  },
-  highlightAlt: { backgroundColor: Colors.amberGlow, borderBottomWidth: 0 },
-  highlightLabel: { ...Typography.eyebrow, color: Colors.textMuted },
-  highlightText: {
-    ...Typography.bodySM,
-    color: Colors.textSecondary,
-    fontStyle: "italic",
-    fontFamily: "DMSans_300Light",
-    lineHeight: 20,
-  },
-});
-
-// ─────────────────────────────────────────────
-// PHASE 2: REFLECT
-// ─────────────────────────────────────────────
 
 function ReflectPhase({ onNext }: { onNext: (answers: string[]) => void }) {
   const [answers, setAnswers] = useState(["", "", ""]);
@@ -206,18 +121,18 @@ function ReflectPhase({ onNext }: { onNext: (answers: string[]) => void }) {
   };
 
   return (
-    <View style={phaseContentStyles.wrap}>
-      <Text style={phaseContentStyles.phaseLabel}>Reflect</Text>
-      <Text style={phaseContentStyles.title}>
+    <View className="flex-1">
+      <Text className="text-xs text-muted-foreground uppercase tracking-widest font-bold mb-2">Reflect</Text>
+      <Text className="text-3xl font-serif text-foreground tracking-tight mb-6">
         {current + 1}/{REFLECT_PROMPTS.length}
       </Text>
 
-      <View style={reflectStyles.promptCard}>
-        <Text style={reflectStyles.prompt}>{REFLECT_PROMPTS[current]}</Text>
+      <View className="bg-surface rounded-2xl border border-border p-5 gap-4 mb-6 flex-1">
+        <Text className="text-xl text-foreground italic leading-6">{REFLECT_PROMPTS[current]}</Text>
         <TextInput
-          style={reflectStyles.answer}
+          className="text-base text-foreground flex-1 leading-6"
           placeholder="Take your time…"
-          placeholderTextColor={Colors.textMuted}
+          placeholderTextColor="#6b7280"
           value={answers[current]}
           onChangeText={(text) => updateAnswer(current, text)}
           multiline
@@ -227,52 +142,19 @@ function ReflectPhase({ onNext }: { onNext: (answers: string[]) => void }) {
         />
       </View>
 
-      <View style={reflectStyles.btnRow}>
-        <Pressable onPress={next} style={reflectStyles.skipBtn}>
-          <Text style={reflectStyles.skipText}>Skip this one</Text>
+      <View className="flex-row gap-3 items-center">
+        <Pressable onPress={next} className="py-3 px-2">
+          <Text className="text-sm text-muted-foreground">Skip this one</Text>
         </Pressable>
         <Button
           label={current < REFLECT_PROMPTS.length - 1 ? "Next →" : "Continue →"}
           variant="primary"
           onPress={next}
-          style={{ flex: 1 }}
         />
       </View>
     </View>
   );
 }
-
-const reflectStyles = StyleSheet.create({
-  promptCard: {
-    backgroundColor: Colors.bgRaised,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.borderSoft,
-    padding: Spacing.xl,
-    gap: Spacing.lg,
-    marginBottom: Spacing.xl,
-    flex: 1,
-  },
-  prompt: {
-    ...Typography.displaySM,
-    color: Colors.textPrimary,
-    fontStyle: "italic",
-    lineHeight: 26,
-  },
-  answer: {
-    ...Typography.bodyMD,
-    color: Colors.textPrimary,
-    flex: 1,
-    fontFamily: "DMSans_300Light",
-  },
-  btnRow: { flexDirection: "row", gap: Spacing.md, alignItems: "center" },
-  skipBtn: { paddingVertical: Spacing.md, paddingHorizontal: Spacing.sm },
-  skipText: { ...Typography.labelMD, color: Colors.textMuted },
-});
-
-// ─────────────────────────────────────────────
-// PHASE 3: INTENTIONS
-// ─────────────────────────────────────────────
 
 function IntentionsPhase({ onNext }: { onNext: (intentions: string[]) => void }) {
   const [intentions, setIntentions] = useState(["", "", ""]);
@@ -288,21 +170,19 @@ function IntentionsPhase({ onNext }: { onNext: (intentions: string[]) => void })
   const filled = intentions.filter((i) => i.trim()).length;
 
   return (
-    <View style={phaseContentStyles.wrap}>
-      <Text style={phaseContentStyles.phaseLabel}>Intentions</Text>
-      <Text style={phaseContentStyles.title}>Next week,{"\n"}I want to…</Text>
-      <Text style={phaseContentStyles.subtitle}>
-        1–3 loose intentions. Not commitments — directions.
-      </Text>
+    <View className="flex-1">
+      <Text className="text-xs text-muted-foreground uppercase tracking-widest font-bold mb-2">Intentions</Text>
+      <Text className="text-3xl font-serif text-foreground tracking-tight mb-2">Next week,{"\n"}I want to…</Text>
+      <Text className="text-base text-muted-foreground mb-8">1–3 loose intentions. Not commitments — directions.</Text>
 
-      <View style={intentStyles.slots}>
+      <View className="gap-3">
         {intentions.map((val, i) => (
-          <View key={i} style={intentStyles.slot}>
-            <View style={intentStyles.slotNum}>
-              <Text style={intentStyles.slotNumText}>{i + 1}</Text>
+          <View key={i} className="flex-row items-center gap-3 bg-surface rounded-lg border border-border py-3 px-4">
+            <View className="w-6 h-6 rounded-full bg-muted border border-border items-center justify-center">
+              <Text className="text-xs text-muted-foreground">{i + 1}</Text>
             </View>
             <TextInput
-              style={intentStyles.input}
+              className="flex-1 text-base text-foreground py-0"
               placeholder={
                 i === 0
                   ? "Something I want to nurture…"
@@ -310,7 +190,7 @@ function IntentionsPhase({ onNext }: { onNext: (intentions: string[]) => void })
                     ? "Something I want to try…"
                     : "Something I want to let go of…"
               }
-              placeholderTextColor={Colors.textMuted}
+              placeholderTextColor="#6b7280"
               value={val}
               onChangeText={(text) => update(i, text)}
               returnKeyType="next"
@@ -324,43 +204,10 @@ function IntentionsPhase({ onNext }: { onNext: (intentions: string[]) => void })
         variant="primary"
         onPress={() => onNext(intentions.filter((i) => i.trim()))}
         disabled={filled === 0}
-        style={{ marginTop: Spacing.xxl }}
       />
     </View>
   );
 }
-
-const intentStyles = StyleSheet.create({
-  slots: { gap: Spacing.md },
-  slot: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.md,
-    backgroundColor: Colors.bgRaised,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.borderSoft,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.lg,
-  },
-  slotNum: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: Colors.bgFloat,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
-  slotNumText: { ...Typography.eyebrow, color: Colors.textMuted },
-  input: { flex: 1, ...Typography.bodyMD, color: Colors.textPrimary, paddingVertical: 0 },
-});
-
-// ─────────────────────────────────────────────
-// PHASE 4: CLOSE
-// ─────────────────────────────────────────────
 
 function ClosePhase({ intentions }: { intentions: string[] }) {
   const scaleAnim = useRef(new Animated.Value(0)).current;
@@ -373,175 +220,89 @@ function ClosePhase({ intentions }: { intentions: string[] }) {
 
   return (
     <Animated.View
-      style={[closeStyles.wrap, { transform: [{ scale: scaleAnim }], opacity: scaleAnim }]}
+      className="flex-1 items-center justify-center gap-4 px-6"
+      style={{ transform: [{ scale: scaleAnim }], opacity: scaleAnim }}
     >
-      <Text style={closeStyles.emoji}>✦</Text>
-      <Text style={closeStyles.title}>Week sealed.</Text>
-      <Text style={closeStyles.date}>{weekStr}</Text>
+      <Text className="text-4xl text-amber-500">✦</Text>
+      <Text className="text-2xl font-serif text-foreground">Week sealed.</Text>
+      <Text className="text-base text-muted-foreground">{weekStr}</Text>
 
       {intentions.length > 0 && (
-        <View style={closeStyles.card}>
-          <Text style={closeStyles.cardLabel}>Going into next week</Text>
+        <View className="w-full bg-surface rounded-2xl border border-border p-5 gap-3 mt-2">
+          <Text className="text-xs text-muted-foreground uppercase tracking-widest font-bold">Going into next week</Text>
           {intentions.map((intent, i) => (
-            <Text key={i} style={closeStyles.intent}>
-              — {intent}
-            </Text>
+            <Text key={i} className="text-base text-muted-foreground italic">— {intent}</Text>
           ))}
         </View>
       )}
 
-      <Text style={closeStyles.note}>
+      <Text className="text-sm text-muted-foreground text-center mt-4">
         This review is saved. You can revisit it from your history.
       </Text>
     </Animated.View>
   );
 }
 
-const closeStyles = StyleSheet.create({
-  wrap: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: Spacing.lg,
-    paddingHorizontal: Spacing.xxl,
-  },
-  emoji: { fontSize: 40, color: Colors.amber },
-  title: { ...Typography.displayLG, color: Colors.textPrimary },
-  date: { ...Typography.bodyMD, color: Colors.textMuted, fontFamily: "DMSans_300Light" },
-  card: {
-    backgroundColor: Colors.bgRaised,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.borderSoft,
-    padding: Spacing.xl,
-    width: "100%",
-    gap: Spacing.md,
-    marginTop: Spacing.sm,
-  },
-  cardLabel: { ...Typography.eyebrow, color: Colors.textMuted, marginBottom: Spacing.xs },
-  intent: {
-    ...Typography.bodyMD,
-    color: Colors.textSecondary,
-    fontFamily: "DMSans_300Light",
-    fontStyle: "italic",
-  },
-  note: {
-    ...Typography.bodySM,
-    color: Colors.textMuted,
-    textAlign: "center",
-    fontFamily: "DMSans_300Light",
-    marginTop: Spacing.lg,
-  },
-});
-
-const phaseContentStyles = StyleSheet.create({
-  wrap: { flex: 1 },
-  phaseLabel: { ...Typography.eyebrow, color: Colors.textMuted, marginBottom: Spacing.sm },
-  title: { ...Typography.displayXL, color: Colors.textPrimary, marginBottom: Spacing.sm },
-  subtitle: {
-    ...Typography.bodyMD,
-    color: Colors.textSecondary,
-    fontFamily: "DMSans_300Light",
-    marginBottom: Spacing.xxl,
-  },
-});
-
-// ─────────────────────────────────────────────
-// REVIEW SCREEN
-// ─────────────────────────────────────────────
-
-type Phase = 0 | 1 | 2 | 3; // look back | reflect | intentions | close
+type Phase = 0 | 1 | 2 | 3;
 
 export default function ReviewScreen() {
   const [phase, setPhase] = useState<Phase>(0);
   const [intentions, setIntentions] = useState<string[]>([]);
   const [started, setStarted] = useState(false);
 
-  // Landing state — review not yet started
   if (!started) {
     return (
-      <SafeAreaView style={styles.safe} edges={["top"]}>
-        <View style={styles.landing}>
-          <Text style={styles.eyebrow}>Weekly Review</Text>
-          <Text style={styles.landingTitle}>Time to close{"\n"}the week.</Text>
-          <Text style={styles.landingSubtitle}>Takes about 5 minutes. You can skip any part.</Text>
-
-          <View style={styles.phaseList}>
-            {["Look back", "Reflect", "Intentions", "Seal it"].map((p, i) => (
-              <View key={i} style={styles.phaseListItem}>
-                <View style={styles.phaseListNum}>
-                  <Text style={styles.phaseListNumText}>{i + 1}</Text>
-                </View>
-                <Text style={styles.phaseListLabel}>{p}</Text>
-              </View>
-            ))}
-          </View>
-
-          <View style={styles.landingBtns}>
-            <Button
-              label="Start review"
-              variant="primary"
-              onPress={() => setStarted(true)}
-              style={{ flex: 1 }}
-            />
-            <Pressable style={styles.skipAll}>
-              <Text style={styles.skipAllText}>Skip this week</Text>
-            </Pressable>
-          </View>
+      <ScrollView
+        className="flex-1 bg-background"
+        contentContainerClassName="p-6 pb-24 gap-6"
+        showsVerticalScrollIndicator={false}
+      >
+        <View className="mb-4">
+          <Text className="text-xs text-muted-foreground uppercase tracking-widest font-bold mb-2">Weekly Review</Text>
+          <Text className="text-3xl font-serif text-foreground tracking-tight mb-2">Time to close{"\n"}the week.</Text>
+          <Text className="text-base text-muted-foreground mb-8">Takes about 5 minutes. You can skip any part.</Text>
         </View>
-      </SafeAreaView>
+
+        <View className="gap-3 mb-8">
+          {["Look back", "Reflect", "Intentions", "Seal it"].map((p, i) => (
+            <View key={i} className="flex-row items-center gap-3">
+              <View className="w-7 h-7 rounded-full bg-surface border border-border items-center justify-center">
+                <Text className="text-sm text-muted-foreground font-medium">{i + 1}</Text>
+              </View>
+              <Text className="text-base text-muted-foreground">{p}</Text>
+            </View>
+          ))}
+        </View>
+
+        <View className="gap-3">
+          <Button
+            label="Start review"
+            variant="primary"
+            onPress={() => setStarted(true)}
+          />
+          <Pressable className="items-center py-3">
+            <Text className="text-sm text-muted-foreground">Skip this week</Text>
+          </Pressable>
+        </View>
+      </ScrollView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safe} edges={["top"]}>
-      <View style={styles.content}>
-        <PhaseIndicator current={phase} total={4} />
+    <View className="flex-1 bg-background p-6 pt-8">
+      <PhaseIndicator current={phase} total={4} />
 
-        {phase === 0 && <LookBackPhase onNext={() => setPhase(1)} />}
-        {phase === 1 && <ReflectPhase onNext={() => setPhase(2)} />}
-        {phase === 2 && (
-          <IntentionsPhase
-            onNext={(i) => {
-              setIntentions(i);
-              setPhase(3);
-            }}
-          />
-        )}
-        {phase === 3 && <ClosePhase intentions={intentions} />}
-      </View>
-    </SafeAreaView>
+      {phase === 0 && <LookBackPhase onNext={() => setPhase(1)} />}
+      {phase === 1 && <ReflectPhase onNext={() => setPhase(2)} />}
+      {phase === 2 && (
+        <IntentionsPhase
+          onNext={(i) => {
+            setIntentions(i);
+            setPhase(3);
+          }}
+        />
+      )}
+      {phase === 3 && <ClosePhase intentions={intentions} />}
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.bg },
-  content: { flex: 1, paddingHorizontal: Spacing.xxl, paddingTop: Spacing.xxl },
-  // Landing
-  landing: { flex: 1, paddingHorizontal: Spacing.xxl, paddingTop: Spacing.xxl },
-  eyebrow: { ...Typography.eyebrow, color: Colors.textMuted, marginBottom: Spacing.sm },
-  landingTitle: { ...Typography.displayXL, color: Colors.textPrimary, marginBottom: Spacing.sm },
-  landingSubtitle: {
-    ...Typography.bodyMD,
-    color: Colors.textSecondary,
-    fontFamily: "DMSans_300Light",
-    marginBottom: Spacing.xxxl,
-  },
-  phaseList: { gap: Spacing.md, marginBottom: Spacing.xxxl },
-  phaseListItem: { flexDirection: "row", alignItems: "center", gap: Spacing.md },
-  phaseListNum: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: Colors.bgRaised,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  phaseListNumText: { ...Typography.labelMD, color: Colors.textMuted },
-  phaseListLabel: { ...Typography.bodyMD, color: Colors.textSecondary },
-  landingBtns: { gap: Spacing.md },
-  skipAll: { alignItems: "center", paddingVertical: Spacing.md },
-  skipAllText: { ...Typography.labelMD, color: Colors.textMuted },
-});

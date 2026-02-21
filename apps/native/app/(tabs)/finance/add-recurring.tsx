@@ -1,5 +1,5 @@
 import React from "react";
-import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import type { Id } from "@seila/backend/convex/_generated/dataModel";
@@ -10,8 +10,6 @@ import { useToast } from "heroui-native";
 import { scheduleRecurringTransactionRef } from "../../../lib/finance-refs";
 import { formatGhs } from "../../../lib/ghs";
 import { Button } from "../../../components/ui";
-import { styles } from "../../../components/finance/routeShared";
-import { Colors, Radius, Spacing, Typography } from "../../../constants/theme";
 
 const DATE_OFFSETS = [
   { label: "Tomorrow", days: 1 },
@@ -90,119 +88,161 @@ export default function AddRecurringRoute() {
   };
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <View style={styles.section}>
-        <Text style={styles.title}>Add Recurring</Text>
-        <Text style={styles.subtitle}>
+    <ScrollView className="flex-1 bg-background" contentContainerClassName="p-6 pb-24 gap-6">
+      <View className="gap-3">
+        <Text className="text-3xl font-serif text-foreground tracking-tight">Add Recurring</Text>
+        <Text className="text-base text-muted-foreground">
           Create a recurring expense you can manage from the recurring screen.
         </Text>
       </View>
 
       {isLoading ? (
-        <View style={styles.loading}>
-          <Text style={styles.loadingText}>Loading...</Text>
+        <View className="py-12 items-center justify-center">
+          <Text className="text-base text-muted-foreground">Loading...</Text>
         </View>
       ) : (
-        <View style={styles.recurringCard}>
-          <View style={styles.recurringForm}>
-            <Text style={styles.recurringSectionTitle}>Amount Presets</Text>
-            <View style={styles.chipRow}>
+        <View className="bg-surface rounded-2xl border border-border p-5 gap-6">
+          <View className="gap-4">
+            <Text className="text-sm font-medium text-foreground">Amount Presets</Text>
+            <View className="flex-row flex-wrap gap-2">
               {amountPresets.map((amountPreset) => (
                 <Pressable
                   key={amountPreset}
-                  style={[
-                    styles.cadenceChip,
-                    !customAmount && selectedAmount === amountPreset && styles.cadenceChipSelected,
-                  ]}
+                  className={`px-3 py-2 rounded-lg border ${
+                    !customAmount && selectedAmount === amountPreset
+                      ? "bg-warning/10 border-warning/20"
+                      : "bg-background border-border"
+                  }`}
                   onPress={() => {
                     setCustomAmount("");
                     setSelectedAmount(amountPreset);
                   }}
                 >
-                  <Text style={styles.cadenceChipText}>{formatGhs(amountPreset)}</Text>
+                  <Text
+                    className={`text-sm font-medium ${
+                      !customAmount && selectedAmount === amountPreset
+                        ? "text-warning"
+                        : "text-foreground"
+                    }`}
+                  >
+                    {formatGhs(amountPreset)}
+                  </Text>
                 </Pressable>
               ))}
             </View>
+          </View>
 
-            <Text style={styles.recurringSectionTitle}>Custom Amount (GHS)</Text>
+          <View className="gap-2">
+            <Text className="text-sm font-medium text-foreground">Custom Amount (GHS)</Text>
             <TextInput
-              style={localStyles.input}
+              className="bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground"
               value={customAmount}
               onChangeText={setCustomAmount}
               keyboardType="decimal-pad"
               placeholder="Optional (e.g. 45.00)"
-              placeholderTextColor={Colors.textMuted}
+              placeholderTextColor="#6b7280"
             />
+          </View>
 
-            <Text style={styles.recurringSectionTitle}>Merchant Presets</Text>
-            <View style={styles.chipRow}>
+          <View className="gap-4">
+            <Text className="text-sm font-medium text-foreground">Merchant Presets</Text>
+            <View className="flex-row flex-wrap gap-2">
               {(recentMerchants.length ? recentMerchants : ["General expense"]).map((merchant) => (
                 <Pressable
                   key={merchant}
-                  style={[
-                    styles.cadenceChip,
-                    !merchantInput.trim() &&
-                      selectedMerchant === merchant &&
-                      styles.cadenceChipSelected,
-                  ]}
+                  className={`px-3 py-2 rounded-lg border ${
+                    !merchantInput.trim() && selectedMerchant === merchant
+                      ? "bg-warning/10 border-warning/20"
+                      : "bg-background border-border"
+                  }`}
                   onPress={() => {
                     setMerchantInput("");
                     setSelectedMerchant(merchant);
                   }}
                 >
-                  <Text style={styles.cadenceChipText}>{merchant}</Text>
+                  <Text
+                    className={`text-sm font-medium ${
+                      !merchantInput.trim() && selectedMerchant === merchant
+                        ? "text-warning"
+                        : "text-foreground"
+                    }`}
+                  >
+                    {merchant}
+                  </Text>
                 </Pressable>
               ))}
             </View>
+          </View>
 
-            <Text style={styles.recurringSectionTitle}>Custom Merchant</Text>
+          <View className="gap-2">
+            <Text className="text-sm font-medium text-foreground">Custom Merchant</Text>
             <TextInput
-              style={localStyles.input}
+              className="bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground"
               value={merchantInput}
               onChangeText={setMerchantInput}
               placeholder="Optional (e.g. Netflix, Gym)"
-              placeholderTextColor={Colors.textMuted}
+              placeholderTextColor="#6b7280"
             />
+          </View>
 
-            <Text style={styles.recurringSectionTitle}>Cadence</Text>
-            <View style={styles.cadenceRow}>
+          <View className="gap-4">
+            <Text className="text-sm font-medium text-foreground">Cadence</Text>
+            <View className="flex-row flex-wrap gap-2">
               {(["weekly", "biweekly", "monthly"] as const).map((cadenceOption) => (
                 <Pressable
                   key={cadenceOption}
-                  style={[
-                    styles.cadenceChip,
-                    cadence === cadenceOption && styles.cadenceChipSelected,
-                  ]}
+                  className={`px-3 py-2 rounded-lg border ${
+                    cadence === cadenceOption
+                      ? "bg-warning/10 border-warning/20"
+                      : "bg-background border-border"
+                  }`}
                   onPress={() => setCadence(cadenceOption)}
                 >
-                  <Text style={styles.cadenceChipText}>{cadenceOption}</Text>
+                  <Text
+                    className={`text-sm font-medium ${
+                      cadence === cadenceOption ? "text-warning" : "text-foreground"
+                    }`}
+                  >
+                    {cadenceOption}
+                  </Text>
                 </Pressable>
               ))}
             </View>
+          </View>
 
-            <Text style={styles.recurringSectionTitle}>Envelope (Optional)</Text>
+          <View className="gap-4">
+            <Text className="text-sm font-medium text-foreground">Envelope (Optional)</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <View style={localStyles.envelopeRow}>
+              <View className="flex-row gap-1">
                 <Pressable
-                  style={[
-                    styles.pendingEnvelopeChip,
-                    !selectedEnvelopeId && styles.pendingEnvelopeChipSelected,
-                  ]}
+                  className={`px-3 py-2 rounded-lg border ${
+                    !selectedEnvelopeId ? "bg-warning/10 border-warning/20" : "bg-background border-border"
+                  }`}
                   onPress={() => setSelectedEnvelopeId(undefined)}
                 >
-                  <Text style={styles.pendingEnvelopeChipText}>Unassigned</Text>
+                  <Text
+                    className={`text-sm font-medium ${
+                      !selectedEnvelopeId ? "text-warning" : "text-foreground"
+                    }`}
+                  >
+                    Unassigned
+                  </Text>
                 </Pressable>
                 {(envelopes || []).map((envelope) => (
                   <Pressable
                     key={envelope.envelopeId}
-                    style={[
-                      styles.pendingEnvelopeChip,
-                      selectedEnvelopeId === envelope.envelopeId &&
-                        styles.pendingEnvelopeChipSelected,
-                    ]}
+                    className={`px-3 py-2 rounded-lg border ${
+                      selectedEnvelopeId === envelope.envelopeId
+                        ? "bg-warning/10 border-warning/20"
+                        : "bg-background border-border"
+                    }`}
                     onPress={() => setSelectedEnvelopeId(envelope.envelopeId)}
                   >
-                    <Text style={styles.pendingEnvelopeChipText}>
+                    <Text
+                      className={`text-sm font-medium ${
+                        selectedEnvelopeId === envelope.envelopeId ? "text-warning" : "text-foreground"
+                      }`}
+                    >
                       {envelope.emoji ? `${envelope.emoji} ` : ""}
                       {envelope.name}
                     </Text>
@@ -210,32 +250,45 @@ export default function AddRecurringRoute() {
                 ))}
               </View>
             </ScrollView>
+          </View>
 
-            <Text style={styles.recurringSectionTitle}>Start Date</Text>
-            <View style={styles.cadenceRow}>
+          <View className="gap-4">
+            <Text className="text-sm font-medium text-foreground">Start Date</Text>
+            <View className="flex-row flex-wrap gap-2">
               {DATE_OFFSETS.map((offset) => (
                 <Pressable
                   key={offset.days}
-                  style={[
-                    styles.cadenceChip,
-                    nextDueAt === Date.now() + offset.days * 24 * 60 * 60 * 1000 &&
-                      styles.cadenceChipSelected,
-                  ]}
+                  className={`px-3 py-2 rounded-lg border ${
+                    nextDueAt === Date.now() + offset.days * 24 * 60 * 60 * 1000
+                      ? "bg-warning/10 border-warning/20"
+                      : "bg-background border-border"
+                  }`}
                   onPress={() => setNextDueAt(Date.now() + offset.days * 24 * 60 * 60 * 1000)}
                 >
-                  <Text style={styles.cadenceChipText}>{offset.label}</Text>
+                  <Text
+                    className={`text-sm font-medium ${
+                      nextDueAt === Date.now() + offset.days * 24 * 60 * 60 * 1000
+                        ? "text-warning"
+                        : "text-foreground"
+                    }`}
+                  >
+                    {offset.label}
+                  </Text>
                 </Pressable>
               ))}
               <Pressable
-                style={[styles.cadenceChip, styles.cadenceChipSelected]}
+                className="px-3 py-2 rounded-lg border bg-warning/10 border-warning/20"
                 onPress={() => setShowDatePicker(true)}
               >
-                <Text style={styles.cadenceChipText}>Pick Date</Text>
+                <Text className="text-sm font-medium text-warning">Pick Date</Text>
               </Pressable>
             </View>
+          </View>
 
+          <View className="gap-3 pt-2">
             <Button
               label={isSubmitting ? "Scheduling..." : "Schedule Recurring"}
+              variant="primary"
               onPress={handleCreate}
               disabled={isSubmitting}
             />
@@ -259,20 +312,3 @@ export default function AddRecurringRoute() {
     </ScrollView>
   );
 }
-
-const localStyles = StyleSheet.create({
-  input: {
-    ...Typography.bodySM,
-    color: Colors.textPrimary,
-    backgroundColor: Colors.bg,
-    borderWidth: 1,
-    borderColor: Colors.borderSoft,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-  },
-  envelopeRow: {
-    flexDirection: "row",
-    gap: Spacing.xs,
-  },
-});

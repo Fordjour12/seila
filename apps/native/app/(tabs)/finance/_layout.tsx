@@ -26,7 +26,7 @@ export default function FinanceLayout() {
       <Stack.Screen
         name="add-account"
         options={{
-          headerShown: true,
+          headerShown: false,
           title: "Add Account",
           headerBackVisible: true,
           headerStyle: { backgroundColor: Colors.bgRaised },
@@ -77,6 +77,18 @@ export default function FinanceLayout() {
           presentation: "modal",
           headerShown: true,
           title: "Edit Recurring",
+          headerBackVisible: true,
+          headerStyle: { backgroundColor: Colors.bgRaised },
+          headerTintColor: Colors.textPrimary,
+          headerShadowVisible: false,
+          contentStyle: { backgroundColor: Colors.bg },
+        }}
+      />
+      <Stack.Screen
+        name="edit-envelope"
+        options={{
+          headerShown: true,
+          title: "Edit Envelope",
           headerBackVisible: true,
           headerStyle: { backgroundColor: Colors.bgRaised },
           headerTintColor: Colors.textPrimary,

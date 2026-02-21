@@ -112,7 +112,7 @@ export function WeeklyCheckin({ onComplete }: WeeklyCheckinProps) {
               >
                 <Text className="text-2xl">{MOOD_EMOJIS[value]}</Text>
               </Button>
-              <Text className="text-xs text-muted mt-1">{MOOD_LABELS[value]}</Text>
+              <Text className="text-xs text-muted-foreground mt-1">{MOOD_LABELS[value]}</Text>
             </View>
           ))}
         </View>
@@ -154,68 +154,44 @@ export function WeeklyCheckin({ onComplete }: WeeklyCheckinProps) {
       <Text className="text-xl font-medium text-foreground mt-4">Weekly Reflection</Text>
 
       <View>
-        <Text className="text-sm text-muted mb-2">What felt good this week?</Text>
+        <Text className="text-sm text-muted-foreground mb-2">What felt good this week?</Text>
         <TextInput
+          className="border border-border rounded-xl px-3 py-2.5 text-foreground min-h-[80] text-base"
           placeholder="Reflect on the positives..."
           placeholderTextColor="#9CA3AF"
           value={feltGood}
           onChangeText={setFeltGood}
           multiline
           numberOfLines={3}
-          style={{
-            borderWidth: 1,
-            borderColor: "#D1D5DB",
-            borderRadius: 10,
-            paddingHorizontal: 12,
-            paddingVertical: 10,
-            color: "#111827",
-            minHeight: 80,
-            textAlignVertical: "top",
-          }}
+          textAlignVertical="top"
         />
       </View>
 
       <View>
-        <Text className="text-sm text-muted mb-2">What felt hard?</Text>
+        <Text className="text-sm text-muted-foreground mb-2">What felt hard?</Text>
         <TextInput
+          className="border border-border rounded-xl px-3 py-2.5 text-foreground min-h-[80] text-base"
           placeholder="What were the challenges?"
           placeholderTextColor="#9CA3AF"
           value={feltHard}
           onChangeText={setFeltHard}
           multiline
           numberOfLines={3}
-          style={{
-            borderWidth: 1,
-            borderColor: "#D1D5DB",
-            borderRadius: 10,
-            paddingHorizontal: 12,
-            paddingVertical: 10,
-            color: "#111827",
-            minHeight: 80,
-            textAlignVertical: "top",
-          }}
+          textAlignVertical="top"
         />
       </View>
 
       <View>
-        <Text className="text-sm text-muted mb-2">What do you want to carry into next week?</Text>
+        <Text className="text-sm text-muted-foreground mb-2">What do you want to carry into next week?</Text>
         <TextInput
+          className="border border-border rounded-xl px-3 py-2.5 text-foreground min-h-[80] text-base"
           placeholder="Your intentions for next week..."
           placeholderTextColor="#9CA3AF"
           value={carryForward}
           onChangeText={setCarryForward}
           multiline
           numberOfLines={3}
-          style={{
-            borderWidth: 1,
-            borderColor: "#D1D5DB",
-            borderRadius: 10,
-            paddingHorizontal: 12,
-            paddingVertical: 10,
-            color: "#111827",
-            minHeight: 80,
-            textAlignVertical: "top",
-          }}
+          textAlignVertical="top"
         />
       </View>
 

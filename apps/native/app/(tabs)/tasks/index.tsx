@@ -18,20 +18,16 @@ import {
   View,
   Text,
   ScrollView,
-  StyleSheet,
   Pressable,
   TextInput,
   Animated,
   Platform,
   KeyboardAvoidingView,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Colors, Typography, Spacing, Radius } from "../../../constants/theme";
-import { SectionLabel, EmptyState } from "../../../components/ui";
+import { api } from "@seila/backend/convex/_generated/api";
+import { useQuery } from "convex/react";
 
-// ─────────────────────────────────────────────
-// TYPES + MOCK
-// ─────────────────────────────────────────────
+import { SectionLabel } from "../../../components/ui";
 
 type TaskState = "inbox" | "focus" | "deferred" | "done" | "abandoned";
 
@@ -50,10 +46,6 @@ const MOCK_TASKS: Task[] = [
   { id: "5", text: "Call mom back", state: "inbox", capturedAt: "Yesterday" },
   { id: "6", text: "Look into support group times", state: "deferred", capturedAt: "3 days ago" },
 ];
-
-// ─────────────────────────────────────────────
-// FOCUS SLOT
-// ─────────────────────────────────────────────
 
 function FocusSlot({
   task,
@@ -75,73 +67,26 @@ function FocusSlot({
 
   if (!task) {
     return (
-      <View style={slotStyles.empty}>
-        <Text style={slotStyles.emptyText}>open slot</Text>
+      <View className="h-14 border border-dashed border-border rounded-lg items-center justify-center">
+        <Text className="text-xs text-muted-foreground uppercase tracking-widest font-bold">open slot</Text>
       </View>
     );
   }
 
   return (
     <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-      <Pressable style={slotStyles.filled} onLongPress={onDefer}>
-        <Pressable onPress={handleComplete} style={slotStyles.check}>
-          <View style={slotStyles.checkInner} />
+      <Pressable onLongPress={onDefer} className="h-14 border border-border rounded-lg bg-surface flex-row items-center px-4 gap-3">
+        <Pressable onPress={handleComplete} className="w-5.5 h-5.5 border border-border rounded-sm items-center justify-center">
+          <View className="w-2 h-2 rounded-sm" />
         </Pressable>
-        <Text style={slotStyles.taskText}>{task.text}</Text>
-        <Pressable onPress={onDefer} style={slotStyles.defer}>
-          <Text style={slotStyles.deferText}>↓</Text>
+        <Text className="text-base text-foreground flex-1">{task.text}</Text>
+        <Pressable onPress={onDefer} className="p-2">
+          <Text className="text-muted-foreground">↓</Text>
         </Pressable>
       </Pressable>
     </Animated.View>
   );
 }
-
-const slotStyles = StyleSheet.create({
-  empty: {
-    height: 56,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.borderSoft,
-    borderStyle: "dashed",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  emptyText: { ...Typography.eyebrow, color: Colors.textMuted },
-  filled: {
-    height: 56,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.borderSoft,
-    backgroundColor: Colors.bgRaised,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: Spacing.md,
-    gap: Spacing.md,
-  },
-  check: {
-    width: 22,
-    height: 22,
-    borderRadius: Radius.sm,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
-  checkInner: {
-    width: 8,
-    height: 8,
-    borderRadius: 2,
-    backgroundColor: Colors.transparent,
-  },
-  taskText: { ...Typography.bodyMD, color: Colors.textPrimary, flex: 1 },
-  defer: { padding: Spacing.sm },
-  deferText: { fontSize: 14, color: Colors.textMuted },
-});
-
-// ─────────────────────────────────────────────
-// INBOX ROW
-// ─────────────────────────────────────────────
 
 function InboxRow({
   task,
@@ -175,27 +120,23 @@ function InboxRow({
   });
 
   return (
-    <View style={inboxStyles.wrap}>
-      <Pressable onPress={toggle} style={inboxStyles.row}>
-        <View style={inboxStyles.bullet} />
-        <Text style={inboxStyles.text}>{task.text}</Text>
-        <Text style={inboxStyles.meta}>{task.capturedAt}</Text>
+    <View className="bg-surface rounded-lg border border-border overflow-hidden mb-2">
+      <Pressable onPress={toggle} className="flex-row items-center gap-3 p-4">
+        <View className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
+        <Text className="text-base text-foreground flex-1">{task.text}</Text>
+        <Text className="text-xs text-muted-foreground">{task.capturedAt}</Text>
       </Pressable>
-      <Animated.View style={[inboxStyles.actions, { height: actionsHeight }]}>
-        <View style={inboxStyles.actionsInner}>
+      <Animated.View style={{ height: actionsHeight }} className="overflow-hidden border-t border-border">
+        <View className="flex-row gap-2 p-3">
           <Pressable
             onPress={() => {
               onFocus();
               setOpen(false);
             }}
-            style={[
-              inboxStyles.actionBtn,
-              inboxStyles.actionFocus,
-              focusFull && inboxStyles.actionDisabled,
-            ]}
+            className={`flex-1 items-center py-2 rounded-sm border ${focusFull ? "opacity-40" : "bg-amber-500/10 border-amber-500/20"}`}
             disabled={focusFull}
           >
-            <Text style={[inboxStyles.actionText, focusFull && { color: Colors.textMuted }]}>
+            <Text className={`text-xs font-medium ${focusFull ? "text-muted-foreground" : "text-amber-500"}`}>
               {focusFull ? "Focus full" : "Focus"}
             </Text>
           </Pressable>
@@ -204,77 +145,24 @@ function InboxRow({
               onDefer();
               setOpen(false);
             }}
-            style={[inboxStyles.actionBtn, inboxStyles.actionDefer]}
+            className="flex-1 items-center py-2 rounded-sm border border-border"
           >
-            <Text style={inboxStyles.actionTextMuted}>Later</Text>
+            <Text className="text-xs text-muted-foreground">Later</Text>
           </Pressable>
           <Pressable
             onPress={() => {
               onDone();
               setOpen(false);
             }}
-            style={[inboxStyles.actionBtn, inboxStyles.actionDone]}
+            className="flex-1 items-center py-2 rounded-sm border border-border"
           >
-            <Text style={inboxStyles.actionTextMuted}>Done</Text>
+            <Text className="text-xs text-muted-foreground">Done</Text>
           </Pressable>
         </View>
       </Animated.View>
     </View>
   );
 }
-
-const inboxStyles = StyleSheet.create({
-  wrap: {
-    backgroundColor: Colors.bgRaised,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.borderSoft,
-    overflow: "hidden",
-    marginBottom: Spacing.sm,
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.md,
-    padding: Spacing.lg,
-  },
-  bullet: {
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: Colors.textMuted,
-    flexShrink: 0,
-  },
-  text: { ...Typography.bodyMD, color: Colors.textPrimary, flex: 1 },
-  meta: { ...Typography.bodyXS, color: Colors.textMuted },
-  actions: {
-    overflow: "hidden",
-    borderTopWidth: 1,
-    borderTopColor: Colors.borderSoft,
-  },
-  actionsInner: {
-    flexDirection: "row",
-    gap: Spacing.sm,
-    padding: Spacing.md,
-  },
-  actionBtn: {
-    flex: 1,
-    alignItems: "center",
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.sm,
-    borderWidth: 1,
-  },
-  actionFocus: { backgroundColor: Colors.amberGlow, borderColor: Colors.amberBorder },
-  actionDefer: { borderColor: Colors.border },
-  actionDone: { borderColor: Colors.border },
-  actionDisabled: { opacity: 0.4 },
-  actionText: { ...Typography.labelSM, color: Colors.amber },
-  actionTextMuted: { ...Typography.labelSM, color: Colors.textMuted },
-});
-
-// ─────────────────────────────────────────────
-// CAPTURE INPUT
-// ─────────────────────────────────────────────
 
 function CaptureBar({ onAdd }: { onAdd: (text: string) => void }) {
   const [text, setText] = useState("");
@@ -287,60 +175,24 @@ function CaptureBar({ onAdd }: { onAdd: (text: string) => void }) {
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <View style={captureStyles.row}>
+      <View className="flex-row gap-2 bg-background pt-4 pb-6 px-6 border-t border-border">
         <TextInput
-          style={captureStyles.input}
+          className="flex-1 bg-surface border border-border rounded-lg px-4 py-3 text-base text-foreground"
           placeholder="Capture a task…"
-          placeholderTextColor={Colors.textMuted}
+          placeholderTextColor="#6b7280"
           value={text}
           onChangeText={setText}
           onSubmitEditing={submit}
           returnKeyType="done"
           blurOnSubmit={false}
         />
-        <Pressable onPress={submit} style={captureStyles.btn} disabled={!text.trim()}>
-          <Text style={captureStyles.btnText}>Add</Text>
+        <Pressable onPress={submit} className="bg-amber-500 rounded-lg px-4 items-center justify-center" disabled={!text.trim()}>
+          <Text className="text-base font-medium text-background">Add</Text>
         </Pressable>
       </View>
     </KeyboardAvoidingView>
   );
 }
-
-const captureStyles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    gap: Spacing.sm,
-    backgroundColor: Colors.bg,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.xxl,
-    paddingHorizontal: Spacing.xxl,
-    borderTopWidth: 1,
-    borderTopColor: Colors.borderSoft,
-  },
-  input: {
-    flex: 1,
-    backgroundColor: Colors.bgRaised,
-    borderWidth: 1,
-    borderColor: Colors.borderSoft,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    ...Typography.bodyMD,
-    color: Colors.textPrimary,
-  },
-  btn: {
-    backgroundColor: Colors.amber,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.lg,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  btnText: { ...Typography.labelLG, color: Colors.bg },
-});
-
-// ─────────────────────────────────────────────
-// TASKS SCREEN
-// ─────────────────────────────────────────────
 
 export default function TasksScreen() {
   const [tasks, setTasks] = useState(MOCK_TASKS);
@@ -369,98 +221,74 @@ export default function TasksScreen() {
   const focusSlots = Array.from({ length: 3 }, (_, i) => focusTasks[i] ?? null);
 
   return (
-    <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.eyebrow}>Tasks</Text>
-          <Text style={styles.title}>Focus on{"\n"}what matters.</Text>
+    <ScrollView
+      className="flex-1 bg-background"
+      contentContainerClassName="p-6 pb-24 gap-6"
+      showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
+    >
+      <View className="mb-4">
+        <Text className="text-xs text-muted-foreground uppercase tracking-widest font-bold mb-2">Tasks</Text>
+        <Text className="text-3xl font-serif text-foreground tracking-tight">Focus on{"\n"}what matters.</Text>
+      </View>
+
+      <View className="gap-3">
+        <View className="flex-row justify-between items-center mb-3">
+          <SectionLabel>Today&apos;s focus</SectionLabel>
+          <Text className="text-xs text-muted-foreground font-medium">{focusTasks.length}/3</Text>
         </View>
-
-        {/* ── FOCUS ── */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <SectionLabel style={styles.sectionLabelInline}>Today's focus</SectionLabel>
-            <Text style={styles.sectionMeta}>{focusTasks.length}/3</Text>
-          </View>
-          <View style={styles.focusSlots}>
-            {focusSlots.map((task, i) => (
-              <FocusSlot
-                key={task?.id ?? `empty-${i}`}
-                task={task ?? undefined}
-                onComplete={() => task && updateState(task.id, "done")}
-                onDefer={() => task && updateState(task.id, "inbox")}
-              />
-            ))}
-          </View>
+        <View className="gap-2">
+          {focusSlots.map((task, i) => (
+            <FocusSlot
+              key={task?.id ?? `empty-${i}`}
+              task={task ?? undefined}
+              onComplete={() => task && updateState(task.id, "done")}
+              onDefer={() => task && updateState(task.id, "inbox")}
+            />
+          ))}
         </View>
+      </View>
 
-        {/* ── INBOX ── */}
-        {inboxTasks.length > 0 && (
-          <View style={styles.section}>
-            <SectionLabel>Inbox</SectionLabel>
-            {inboxTasks.map((task) => (
-              <InboxRow
-                key={task.id}
-                task={task}
-                focusFull={focusFull}
-                onFocus={() => updateState(task.id, "focus")}
-                onDefer={() => updateState(task.id, "deferred")}
-                onDone={() => updateState(task.id, "done")}
-              />
-            ))}
-          </View>
-        )}
+      {inboxTasks.length > 0 && (
+        <View className="gap-3">
+          <SectionLabel>Inbox</SectionLabel>
+          {inboxTasks.map((task) => (
+            <InboxRow
+              key={task.id}
+              task={task}
+              focusFull={focusFull}
+              onFocus={() => updateState(task.id, "focus")}
+              onDefer={() => updateState(task.id, "deferred")}
+              onDone={() => updateState(task.id, "done")}
+            />
+          ))}
+        </View>
+      )}
 
-        {/* ── DEFERRED ── */}
-        {deferredTasks.length > 0 && (
-          <View style={styles.section}>
-            <SectionLabel>Later</SectionLabel>
-            {deferredTasks.map((task) => (
-              <InboxRow
-                key={task.id}
-                task={task}
-                focusFull={focusFull}
-                onFocus={() => updateState(task.id, "focus")}
-                onDefer={() => updateState(task.id, "deferred")}
-                onDone={() => updateState(task.id, "done")}
-              />
-            ))}
-          </View>
-        )}
+      {deferredTasks.length > 0 && (
+        <View className="gap-3">
+          <SectionLabel>Later</SectionLabel>
+          {deferredTasks.map((task) => (
+            <InboxRow
+              key={task.id}
+              task={task}
+              focusFull={focusFull}
+              onFocus={() => updateState(task.id, "focus")}
+              onDefer={() => updateState(task.id, "deferred")}
+              onDone={() => updateState(task.id, "done")}
+            />
+          ))}
+        </View>
+      )}
 
-        {inboxTasks.length === 0 && focusTasks.length === 0 && (
-          <EmptyState icon="○" title="All clear" subtitle="Capture something when you're ready" />
-        )}
+      {inboxTasks.length === 0 && focusTasks.length === 0 && (
+        <View className="py-12 items-center justify-center">
+          <Text className="text-base text-muted-foreground">All clear</Text>
+          <Text className="text-sm text-muted-foreground mt-1">Capture something when you&apos;re ready</Text>
+        </View>
+      )}
 
-        <View style={{ height: 80 }} />
-      </ScrollView>
-
-      <CaptureBar onAdd={addTask} />
-    </SafeAreaView>
+      <View className="h-20" />
+    </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.bg },
-  scroll: { flex: 1 },
-  content: { paddingHorizontal: Spacing.xxl, paddingTop: Spacing.xxl },
-  header: { marginBottom: Spacing.xxxl },
-  eyebrow: { ...Typography.eyebrow, color: Colors.textMuted, marginBottom: Spacing.sm },
-  title: { ...Typography.displayXL, color: Colors.textPrimary },
-  section: { marginBottom: Spacing.xxl },
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 14,
-  },
-  sectionLabelInline: { marginBottom: 0, flex: 1 },
-  sectionMeta: { ...Typography.labelSM, color: Colors.textMuted },
-  focusSlots: { gap: Spacing.sm },
-});

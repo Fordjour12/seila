@@ -93,13 +93,24 @@ export function AccountsList({ accounts }: { accounts: Account[] }) {
   );
 }
 
-export function EnvelopeCard({ envelope }: { envelope: EnvelopeSummary }) {
+export function EnvelopeCard({
+  envelope,
+  onPress,
+}: {
+  envelope: EnvelopeSummary;
+  onPress?: () => void;
+}) {
   const hasCeiling = envelope.softCeiling && envelope.softCeiling > 0;
   const progressPercent = hasCeiling ? Math.min(envelope.utilization * 100, 100) : 0;
   const isOverBudget = hasCeiling && envelope.utilization > 1;
 
+  const CardWrapper = onPress ? Pressable : View;
+
   return (
-    <View className="bg-surface rounded-2xl border border-border p-4 gap-3 shadow-sm">
+    <CardWrapper
+      onPress={onPress}
+      className="bg-surface rounded-2xl border border-border p-4 gap-3 shadow-sm active:bg-muted"
+    >
       <View className="flex-row justify-between items-center">
         <View className="flex-row items-center gap-2">
           {envelope.emoji ? <Text className="text-xl">{envelope.emoji}</Text> : null}
@@ -127,11 +138,17 @@ export function EnvelopeCard({ envelope }: { envelope: EnvelopeSummary }) {
           </Text>
         </View>
       )}
-    </View>
+    </CardWrapper>
   );
 }
 
-export function EnvelopesList({ envelopes }: { envelopes: EnvelopeSummary[] }) {
+export function EnvelopesList({
+  envelopes,
+  onEnvelopePress,
+}: {
+  envelopes: EnvelopeSummary[];
+  onEnvelopePress?: (envelopeId: string) => void;
+}) {
   if (envelopes.length === 0) {
     return <EmptyState title="No envelopes yet" body="Create envelopes to budget your spending" />;
   }
@@ -139,7 +156,11 @@ export function EnvelopesList({ envelopes }: { envelopes: EnvelopeSummary[] }) {
   return (
     <View className="gap-3">
       {envelopes.map((envelope) => (
-        <EnvelopeCard key={envelope.envelopeId} envelope={envelope} />
+        <EnvelopeCard
+          key={envelope.envelopeId}
+          envelope={envelope}
+          onPress={onEnvelopePress ? () => onEnvelopePress(envelope.envelopeId) : undefined}
+        />
       ))}
     </View>
   );
@@ -279,14 +300,23 @@ export function AddTransactionSheet({ onAdd, onClose, envelopes }: AddTransactio
 interface AddEnvelopeSheetProps {
   onAdd: (name: string, softCeiling?: number, emoji?: string) => void | Promise<void>;
   onClose: () => void;
+  initialEnvelope?: {
+    envelopeId: string;
+    name: string;
+    softCeiling?: number;
+    emoji?: string;
+  };
 }
 
-export function AddEnvelopeSheet({ onAdd, onClose }: AddEnvelopeSheetProps) {
-  const [name, setName] = useState("");
-  const [softCeiling, setSoftCeiling] = useState("");
-  const [emoji, setEmoji] = useState("");
+export function AddEnvelopeSheet({ onAdd, onClose, initialEnvelope }: AddEnvelopeSheetProps) {
+  const [name, setName] = useState(initialEnvelope?.name ?? "");
+  const [softCeiling, setSoftCeiling] = useState(
+    initialEnvelope?.softCeiling ? (initialEnvelope.softCeiling / 100).toString() : "",
+  );
+  const [emoji, setEmoji] = useState(initialEnvelope?.emoji ?? "");
 
-  const handleAdd = async () => {
+  const isEditing = !!initialEnvelope;
+  const handleSubmit = async () => {
     if (name.trim()) {
       try {
         await onAdd(
@@ -303,7 +333,9 @@ export function AddEnvelopeSheet({ onAdd, onClose }: AddEnvelopeSheetProps) {
 
   return (
     <View className="bg-surface rounded-2xl border border-border p-6 gap-6 shadow-sm">
-      <Text className="text-xl font-medium text-foreground">New Envelope</Text>
+      <Text className="text-xl font-medium text-foreground">
+        {isEditing ? "Edit Envelope" : "New Envelope"}
+      </Text>
 
       <View className="gap-2">
         <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Name</Text>
@@ -349,10 +381,12 @@ export function AddEnvelopeSheet({ onAdd, onClose }: AddEnvelopeSheetProps) {
         </Pressable>
         <Pressable
           className={`flex-1 bg-foreground rounded-xl py-3 active:opacity-90 ${(!name.trim()) ? "opacity-50" : ""}`}
-          onPress={handleAdd}
+          onPress={handleSubmit}
           disabled={!name.trim()}
         >
-          <Text className="text-sm text-background text-center font-bold">Create Envelope</Text>
+          <Text className="text-sm text-background text-center font-bold">
+            {isEditing ? "Save Changes" : "Create Envelope"}
+          </Text>
         </Pressable>
       </View>
     </View>

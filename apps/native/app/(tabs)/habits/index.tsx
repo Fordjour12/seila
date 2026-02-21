@@ -14,14 +14,8 @@
  */
 
 import React, { useState, useRef } from "react";
-import { View, Text, ScrollView, StyleSheet, Pressable, Animated, TextInput } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Colors, Typography, Spacing, Radius } from "../../../constants/theme";
-import { SectionLabel, Button, EmptyState, Badge } from "../../../components/ui";
-
-// ─────────────────────────────────────────────
-// TYPES + MOCK DATA
-// ─────────────────────────────────────────────
+import { View, Text, ScrollView, Pressable, Animated, TextInput } from "react-native";
+import { SectionLabel, Button, Badge } from "../../../components/ui";
 
 type Anchor = "morning" | "afternoon" | "evening" | "anytime";
 type Difficulty = "low" | "medium" | "high";
@@ -87,14 +81,10 @@ const ANCHOR_LABEL: Record<Anchor, string> = {
 };
 
 const DIFFICULTY_COLOR: Record<Difficulty, string> = {
-  low: Colors.sage,
-  medium: Colors.amber,
-  high: Colors.rose,
+  low: "#10b981",
+  medium: "#f59e0b",
+  high: "#f43f5e",
 };
-
-// ─────────────────────────────────────────────
-// HABIT CARD
-// ─────────────────────────────────────────────
 
 interface HabitCardProps {
   habit: Habit;
@@ -139,59 +129,62 @@ function HabitCard({ habit, onLog, onSkip }: HabitCardProps) {
   const isResolved = isDone || isSkipped;
 
   return (
-    <View style={[cardStyles.wrap, isResolved && cardStyles.wrapResolved]}>
-      <Pressable onPress={isResolved ? undefined : toggleActions} style={cardStyles.main}>
-        {/* Status indicator */}
+    <View className={`bg-surface rounded-lg border border-border overflow-hidden mb-2 ${isResolved ? "opacity-65" : ""}`}>
+      <Pressable onPress={isResolved ? undefined : toggleActions} className="flex-row items-center gap-3 p-4">
         <View
-          style={[
-            cardStyles.statusDot,
-            isDone && cardStyles.statusDone,
-            isSkipped && cardStyles.statusSkipped,
-          ]}
+          className={`w-6 h-6 rounded-sm border-1.5 border-border items-center justify-center ${
+            isDone ? "bg-emerald-500 border-emerald-500" : isSkipped ? "bg-muted border-border" : ""
+          }`}
         >
-          {isDone && <Text style={cardStyles.statusIcon}>✓</Text>}
-          {isSkipped && <Text style={cardStyles.statusIcon}>·</Text>}
+          {isDone && <Text className="text-xs text-background font-bold">✓</Text>}
+          {isSkipped && <Text className="text-xs text-foreground">·</Text>}
         </View>
 
-        {/* Info */}
-        <View style={cardStyles.info}>
-          <Text style={[cardStyles.name, isResolved && cardStyles.nameResolved]}>{habit.name}</Text>
-          <View style={cardStyles.meta}>
+        <View className="flex-1">
+          <Text className={`text-base mb-0.5 ${isResolved ? "text-muted-foreground" : "text-foreground"}`}>
+            {habit.name}
+          </Text>
+          <View className="flex-row items-center gap-2">
             <View
-              style={[cardStyles.diffDot, { backgroundColor: DIFFICULTY_COLOR[habit.difficulty] }]}
+              className="w-1.5 h-1.5 rounded-full"
+              style={{ backgroundColor: DIFFICULTY_COLOR[habit.difficulty] }}
             />
-            <Text style={cardStyles.cadence}>{habit.cadence}</Text>
-            {isSkipped && <Text style={cardStyles.skippedLabel}>intentional rest</Text>}
+            <Text className="text-xs text-muted-foreground">{habit.cadence}</Text>
+            {isSkipped && (
+              <Text className="text-[9px] text-emerald-500 px-2 py-0.5 bg-emerald-500/10 rounded-full border border-emerald-500/20">
+                intentional rest
+              </Text>
+            )}
           </View>
         </View>
 
-        {/* Expand chevron */}
         {!isResolved && (
-          <Animated.Text style={[cardStyles.chevron, { transform: [{ rotate }] }]}>›</Animated.Text>
+          <Animated.Text className="text-muted-foreground text-xl leading-6" style={{ transform: [{ rotate }] }}>
+            ›
+          </Animated.Text>
         )}
       </Pressable>
 
-      {/* Actions */}
       {!isResolved && (
-        <Animated.View style={[cardStyles.actions, { height: actionsHeight }]}>
-          <View style={cardStyles.actionsInner}>
+        <Animated.View className="overflow-hidden border-t border-border" style={{ height: actionsHeight }}>
+          <View className="flex-row gap-2 p-3">
             <Pressable
               onPress={() => {
                 onLog(habit.id);
                 setShowActions(false);
               }}
-              style={[cardStyles.actionBtn, cardStyles.actionBtnDone]}
+              className="flex-1 items-center py-3 rounded-sm border bg-emerald-500/10 border-emerald-500/20"
             >
-              <Text style={cardStyles.actionBtnDoneText}>Done</Text>
+              <Text className="text-sm text-emerald-500 font-medium">Done</Text>
             </Pressable>
             <Pressable
               onPress={() => {
                 onSkip(habit.id);
                 setShowActions(false);
               }}
-              style={[cardStyles.actionBtn, cardStyles.actionBtnSkip]}
+              className="flex-1 items-center py-3 rounded-sm border border-border"
             >
-              <Text style={cardStyles.actionBtnSkipText}>Skip today</Text>
+              <Text className="text-sm text-muted-foreground">Skip today</Text>
             </Pressable>
           </View>
         </Animated.View>
@@ -199,90 +192,6 @@ function HabitCard({ habit, onLog, onSkip }: HabitCardProps) {
     </View>
   );
 }
-
-const cardStyles = StyleSheet.create({
-  wrap: {
-    backgroundColor: Colors.bgRaised,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.borderSoft,
-    overflow: "hidden",
-    marginBottom: Spacing.sm,
-  },
-  wrapResolved: { opacity: 0.65 },
-  main: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.md,
-    padding: Spacing.lg,
-  },
-  statusDot: {
-    width: 24,
-    height: 24,
-    borderRadius: Radius.sm,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
-  statusDone: { backgroundColor: Colors.sage, borderColor: Colors.sage },
-  statusSkipped: { backgroundColor: Colors.bgFloat, borderColor: Colors.border },
-  statusIcon: { fontSize: 11, color: Colors.bg, fontWeight: "700" },
-  info: { flex: 1 },
-  name: { ...Typography.bodyMD, color: Colors.textPrimary, marginBottom: 3 },
-  nameResolved: { color: Colors.textMuted },
-  meta: { flexDirection: "row", alignItems: "center", gap: Spacing.sm },
-  diffDot: { width: 5, height: 5, borderRadius: 3 },
-  cadence: { ...Typography.bodyXS, color: Colors.textMuted },
-  skippedLabel: {
-    ...Typography.eyebrow,
-    color: Colors.sage,
-    fontSize: 9,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 2,
-    backgroundColor: Colors.sageGlow,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    borderColor: Colors.sageBorder,
-  },
-  chevron: {
-    fontSize: 20,
-    color: Colors.textMuted,
-    lineHeight: 24,
-  },
-  actions: {
-    overflow: "hidden",
-    borderTopWidth: 1,
-    borderTopColor: Colors.borderSoft,
-  },
-  actionsInner: {
-    flexDirection: "row",
-    gap: Spacing.sm,
-    padding: Spacing.md,
-  },
-  actionBtn: {
-    flex: 1,
-    alignItems: "center",
-    paddingVertical: Spacing.md,
-    borderRadius: Radius.sm,
-    borderWidth: 1,
-  },
-  actionBtnDone: {
-    backgroundColor: Colors.sageGlow,
-    borderColor: Colors.sageBorder,
-  },
-  actionBtnDoneText: { ...Typography.labelMD, color: Colors.sage },
-  actionBtnSkip: {
-    backgroundColor: Colors.transparent,
-    borderColor: Colors.border,
-  },
-  actionBtnSkipText: { ...Typography.labelMD, color: Colors.textMuted },
-});
-
-// ─────────────────────────────────────────────
-// ADD HABIT SHEET
-// ─────────────────────────────────────────────
 
 const ANCHORS: Anchor[] = ["morning", "afternoon", "evening", "anytime"];
 const DIFFICULTIES: Difficulty[] = ["low", "medium", "high"];
@@ -310,9 +219,7 @@ function AddHabitSheet({ onClose, onAdd }: AddHabitSheetProps) {
   }, []);
 
   const close = () => {
-    Animated.timing(slideAnim, { toValue: 600, duration: 220, useNativeDriver: true }).start(
-      onClose,
-    );
+    Animated.timing(slideAnim, { toValue: 600, duration: 220, useNativeDriver: true }).start(onClose);
   };
 
   const submit = () => {
@@ -322,143 +229,84 @@ function AddHabitSheet({ onClose, onAdd }: AddHabitSheetProps) {
   };
 
   return (
-    <View style={sheetStyles.overlay}>
-      <Pressable style={sheetStyles.backdrop} onPress={close} />
-      <Animated.View style={[sheetStyles.sheet, { transform: [{ translateY: slideAnim }] }]}>
-        <View style={sheetStyles.handle} />
-        <Text style={sheetStyles.title}>New habit</Text>
+    <View className="absolute inset-0 z-50 justify-end">
+      <Pressable className="absolute inset-0 bg-black/70" onPress={close} />
+      <Animated.View
+        className="bg-surface rounded-t-3xl border border-border p-6 pb-12"
+        style={{ transform: [{ translateY: slideAnim }] }}
+      >
+        <View className="w-9 h-0.75 bg-border rounded-sm self-center mb-8" />
+        <Text className="text-xl font-serif text-foreground mb-6">New habit</Text>
 
         <TextInput
-          style={sheetStyles.input}
+          className="bg-muted border border-border rounded-sm px-4 py-3 text-base text-foreground mb-6"
           placeholder="What do you want to do?"
-          placeholderTextColor={Colors.textMuted}
+          placeholderTextColor="#6b7280"
           value={name}
           onChangeText={setName}
           autoFocus
         />
 
-        <Text style={sheetStyles.label}>When</Text>
-        <View style={sheetStyles.chipRow}>
+        <Text className="text-xs text-muted-foreground uppercase tracking-widest font-bold mb-3">When</Text>
+        <View className="flex-row flex-wrap gap-2 mb-6">
           {ANCHORS.map((a) => (
             <Pressable
               key={a}
               onPress={() => setAnchor(a)}
-              style={[sheetStyles.chip, anchor === a && sheetStyles.chipActive]}
+              className={`px-4 py-2 rounded-full border ${
+                anchor === a ? "bg-amber-500/10 border-amber-500/20" : "bg-muted border-border"
+              }`}
             >
-              <Text style={[sheetStyles.chipText, anchor === a && sheetStyles.chipTextActive]}>
+              <Text className={`text-sm font-medium ${anchor === a ? "text-amber-500" : "text-muted-foreground"}`}>
                 {ANCHOR_LABEL[a]}
               </Text>
             </Pressable>
           ))}
         </View>
 
-        <Text style={sheetStyles.label}>How often</Text>
-        <View style={sheetStyles.chipRow}>
+        <Text className="text-xs text-muted-foreground uppercase tracking-widest font-bold mb-3">How often</Text>
+        <View className="flex-row flex-wrap gap-2 mb-6">
           {CADENCES.map((c) => (
             <Pressable
               key={c}
               onPress={() => setCadence(c)}
-              style={[sheetStyles.chip, cadence === c && sheetStyles.chipActive]}
+              className={`px-4 py-2 rounded-full border ${
+                cadence === c ? "bg-amber-500/10 border-amber-500/20" : "bg-muted border-border"
+              }`}
             >
-              <Text style={[sheetStyles.chipText, cadence === c && sheetStyles.chipTextActive]}>
+              <Text className={`text-sm font-medium ${cadence === c ? "text-amber-500" : "text-muted-foreground"}`}>
                 {c}
               </Text>
             </Pressable>
           ))}
         </View>
 
-        <Text style={sheetStyles.label}>Effort level</Text>
-        <View style={sheetStyles.chipRow}>
+        <Text className="text-xs text-muted-foreground uppercase tracking-widest font-bold mb-3">Effort level</Text>
+        <View className="flex-row flex-wrap gap-2 mb-6">
           {DIFFICULTIES.map((d) => (
             <Pressable
               key={d}
               onPress={() => setDifficulty(d)}
-              style={[sheetStyles.chip, difficulty === d && sheetStyles.chipActive]}
+              className={`flex-row items-center gap-1 px-4 py-2 rounded-full border ${
+                difficulty === d ? "bg-amber-500/10 border-amber-500/20" : "bg-muted border-border"
+              }`}
             >
-              <View style={[sheetStyles.diffDot, { backgroundColor: DIFFICULTY_COLOR[d] }]} />
-              <Text style={[sheetStyles.chipText, difficulty === d && sheetStyles.chipTextActive]}>
+              <View className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: DIFFICULTY_COLOR[d] }} />
+              <Text className={`text-sm font-medium ${difficulty === d ? "text-amber-500" : "text-muted-foreground"}`}>
                 {d}
               </Text>
             </Pressable>
           ))}
         </View>
 
-        <View style={sheetStyles.btnRow}>
-          <Button
-            label="Cancel"
-            variant="ghost"
-            onPress={close}
-            style={{ flex: 0, paddingHorizontal: Spacing.xl }}
-          />
-          <Button
-            label="Add habit"
-            variant="primary"
-            onPress={submit}
-            disabled={!name.trim()}
-            style={{ flex: 1 }}
-          />
+        <View className="flex-row gap-3 mt-3">
+          <Button label="Cancel" variant="ghost" onPress={close} style={{ flex: 0, paddingHorizontal: 20 }} />
+          <Button label="Add habit" variant="primary" onPress={submit} disabled={!name.trim()} style={{ flex: 1 }} />
         </View>
       </Animated.View>
     </View>
   );
 }
-
-const sheetStyles = StyleSheet.create({
-  overlay: { ...StyleSheet.absoluteFillObject, zIndex: 100, justifyContent: "flex-end" },
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.7)" },
-  sheet: {
-    backgroundColor: Colors.bgRaised,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    borderWidth: 1,
-    borderBottomWidth: 0,
-    borderColor: Colors.border,
-    padding: Spacing.xxl,
-    paddingBottom: 48,
-  },
-  handle: {
-    width: 36,
-    height: 3,
-    backgroundColor: Colors.border,
-    borderRadius: 2,
-    alignSelf: "center",
-    marginBottom: Spacing.xxl,
-  },
-  title: { ...Typography.displayMD, color: Colors.textPrimary, marginBottom: Spacing.xl },
-  input: {
-    backgroundColor: Colors.bgElevated,
-    borderWidth: 1,
-    borderColor: Colors.borderSoft,
-    borderRadius: Radius.sm,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    ...Typography.bodyMD,
-    color: Colors.textPrimary,
-    marginBottom: Spacing.xl,
-  },
-  label: { ...Typography.eyebrow, color: Colors.textMuted, marginBottom: Spacing.md },
-  chipRow: { flexDirection: "row", flexWrap: "wrap", gap: Spacing.sm, marginBottom: Spacing.xl },
-  chip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.xs,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.bgElevated,
-  },
-  chipActive: { backgroundColor: Colors.amberGlow, borderColor: Colors.amberBorder },
-  chipText: { ...Typography.labelMD, color: Colors.textMuted },
-  chipTextActive: { color: Colors.amber },
-  diffDot: { width: 6, height: 6, borderRadius: 3 },
-  btnRow: { flexDirection: "row", gap: Spacing.md, marginTop: Spacing.md },
-});
-
-// ─────────────────────────────────────────────
-// HABITS SCREEN
-// ─────────────────────────────────────────────
 
 export default function HabitsScreen() {
   const [habits, setHabits] = useState(MOCK_HABITS);
@@ -497,83 +345,42 @@ export default function HabitsScreen() {
   const skippedCount = habits.filter((h) => h.status === "skipped").length;
 
   return (
-    <SafeAreaView style={styles.safe} edges={["top"]}>
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.eyebrow}>Habits</Text>
-          <Text style={styles.title}>Today's{"\n"}routines.</Text>
-          {/* No streaks — just today's count */}
-          <View style={styles.countRow}>
-            <View style={styles.countPill}>
-              <Text style={styles.countText}>{doneCount} done</Text>
+    <ScrollView
+      className="flex-1 bg-background"
+      contentContainerClassName="p-6 pb-24 gap-6"
+      showsVerticalScrollIndicator={false}
+    >
+      <View className="mb-6">
+        <Text className="text-xs text-muted-foreground uppercase tracking-widest font-bold mb-2">Habits</Text>
+        <Text className="text-3xl font-serif text-foreground tracking-tight mb-4">Today&apos;s{"\n"}routines.</Text>
+        <View className="flex-row gap-2">
+          <View className="bg-emerald-500/10 rounded-full px-3 py-1 border border-emerald-500/20">
+            <Text className="text-sm font-medium text-emerald-500">{doneCount} done</Text>
+          </View>
+          {skippedCount > 0 && (
+            <View className="bg-surface rounded-full px-3 py-1 border border-border">
+              <Text className="text-sm font-medium text-muted-foreground">{skippedCount} resting</Text>
             </View>
-            {skippedCount > 0 && (
-              <View style={[styles.countPill, styles.countPillSkip]}>
-                <Text style={[styles.countText, { color: Colors.textMuted }]}>
-                  {skippedCount} resting
-                </Text>
-              </View>
-            )}
-          </View>
+          )}
         </View>
+      </View>
 
-        {/* Grouped habits */}
-        {(Object.keys(grouped) as Anchor[]).map((anchor) => (
-          <View key={anchor} style={styles.group}>
-            <SectionLabel>{ANCHOR_LABEL[anchor]}</SectionLabel>
-            {grouped[anchor].map((h) => (
-              <HabitCard key={h.id} habit={h} onLog={logHabit} onSkip={skipHabit} />
-            ))}
-          </View>
-        ))}
+      {(Object.keys(grouped) as Anchor[]).map((anchor) => (
+        <View key={anchor} className="gap-3">
+          <SectionLabel>{ANCHOR_LABEL[anchor]}</SectionLabel>
+          {grouped[anchor].map((h) => (
+            <HabitCard key={h.id} habit={h} onLog={logHabit} onSkip={skipHabit} />
+          ))}
+        </View>
+      ))}
 
-        {/* Add button */}
-        <Pressable onPress={() => setShowAdd(true)} style={styles.addBtn}>
-          <Text style={styles.addBtnText}>+ Add habit</Text>
-        </Pressable>
+      <Pressable onPress={() => setShowAdd(true)} className="items-center py-4 rounded-lg border border-border border-dashed">
+        <Text className="text-base text-muted-foreground">+ Add habit</Text>
+      </Pressable>
 
-        <View style={{ height: 40 }} />
-      </ScrollView>
+      <View className="h-10" />
 
       {showAdd && <AddHabitSheet onClose={() => setShowAdd(false)} onAdd={addHabit} />}
-    </SafeAreaView>
+    </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.bg },
-  scroll: { flex: 1 },
-  content: { paddingHorizontal: Spacing.xxl, paddingTop: Spacing.xxl },
-  header: { marginBottom: Spacing.xxxl },
-  eyebrow: { ...Typography.eyebrow, color: Colors.textMuted, marginBottom: Spacing.sm },
-  title: { ...Typography.displayXL, color: Colors.textPrimary, marginBottom: Spacing.lg },
-  countRow: { flexDirection: "row", gap: Spacing.sm },
-  countPill: {
-    backgroundColor: Colors.sageGlow,
-    borderRadius: Radius.full,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderWidth: 1,
-    borderColor: Colors.sageBorder,
-  },
-  countPillSkip: {
-    backgroundColor: Colors.bgRaised,
-    borderColor: Colors.border,
-  },
-  countText: { ...Typography.labelSM, color: Colors.sage },
-  group: { marginBottom: Spacing.xxl },
-  addBtn: {
-    alignItems: "center",
-    paddingVertical: Spacing.lg,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderStyle: "dashed",
-  },
-  addBtnText: { ...Typography.labelLG, color: Colors.textMuted },
-});

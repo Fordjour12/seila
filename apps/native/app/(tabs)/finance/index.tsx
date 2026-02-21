@@ -9,10 +9,10 @@ import {
   merchantHintReviewRef,
   monthlyCloseSummaryRef,
   recurringTransactionsRef,
-} from "../../../lib/finance-refs";
-import { formatGhs } from "../../../lib/ghs";
-import { EnvelopesList } from "../../../components/finance/FinanceComponents";
-import { Button, SectionLabel } from "../../../components/ui";
+} from "@/lib/finance-refs";
+import { formatGhs } from "@/lib/ghs";
+import { EnvelopesList } from "@/components/finance/FinanceComponents";
+import { Button, SectionLabel } from "@/components/ui";
 
 export default function FinanceScreen() {
   const router = useRouter();
@@ -21,9 +21,13 @@ export default function FinanceScreen() {
     pendingOnly: true,
     limit: 20,
   });
-  const spendingTrend = useQuery(api.queries.spendingTrend.spendingTrend, { weeks: 6 });
+  const spendingTrend = useQuery(api.queries.spendingTrend.spendingTrend, {
+    weeks: 6,
+  });
   const monthlyClose = useQuery(monthlyCloseSummaryRef, {});
-  const recurringTransactions = useQuery(recurringTransactionsRef, { limit: 8 });
+  const recurringTransactions = useQuery(recurringTransactionsRef, {
+    limit: 8,
+  });
   const merchantHintReview = useQuery(merchantHintReviewRef, { limit: 8 });
   const accountSummary = useQuery(accountSummaryRef, {});
 
@@ -36,7 +40,10 @@ export default function FinanceScreen() {
     merchantHintReview === undefined ||
     accountSummary === undefined;
 
-  const monthlySpent = (envelopes || []).reduce((sum, envelope) => sum + envelope.spent, 0);
+  const monthlySpent = (envelopes || []).reduce(
+    (sum, envelope) => sum + envelope.spent,
+    0,
+  );
   const monthlyBudget = (envelopes || []).reduce(
     (sum, envelope) => sum + (envelope.softCeiling || 0),
     0,
@@ -47,12 +54,20 @@ export default function FinanceScreen() {
       envelope.softCeiling > 0 &&
       envelope.utilization > 1,
   ).length;
-  const trendMax = Math.max(...(spendingTrend || []).map((point) => point.total), 1);
+  const trendMax = Math.max(
+    ...(spendingTrend || []).map((point) => point.total),
+    1,
+  );
 
   return (
-    <ScrollView className="flex-1 bg-background" contentContainerClassName="p-6 pb-24 gap-6">
+    <ScrollView
+      className="flex-1 bg-background"
+      contentContainerClassName="p-6 pb-24 gap-6"
+    >
       <View className="mb-2">
-        <Text className="text-3xl font-serif text-foreground tracking-tight">Finance</Text>
+        <Text className="text-3xl font-serif text-foreground tracking-tight">
+          Finance
+        </Text>
         <Text className="text-sm text-muted-foreground mt-1">
           Hub for spending, accounts, recurring bills, and insights.
         </Text>
@@ -64,45 +79,77 @@ export default function FinanceScreen() {
         </View>
       ) : (
         <>
-          <View className="gap-3">
-            <SectionLabel>Monthly Snapshot</SectionLabel>
-            <View className="flex-row gap-2">
-              <View className="flex-1 bg-surface rounded-2xl border border-border p-4 gap-1 shadow-sm">
-                <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Spent</Text>
-                <Text className="text-xl font-medium text-foreground">{formatGhs(monthlySpent)}</Text>
-              </View>
-              <View className="flex-1 bg-surface rounded-2xl border border-border p-4 gap-1 shadow-sm">
-                <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Budget</Text>
-                <Text className="text-xl font-medium text-foreground">{formatGhs(monthlyBudget)}</Text>
-              </View>
-              <View className="flex-1 bg-surface rounded-2xl border border-border p-4 gap-1 shadow-sm">
-                <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Over</Text>
-                <Text className="text-xl font-medium text-foreground">{overspentCount}</Text>
+          <View>
+            <View className="gap-3">
+              <SectionLabel>Monthly Snapshot</SectionLabel>
+              <View className="flex-row gap-2">
+                <View className="flex-1 bg-surface rounded-2xl border border-border p-4 gap-1 shadow-sm">
+                  <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
+                    Spent
+                  </Text>
+                  <Text className="text-xl font-medium text-foreground">
+                    {formatGhs(monthlySpent)}
+                  </Text>
+                </View>
+                <View className="flex-1 bg-surface rounded-2xl border border-border p-4 gap-1 shadow-sm">
+                  <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
+                    Over
+                  </Text>
+                  <Text className="text-xl font-medium text-foreground">
+                    {overspentCount}
+                  </Text>
+                </View>
               </View>
             </View>
-            <View className="bg-surface rounded-2xl border border-border p-4 gap-4 shadow-sm mt-1">
-              <Text className="text-sm font-medium text-foreground">6-Week Spend Trend</Text>
-              <View className="h-24 flex-row items-end gap-2">
-                {(spendingTrend || []).map((point) => (
-                  <View key={point.weekStart} className="flex-1 h-full justify-end bg-background rounded-lg overflow-hidden border border-border/50">
-                    <View
-                      className="w-full bg-warning rounded-lg"
-                      style={[{ height: `${Math.max((point.total / trendMax) * 100, 8)}%` }]}
-                    />
-                  </View>
-                ))}
-              </View>
+
+            <View className="flex-1 bg-surface rounded-2xl border border-border p-4 mt-4 gap-1 shadow-sm">
+              <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
+                Budget
+              </Text>
+              <Text className="text-xl font-medium text-foreground">
+                {formatGhs(monthlyBudget)}
+              </Text>
+            </View>
+          </View>
+
+          <View className="bg-surface rounded-2xl border border-border p-4 gap-4 shadow-sm mt-1">
+            <Text className="text-sm font-medium text-foreground">
+              6-Week Spend Trend
+            </Text>
+            <View className="h-24 flex-row items-end gap-2">
+              {(spendingTrend || []).map((point) => (
+                <View
+                  key={point.weekStart}
+                  className="flex-1 h-full justify-end bg-background rounded-lg overflow-hidden border border-border/50"
+                >
+                  <View
+                    className="w-full bg-warning rounded-lg"
+                    style={[
+                      {
+                        height: `${Math.max((point.total / trendMax) * 100, 8)}%`,
+                      },
+                    ]}
+                  />
+                </View>
+              ))}
             </View>
           </View>
 
           <View className="gap-3">
             <View className="flex-row justify-between items-center">
               <SectionLabel>Budget Envelopes</SectionLabel>
-              <Pressable onPress={() => router.push("/(tabs)/finance/add-envelope")}>
+              <Pressable
+                onPress={() => router.push("/(tabs)/finance/add-envelope")}
+              >
                 <Text className="text-sm text-warning font-medium">Add</Text>
               </Pressable>
             </View>
-            <EnvelopesList envelopes={envelopes || []} />
+            <EnvelopesList
+              envelopes={envelopes || []}
+              onEnvelopePress={(envelopeId) =>
+                router.push(`/(tabs)/finance/edit-envelope?id=${envelopeId}`)
+              }
+            />
           </View>
 
           <View className="gap-3">
@@ -112,15 +159,23 @@ export default function FinanceScreen() {
                 className="bg-surface rounded-2xl border border-border p-4 flex-1 min-w-[140] gap-1 shadow-sm active:bg-muted/10"
                 onPress={() => router.push("/(tabs)/finance/add-transaction")}
               >
-                <Text className="text-base font-medium text-foreground">Log Transaction</Text>
-                <Text className="text-xs text-muted-foreground">Manual expense entry</Text>
+                <Text className="text-base font-medium text-foreground">
+                  Log Transaction
+                </Text>
+                <Text className="text-xs text-muted-foreground">
+                  Manual expense entry
+                </Text>
               </Pressable>
               <Pressable
                 className="bg-surface rounded-2xl border border-border p-4 flex-1 min-w-[140] gap-1 shadow-sm active:bg-muted/10"
                 onPress={() => router.push("/(tabs)/finance/add-recurring")}
               >
-                <Text className="text-base font-medium text-foreground">Add Recurring</Text>
-                <Text className="text-xs text-muted-foreground">Payment schedule</Text>
+                <Text className="text-base font-medium text-foreground">
+                  Add Recurring
+                </Text>
+                <Text className="text-xs text-muted-foreground">
+                  Payment schedule
+                </Text>
               </Pressable>
             </View>
           </View>
@@ -132,27 +187,27 @@ export default function FinanceScreen() {
                 {
                   label: "Transactions",
                   meta: `Pending imports: ${(transactions || []).length}`,
-                  route: "/(tabs)/finance/transactions"
+                  route: "/(tabs)/finance/transactions",
                 },
                 {
                   label: "Recurring",
                   meta: `Active schedules: ${(recurringTransactions || []).length}`,
-                  route: "/(tabs)/finance/recurring"
+                  route: "/(tabs)/finance/recurring",
                 },
                 {
                   label: "Accounts",
                   meta: `Tracked accounts: ${(accountSummary?.accounts || []).length}`,
-                  route: "/(tabs)/finance/accounts"
+                  route: "/(tabs)/finance/accounts",
                 },
                 {
                   label: "Merchant Hints",
                   meta: `Review rows: ${(merchantHintReview || []).length}`,
-                  route: "/(tabs)/finance/merchant-hints"
+                  route: "/(tabs)/finance/merchant-hints",
                 },
                 {
                   label: "Insights",
                   meta: "Advanced metrics and anomalies",
-                  route: "/(tabs)/finance/insights"
+                  route: "/(tabs)/finance/insights",
                 },
               ].map((nav) => (
                 <Pressable
@@ -161,8 +216,12 @@ export default function FinanceScreen() {
                   onPress={() => router.push(nav.route as any)}
                 >
                   <View>
-                    <Text className="text-base font-medium text-foreground">{nav.label}</Text>
-                    <Text className="text-xs text-muted-foreground mt-0.5">{nav.meta}</Text>
+                    <Text className="text-base font-medium text-foreground">
+                      {nav.label}
+                    </Text>
+                    <Text className="text-xs text-muted-foreground mt-0.5">
+                      {nav.meta}
+                    </Text>
                   </View>
                   <Text className="text-muted-foreground opacity-50">→</Text>
                 </Pressable>
@@ -173,7 +232,9 @@ export default function FinanceScreen() {
           <View className="gap-3 pb-8">
             <SectionLabel>Monthly Close</SectionLabel>
             <View className="bg-surface rounded-2xl border border-border p-5 gap-3 shadow-sm">
-              <Text className="text-lg font-medium text-foreground">{monthlyClose?.win}</Text>
+              <Text className="text-lg font-medium text-foreground">
+                {monthlyClose?.win}
+              </Text>
               <View className="h-px bg-border" />
               <View className="flex-row justify-between items-center">
                 <Text className="text-sm text-muted-foreground">
@@ -188,7 +249,8 @@ export default function FinanceScreen() {
               ) : null}
               <View className="bg-warning/10 border border-warning/20 rounded-xl p-3">
                 <Text className="text-xs text-warning leading-relaxed">
-                  <Text className="font-bold">Focus:</Text> {monthlyClose?.focus}
+                  <Text className="font-bold">Focus:</Text>{" "}
+                  {monthlyClose?.focus}
                 </Text>
               </View>
               <Button

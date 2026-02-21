@@ -1,6 +1,11 @@
 import { cn } from "heroui-native";
 import { type PropsWithChildren } from "react";
-import { ScrollView, View, type ScrollViewProps, type ViewProps } from "react-native";
+import {
+  ScrollView,
+  View,
+  type ScrollViewProps,
+  type ViewProps,
+} from "react-native";
 import Animated, { type AnimatedProps } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -26,6 +31,7 @@ export function Container({
       className={cn("flex-1 bg-background", className)}
       style={{
         paddingBottom: insets.bottom,
+        paddingTop: insets.top,
       }}
       {...props}
     >

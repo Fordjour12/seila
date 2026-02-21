@@ -1,6 +1,6 @@
 import React from "react";
-import { Pressable, StyleSheet, Text, TextStyle, View, ViewStyle } from "react-native";
-import { Colors, Radius, Spacing, Typography } from "../constants/theme";
+import { Pressable, Text, TextStyle, View, ViewStyle } from "react-native";
+import { Typography } from "../constants/theme";
 
 export function SectionLabel({
   children,
@@ -9,7 +9,11 @@ export function SectionLabel({
   children: React.ReactNode;
   style?: TextStyle;
 }) {
-  return <Text style={[styles.sectionLabel, style]}>{children}</Text>;
+  return (
+    <Text className="text-muted-foreground mb-2" style={[Typography.eyebrow, style]}>
+      {children}
+    </Text>
+  );
 }
 
 export function EmptyState({
@@ -25,26 +29,39 @@ export function EmptyState({
 }) {
   const details = body ?? subtitle;
   return (
-    <View style={styles.empty}>
-      {icon ? <Text style={styles.emptyIcon}>{icon}</Text> : null}
-      <Text style={styles.emptyTitle}>{title}</Text>
-      {details ? <Text style={styles.emptyBody}>{details}</Text> : null}
+    <View className="bg-surface border border-border rounded-2xl p-4 gap-1">
+      {icon ? <Text className="text-lg">{icon}</Text> : null}
+      <Text className="text-foreground" style={Typography.labelLG}>
+        {title}
+      </Text>
+      {details ? (
+        <Text className="text-muted-foreground" style={Typography.bodySM}>
+          {details}
+        </Text>
+      ) : null}
     </View>
   );
 }
 
 export function Badge({ label }: { label: string }) {
   return (
-    <View style={styles.badge}>
-      <Text style={styles.badgeText}>{label}</Text>
+    <View className="self-start bg-warning/15 border border-warning/30 rounded-full px-2.5 py-1">
+      <Text className="text-warning" style={Typography.labelSM}>
+        {label}
+      </Text>
     </View>
   );
 }
 
 export function Toggle({ value, onToggle }: { value: boolean; onToggle: () => void }) {
   return (
-    <Pressable onPress={onToggle} style={[styles.toggleTrack, value && styles.toggleTrackOn]}>
-      <View style={[styles.toggleThumb, value && styles.toggleThumbOn]} />
+    <Pressable
+      onPress={onToggle}
+      className={`h-7 w-12 rounded-full justify-center ${value ? "bg-accent/35" : "bg-border"}`}
+    >
+      <View
+        className={`h-5 w-5 rounded-full ${value ? "bg-accent translate-x-6" : "bg-muted-foreground translate-x-1"}`}
+      />
     </Pressable>
   );
 }
@@ -52,101 +69,36 @@ export function Toggle({ value, onToggle }: { value: boolean; onToggle: () => vo
 interface ButtonProps {
   label: string;
   onPress: () => void;
-  variant?: "primary" | "secondary" | "ghost";
+  variant?: "primary" | "secondary" | "ghost" | "outline";
   disabled?: boolean;
   style?: ViewStyle;
 }
 
 export function Button({ label, onPress, variant = "primary", disabled, style }: ButtonProps) {
+  const containerClass =
+    variant === "primary"
+      ? "bg-accent border-accent"
+      : variant === "secondary" || variant === "outline"
+        ? "bg-surface border-border"
+        : "bg-transparent border-transparent";
+
+  const textClass =
+    variant === "primary"
+      ? "text-accent-foreground"
+      : variant === "secondary" || variant === "outline"
+        ? "text-foreground"
+        : "text-muted-foreground";
+
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
-      style={[
-        styles.button,
-        variant === "primary"
-          ? styles.buttonPrimary
-          : variant === "secondary"
-            ? styles.buttonSecondary
-            : styles.buttonGhost,
-        disabled && styles.buttonDisabled,
-        style,
-      ]}
+      className={`min-h-11 items-center justify-center rounded-xl border px-4 py-3 ${containerClass} ${disabled ? "opacity-50" : ""}`}
+      style={style}
     >
-      <Text
-        style={[
-          styles.buttonText,
-          variant === "primary"
-            ? styles.buttonTextPrimary
-            : variant === "secondary"
-              ? styles.buttonTextSecondary
-              : styles.buttonTextGhost,
-        ]}
-      >
+      <Text className={textClass} style={Typography.labelMD}>
         {label}
       </Text>
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  sectionLabel: { ...Typography.eyebrow, color: Colors.textMuted, marginBottom: Spacing.sm },
-  empty: {
-    backgroundColor: Colors.bgRaised,
-    borderColor: Colors.borderSoft,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    gap: Spacing.xs,
-    padding: Spacing.lg,
-  },
-  emptyTitle: { ...Typography.labelLG, color: Colors.textPrimary },
-  emptyBody: { ...Typography.bodySM, color: Colors.textSecondary },
-  emptyIcon: { fontSize: 18 },
-  badge: {
-    alignSelf: "flex-start",
-    backgroundColor: Colors.amberGlow,
-    borderColor: Colors.amberBorder,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-  },
-  badgeText: { ...Typography.labelSM, color: Colors.amber },
-  toggleTrack: {
-    alignItems: "center",
-    backgroundColor: Colors.border,
-    borderRadius: Radius.full,
-    height: 28,
-    justifyContent: "center",
-    width: 48,
-  },
-  toggleTrackOn: { backgroundColor: Colors.amberBorder },
-  toggleThumb: {
-    backgroundColor: Colors.textMuted,
-    borderRadius: Radius.full,
-    height: 20,
-    transform: [{ translateX: -10 }],
-    width: 20,
-  },
-  toggleThumbOn: {
-    backgroundColor: Colors.amber,
-    transform: [{ translateX: 10 }],
-  },
-  button: {
-    alignItems: "center",
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    justifyContent: "center",
-    minHeight: 44,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-  },
-  buttonPrimary: { backgroundColor: Colors.amber, borderColor: Colors.amber },
-  buttonSecondary: { backgroundColor: Colors.bgRaised, borderColor: Colors.borderSoft },
-  buttonGhost: { backgroundColor: Colors.transparent, borderColor: Colors.transparent },
-  buttonDisabled: { opacity: 0.5 },
-  buttonText: { ...Typography.labelMD },
-  buttonTextPrimary: { color: "#121212" },
-  buttonTextSecondary: { color: Colors.textPrimary },
-  buttonTextGhost: { color: Colors.textMuted },
-});

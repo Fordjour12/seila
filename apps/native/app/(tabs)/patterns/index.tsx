@@ -11,14 +11,8 @@
  */
 
 import React, { useState, useRef } from "react";
-import { View, Text, ScrollView, StyleSheet, Pressable, Animated } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Colors, Typography, Spacing, Radius } from "../../../constants/theme";
+import { View, Text, ScrollView, Pressable, Animated } from "react-native";
 import { EmptyState } from "../../../components/ui";
-
-// ─────────────────────────────────────────────
-// MOCK DATA
-// ─────────────────────────────────────────────
 
 type PatternType = "mood_habit" | "energy_sleep" | "spending_mood" | "habit_time" | "review";
 
@@ -78,14 +72,10 @@ const TYPE_ICON: Record<PatternType, string> = {
 };
 
 const CONFIDENCE_COLOR: Record<Pattern["confidence"], string> = {
-  low: Colors.textMuted,
-  medium: Colors.amber,
-  high: Colors.sage,
+  low: "#6b7280",
+  medium: "#f59e0b",
+  high: "#10b981",
 };
-
-// ─────────────────────────────────────────────
-// PATTERN CARD
-// ─────────────────────────────────────────────
 
 interface PatternCardProps {
   pattern: Pattern;
@@ -131,161 +121,65 @@ function PatternCard({ pattern, onDismiss, onPin }: PatternCardProps) {
 
   return (
     <Animated.View
-      style={[
-        cardStyles.wrap,
-        pattern.pinned && cardStyles.wrapPinned,
-        {
-          opacity: slideAnim,
-          transform: [
-            { scale: entryAnim },
-            { translateX: slideAnim.interpolate({ inputRange: [0, 1], outputRange: [40, 0] }) },
-          ],
-        },
-      ]}
+      className={`bg-surface rounded-xl border overflow-hidden mb-4 ${pattern.pinned ? "border-l-2 border-amber-500" : "border-border"}`}
+      style={{
+        opacity: slideAnim,
+        transform: [
+          { scale: entryAnim },
+          { translateX: slideAnim.interpolate({ inputRange: [0, 1], outputRange: [40, 0] }) },
+        ],
+      }}
     >
-      <Pressable onPress={toggleExpand} style={cardStyles.main}>
-        {/* Type icon */}
-        <View style={cardStyles.typeIcon}>
-          <Text style={cardStyles.typeIconText}>{TYPE_ICON[pattern.type]}</Text>
+      <Pressable onPress={toggleExpand} className="flex-row items-start gap-3 p-4">
+        <View className="w-8 h-8 bg-muted rounded-sm border border-border items-center justify-center mt-0.5">
+          <Text className="text-xs text-muted-foreground font-mono">{TYPE_ICON[pattern.type]}</Text>
         </View>
 
-        {/* Content */}
-        <View style={cardStyles.content}>
-          <Text style={cardStyles.headline}>{pattern.headline}</Text>
-          <View style={cardStyles.meta}>
+        <View className="flex-1">
+          <Text className="text-base font-medium text-foreground mb-1 leading-5">{pattern.headline}</Text>
+          <View className="flex-row items-center gap-2">
             <View
-              style={[
-                cardStyles.confidenceDot,
-                { backgroundColor: CONFIDENCE_COLOR[pattern.confidence] },
-              ]}
+              className="w-1.5 h-1.5 rounded-full"
+              style={{ backgroundColor: CONFIDENCE_COLOR[pattern.confidence] }}
             />
-            <Text style={cardStyles.metaText}>{pattern.confidence} confidence</Text>
-            <Text style={cardStyles.metaDivider}>·</Text>
-            <Text style={cardStyles.metaText}>{pattern.dataPoints} days of data</Text>
+            <Text className="text-xs text-muted-foreground">{pattern.confidence} confidence</Text>
+            <Text className="text-xs text-muted-foreground">·</Text>
+            <Text className="text-xs text-muted-foreground">{pattern.dataPoints} days of data</Text>
           </View>
         </View>
 
-        {/* Actions */}
-        <View style={cardStyles.actions}>
-          <Pressable onPress={onPin} style={cardStyles.actionBtn}>
-            <Text style={[cardStyles.actionIcon, pattern.pinned && cardStyles.actionIconPinned]}>
+        <View className="flex-row items-start gap-1 mt-0.5">
+          <Pressable onPress={onPin} className="p-1">
+            <Text className={`text-base ${pattern.pinned ? "text-amber-500" : "text-muted-foreground"}`}>
               {pattern.pinned ? "◆" : "◇"}
             </Text>
           </Pressable>
-          <Pressable onPress={dismiss} style={cardStyles.actionBtn}>
-            <Text style={cardStyles.dismissIcon}>×</Text>
+          <Pressable onPress={dismiss} className="p-1">
+            <Text className="text-xl text-muted-foreground leading-5">×</Text>
           </Pressable>
         </View>
       </Pressable>
 
-      {/* Expanded detail */}
-      <Animated.View style={[cardStyles.detail, { height: detailHeight }]}>
-        <View style={cardStyles.detailInner}>
-          <Text style={cardStyles.detailText}>{pattern.detail}</Text>
-          <Text style={cardStyles.detectedAgo}>Noticed {pattern.detectedDaysAgo}d ago</Text>
+      <Animated.View className="overflow-hidden border-t border-border" style={{ height: detailHeight }}>
+        <View className="p-4 gap-2">
+          <Text className="text-sm text-muted-foreground italic leading-5">{pattern.detail}</Text>
+          <Text className="text-xs text-muted-foreground">Noticed {pattern.detectedDaysAgo}d ago</Text>
         </View>
       </Animated.View>
     </Animated.View>
   );
 }
 
-const cardStyles = StyleSheet.create({
-  wrap: {
-    backgroundColor: Colors.bgRaised,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.borderSoft,
-    overflow: "hidden",
-    marginBottom: Spacing.md,
-  },
-  wrapPinned: {
-    borderColor: Colors.amberBorder,
-    borderLeftWidth: 2,
-    borderLeftColor: Colors.amber,
-  },
-  main: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: Spacing.md,
-    padding: Spacing.lg,
-  },
-  typeIcon: {
-    width: 32,
-    height: 32,
-    backgroundColor: Colors.bgFloat,
-    borderRadius: Radius.sm,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-    marginTop: 2,
-  },
-  typeIconText: { fontSize: 12, color: Colors.textMuted, fontFamily: "monospace" },
-  content: { flex: 1 },
-  headline: {
-    ...Typography.labelLG,
-    color: Colors.textPrimary,
-    marginBottom: Spacing.xs,
-    lineHeight: 20,
-  },
-  meta: { flexDirection: "row", alignItems: "center", gap: Spacing.sm },
-  confidenceDot: { width: 5, height: 5, borderRadius: 3 },
-  metaText: { ...Typography.bodyXS, color: Colors.textMuted },
-  metaDivider: { ...Typography.bodyXS, color: Colors.textMuted },
-  actions: { flexDirection: "row", alignItems: "flex-start", gap: Spacing.xs, marginTop: 2 },
-  actionBtn: { padding: Spacing.xs },
-  actionIcon: { fontSize: 13, color: Colors.textMuted },
-  actionIconPinned: { color: Colors.amber },
-  dismissIcon: { fontSize: 18, color: Colors.textMuted, lineHeight: 20 },
-  detail: { overflow: "hidden", borderTopWidth: 1, borderTopColor: Colors.borderSoft },
-  detailInner: { padding: Spacing.lg, gap: Spacing.sm },
-  detailText: {
-    ...Typography.bodySM,
-    color: Colors.textSecondary,
-    lineHeight: 20,
-    fontFamily: "DMSans_300Light",
-    fontStyle: "italic",
-  },
-  detectedAgo: { ...Typography.bodyXS, color: Colors.textMuted },
-});
-
-// ─────────────────────────────────────────────
-// AWARENESS NOTE
-// ─────────────────────────────────────────────
-
 function AwarenessNote() {
   return (
-    <View style={noteStyles.wrap}>
-      <Text style={noteStyles.text}>
+    <View className="bg-amber-500/10 rounded-lg border border-amber-500/20 p-4 mb-8">
+      <Text className="text-sm text-muted-foreground italic leading-5">
         Patterns are observations, not instructions. The AI surfaces what it notices — what you do
         with it is entirely yours.
       </Text>
     </View>
   );
 }
-
-const noteStyles = StyleSheet.create({
-  wrap: {
-    backgroundColor: Colors.amberGlow,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.amberBorder,
-    padding: Spacing.lg,
-    marginBottom: Spacing.xxl,
-  },
-  text: {
-    ...Typography.bodySM,
-    color: Colors.textSecondary,
-    fontFamily: "DMSans_300Light",
-    fontStyle: "italic",
-    lineHeight: 20,
-  },
-});
-
-// ─────────────────────────────────────────────
-// PATTERNS SCREEN
-// ─────────────────────────────────────────────
 
 export default function PatternsScreen() {
   const [patterns, setPatterns] = useState(MOCK_PATTERNS);
@@ -302,81 +196,67 @@ export default function PatternsScreen() {
   const unpinned = patterns.filter((p) => !p.pinned);
 
   return (
-    <SafeAreaView style={styles.safe} edges={["top"]}>
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.eyebrow}>Patterns</Text>
-          <Text style={styles.title}>What the AI{"\n"}has noticed.</Text>
-          <Text style={styles.subtitle}>
-            Up to 3 at a time. Tap to expand, pin to keep, dismiss to clear.
+    <ScrollView
+      className="flex-1 bg-background"
+      contentContainerClassName="p-6 pb-24 gap-6"
+      showsVerticalScrollIndicator={false}
+    >
+      <View className="mb-8">
+        <Text className="text-xs text-muted-foreground uppercase tracking-widest font-bold mb-2">Patterns</Text>
+        <Text className="text-3xl font-serif text-foreground tracking-tight mb-2">What the AI{"\n"}has noticed.</Text>
+        <Text className="text-base text-muted-foreground">
+          Up to 3 at a time. Tap to expand, pin to keep, dismiss to clear.
+        </Text>
+      </View>
+
+      <AwarenessNote />
+
+      {patterns.length === 0 ? (
+        <View className="py-12 items-center justify-center">
+          <Text className="text-2xl mb-2">◎</Text>
+          <Text className="text-lg font-medium text-foreground">Nothing yet</Text>
+          <Text className="text-sm text-muted-foreground text-center mt-1">
+            Patterns emerge after a week or two of check-ins and habit logging
           </Text>
         </View>
+      ) : (
+        <>
+          {pinned.length > 0 && (
+            <View className="gap-3">
+              <Text className="text-xs text-muted-foreground uppercase tracking-widest font-bold mb-2">Pinned</Text>
+              {pinned.map((p) => (
+                <PatternCard
+                  key={p.id}
+                  pattern={p}
+                  onDismiss={() => dismiss(p.id)}
+                  onPin={() => pin(p.id)}
+                />
+              ))}
+            </View>
+          )}
+          {unpinned.length > 0 && (
+            <View className="gap-3">
+              {pinned.length > 0 && (
+                <Text className="text-xs text-muted-foreground uppercase tracking-widest font-bold mb-2">Recent</Text>
+              )}
+              {unpinned.map((p) => (
+                <PatternCard
+                  key={p.id}
+                  pattern={p}
+                  onDismiss={() => dismiss(p.id)}
+                  onPin={() => pin(p.id)}
+                />
+              ))}
+            </View>
+          )}
+        </>
+      )}
 
-        <AwarenessNote />
+      <View className="items-center pt-8">
+        <Text className="text-xs text-muted-foreground">{patterns.length}/3 patterns active</Text>
+      </View>
 
-        {patterns.length === 0 ? (
-          <EmptyState
-            icon="◎"
-            title="Nothing yet"
-            subtitle="Patterns emerge after a week or two of check-ins and habit logging"
-          />
-        ) : (
-          <>
-            {pinned.length > 0 && (
-              <View style={styles.group}>
-                <Text style={styles.groupLabel}>Pinned</Text>
-                {pinned.map((p) => (
-                  <PatternCard
-                    key={p.id}
-                    pattern={p}
-                    onDismiss={() => dismiss(p.id)}
-                    onPin={() => pin(p.id)}
-                  />
-                ))}
-              </View>
-            )}
-            {unpinned.length > 0 && (
-              <View style={styles.group}>
-                {pinned.length > 0 && <Text style={styles.groupLabel}>Recent</Text>}
-                {unpinned.map((p) => (
-                  <PatternCard
-                    key={p.id}
-                    pattern={p}
-                    onDismiss={() => dismiss(p.id)}
-                    onPin={() => pin(p.id)}
-                  />
-                ))}
-              </View>
-            )}
-          </>
-        )}
-
-        {/* Sparsity note */}
-        <View style={styles.sparsityRow}>
-          <Text style={styles.sparsityText}>{patterns.length}/3 patterns active</Text>
-        </View>
-
-        <View style={{ height: 40 }} />
-      </ScrollView>
-    </SafeAreaView>
+      <View className="h-10" />
+    </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.bg },
-  scroll: { flex: 1 },
-  content: { paddingHorizontal: Spacing.xxl, paddingTop: Spacing.xxl },
-  header: { marginBottom: Spacing.xxl },
-  eyebrow: { ...Typography.eyebrow, color: Colors.textMuted, marginBottom: Spacing.sm },
-  title: { ...Typography.displayXL, color: Colors.textPrimary, marginBottom: Spacing.sm },
-  subtitle: { ...Typography.bodyMD, color: Colors.textSecondary, fontFamily: "DMSans_300Light" },
-  group: { marginBottom: Spacing.xl },
-  groupLabel: { ...Typography.eyebrow, color: Colors.textMuted, marginBottom: Spacing.md },
-  sparsityRow: { alignItems: "center", paddingTop: Spacing.xl },
-  sparsityText: { ...Typography.bodyXS, color: Colors.textMuted },
-});
