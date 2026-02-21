@@ -9,6 +9,8 @@ export async function runAgentText(
   thread: Thread<ToolSet>,
   prompt: string,
 ): Promise<AgentTextResult> {
-  const generateText = thread.generateText as unknown as (args: { prompt: string }) => Promise<AgentTextResult>;
+  const generateText = thread.generateText as unknown as (args: {
+    prompt: string;
+  }) => Promise<AgentTextResult>;
   return generateText({ prompt });
 }

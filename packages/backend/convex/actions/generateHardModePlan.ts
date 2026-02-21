@@ -264,7 +264,9 @@ export const generateHardModePlan = internalAction({
       if (parsed.rationales) {
         agentRationales = parsed.rationales;
       }
-    } catch { /* agent failure — use rule-based rationales */ }
+    } catch {
+      /* agent failure — use rule-based rationales */
+    }
 
     const candidates = buildCandidates({
       scope: session.scope as HardModeScope,

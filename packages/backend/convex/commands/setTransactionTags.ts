@@ -18,7 +18,10 @@ export const setTransactionTags = mutation({
     const transaction = await ctx.db.get(args.transactionId);
     if (!transaction) throw new ConvexError("Transaction not found");
 
-    const tags = Array.from(new Set(args.tags.map((tag) => tag.trim()).filter(Boolean))).slice(0, 20);
+    const tags = Array.from(new Set(args.tags.map((tag) => tag.trim()).filter(Boolean))).slice(
+      0,
+      20,
+    );
 
     await ctx.db.patch(args.transactionId, {
       tags,
@@ -28,4 +31,3 @@ export const setTransactionTags = mutation({
     return { transactionId: args.transactionId, tags, deduplicated: false };
   },
 });
-

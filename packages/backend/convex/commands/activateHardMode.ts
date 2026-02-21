@@ -1,8 +1,4 @@
-import type {
-  HardModeConstraint,
-  HardModePlan,
-  HardModeScope,
-} from "@seila/domain-kernel";
+import type { HardModeConstraint, HardModePlan, HardModeScope } from "@seila/domain-kernel";
 import type { Id } from "../_generated/dataModel";
 import { makeFunctionReference } from "convex/server";
 import { ConvexError, v } from "convex/values";
@@ -46,8 +42,7 @@ export const activateHardMode = mutation({
     if (existing) {
       const payload = existing.payload as { sessionId?: unknown };
       return {
-        sessionId:
-          typeof payload.sessionId === "string" ? payload.sessionId : undefined,
+        sessionId: typeof payload.sessionId === "string" ? payload.sessionId : undefined,
         deduplicated: true,
       };
     }

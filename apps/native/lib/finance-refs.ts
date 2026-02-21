@@ -248,7 +248,13 @@ export const debtStrategyRef = makeFunctionReference<
     totalBalance: number;
     totalMinPayment: number;
     nextFocus: { debtId: string; name: string; balance: number; aprBps: number } | null;
-    debts: Array<{ debtId: string; name: string; balance: number; aprBps: number; minPayment: number }>;
+    debts: Array<{
+      debtId: string;
+      name: string;
+      balance: number;
+      aprBps: number;
+      minPayment: number;
+    }>;
   }
 >("queries/debtStrategy:debtStrategy");
 
@@ -410,7 +416,13 @@ export const multiCurrencySummaryRef = makeFunctionReference<
 
 export const setFxRateRef = makeFunctionReference<
   "mutation",
-  { idempotencyKey: string; baseCurrency: string; quoteCurrency: string; rateScaled: number; asOf?: number },
+  {
+    idempotencyKey: string;
+    baseCurrency: string;
+    quoteCurrency: string;
+    rateScaled: number;
+    asOf?: number;
+  },
   { recordId?: Id<"fxRates">; deduplicated: boolean }
 >("commands/setFxRate:setFxRate");
 

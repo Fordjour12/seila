@@ -255,9 +255,7 @@ export const getPatternByType = internalQuery({
       .withIndex("by_type", (q) => q.eq("type", args.type))
       .collect();
 
-    const active = patterns
-      .filter((p) => !p.dismissedAt)
-      .sort((a, b) => b.updatedAt - a.updatedAt);
+    const active = patterns.filter((p) => !p.dismissedAt).sort((a, b) => b.updatedAt - a.updatedAt);
 
     return active[0] ?? null;
   },

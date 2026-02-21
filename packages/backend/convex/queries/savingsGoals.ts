@@ -15,10 +15,7 @@ export const savingsGoals = query({
         targetAmount: goal.targetAmount,
         currentAmount: goal.currentAmount,
         deadlineAt: goal.deadlineAt,
-        progress:
-          goal.targetAmount > 0
-            ? Math.min(goal.currentAmount / goal.targetAmount, 1)
-            : 0,
+        progress: goal.targetAmount > 0 ? Math.min(goal.currentAmount / goal.targetAmount, 1) : 0,
       }))
       .sort((a, b) => a.progress - b.progress);
   },

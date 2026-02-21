@@ -51,4 +51,3 @@ export const upsertWeeklyMoneyCheckin = mutation({
     return { checkinId, deduplicated: false };
   },
 });
-

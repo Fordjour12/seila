@@ -111,10 +111,7 @@ function getDateKey(timestamp: number): string {
   return new Date(timestamp).toISOString().split("T")[0] ?? "";
 }
 
-export function checkinReducer(
-  state: CheckinState,
-  event: CheckinEvent,
-): CheckinState {
+export function checkinReducer(state: CheckinState, event: CheckinEvent): CheckinState {
   if (event.type === "checkin.submitted") {
     const newCheckin: Checkin = {
       id: event.idempotencyKey,

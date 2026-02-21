@@ -36,12 +36,7 @@ export function PatternStrip() {
       <Text className="text-foreground font-medium mb-2">Patterns</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         {patterns.map((pattern) => (
-          <PatternCard
-            key={pattern._id}
-            pattern={pattern}
-            onDismiss={onDismiss}
-            onPin={onPin}
-          />
+          <PatternCard key={pattern._id} pattern={pattern} onDismiss={onDismiss} onPin={onPin} />
         ))}
       </ScrollView>
     </View>

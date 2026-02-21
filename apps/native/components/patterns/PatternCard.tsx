@@ -25,9 +25,7 @@ export function PatternCard({ pattern, onDismiss, onPin }: Props) {
             </Text>
           </View>
         </View>
-        <Text className="text-muted-foreground text-sm leading-5">
-          {pattern.subtext}
-        </Text>
+        <Text className="text-muted-foreground text-sm leading-5">{pattern.subtext}</Text>
       </View>
 
       <View className="flex-row gap-3 mt-4 pt-3 border-t border-border/5">

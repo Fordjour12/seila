@@ -1,11 +1,7 @@
 import { internalQuery, query, type QueryCtx } from "../_generated/server";
 
 async function getLastCheckin(ctx: QueryCtx) {
-  const checkins = await ctx.db
-    .query("checkins")
-    .withIndex("by_occurredAt")
-    .order("desc")
-    .take(1);
+  const checkins = await ctx.db.query("checkins").withIndex("by_occurredAt").order("desc").take(1);
 
   if (checkins.length === 0) {
     return null;

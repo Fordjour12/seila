@@ -143,21 +143,29 @@ export function TodayOrchestrationCard() {
 
       <View className="flex-row gap-2 mt-2">
         <View className="flex-1 rounded-xl bg-secondary/50 p-3 border border-border/10">
-          <Text className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">Quiet</Text>
+          <Text className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">
+            Quiet
+          </Text>
           <Text className="text-foreground text-sm font-semibold mt-1">
             {quietToday?.isQuiet ? "Active" : "Off"}
           </Text>
         </View>
         <View className="flex-1 rounded-xl bg-secondary/50 p-3 border border-border/10">
-          <Text className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">Notes</Text>
+          <Text className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">
+            Notes
+          </Text>
           <Text className="text-foreground text-sm font-semibold mt-1">{scratchpadCount}</Text>
         </View>
         <View className="flex-1 rounded-xl bg-secondary/50 p-3 border border-border/10">
-          <Text className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">Focus</Text>
+          <Text className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">
+            Focus
+          </Text>
           <Text className="text-foreground text-sm font-semibold mt-1">{focusCount}/3</Text>
         </View>
         <View className="flex-1 rounded-xl bg-secondary/50 p-3 border border-border/10">
-          <Text className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">Habits</Text>
+          <Text className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">
+            Habits
+          </Text>
           <Text className="text-foreground text-sm font-semibold mt-1">{pendingHabits}</Text>
         </View>
       </View>

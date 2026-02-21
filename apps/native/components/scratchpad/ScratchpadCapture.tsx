@@ -3,11 +3,7 @@ import { Button, Surface } from "heroui-native";
 import { useState } from "react";
 import { Text, TextInput, View } from "react-native";
 
-import {
-  captureScratchpadRef,
-  todayScratchpadRef,
-  triageScratchpadRef,
-} from "@/lib/recovery-refs";
+import { captureScratchpadRef, todayScratchpadRef, triageScratchpadRef } from "@/lib/recovery-refs";
 
 function key(prefix: string) {
   return `${prefix}:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`;
@@ -53,7 +49,10 @@ export function ScratchpadCapture() {
 
       <View className="gap-2 mt-3">
         {(entries ?? []).slice(0, 5).map((entry) => (
-          <View key={entry._id} className="flex-row items-center justify-between bg-default-100 p-2 rounded-lg">
+          <View
+            key={entry._id}
+            className="flex-row items-center justify-between bg-default-100 p-2 rounded-lg"
+          >
             <Text className="text-foreground text-xs flex-1 pr-2">{entry.text}</Text>
             <Button
               size="sm"

@@ -7,46 +7,86 @@
  * One action: Clear AI memory.
  */
 
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  Pressable,
-  Alert,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import { Colors, Typography, Spacing, Radius } from '../../constants/theme';
-import { SectionLabel, Button } from '../../components/ui';
+import React, { useState } from "react";
+import { View, Text, ScrollView, StyleSheet, Pressable, Alert } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { router } from "expo-router";
+import { Colors, Typography, Spacing, Radius } from "../../constants/theme";
+import { SectionLabel, Button } from "../../components/ui";
 
 // ─────────────────────────────────────────────
 // MOCK AI CONTEXT
 // ─────────────────────────────────────────────
 
 const MOCK_WORKING_MODEL = {
-  energyPatterns: 'Energy tends to peak mid-morning. Lowest on Sunday evenings and after high-spend days.',
-  habitResonance: 'Morning walk and journaling complete most consistently. Meditation often skipped in evening.',
-  flagPatterns: 'not_now flags cluster around early morning and post-lunch. not_aligned mostly on finance tasks.',
-  triggerSignals: 'Low mood often follows low-sleep days and high eating-out spend weeks.',
-  suggestionResponse: 'Responds well to one specific suggestion. Dismisses vague or multi-part suggestions.',
-  reviewEngagement: 'Weekly reviews completed 3 of last 4 weeks. Look-back section skipped once.',
-  financeRelationship: 'Spending awareness improves mood correlation. High credit spend weeks correlate with lower energy.',
+  energyPatterns:
+    "Energy tends to peak mid-morning. Lowest on Sunday evenings and after high-spend days.",
+  habitResonance:
+    "Morning walk and journaling complete most consistently. Meditation often skipped in evening.",
+  flagPatterns:
+    "not_now flags cluster around early morning and post-lunch. not_aligned mostly on finance tasks.",
+  triggerSignals: "Low mood often follows low-sleep days and high eating-out spend weeks.",
+  suggestionResponse:
+    "Responds well to one specific suggestion. Dismisses vague or multi-part suggestions.",
+  reviewEngagement: "Weekly reviews completed 3 of last 4 weeks. Look-back section skipped once.",
+  financeRelationship:
+    "Spending awareness improves mood correlation. High credit spend weeks correlate with lower energy.",
 };
 
 const MOCK_MEMORY = [
-  { occurredAt: Date.now() - 1000 * 60 * 30,      source: 'captureAgent',   module: 'capture',     observation: 'Capture signal: mood ~2. Morning context.', confidence: 'low'    },
-  { occurredAt: Date.now() - 1000 * 60 * 60 * 3,  source: 'plannerAgent',   module: 'hardMode',    observation: 'Hard Mode plan: 4 items scheduled',          confidence: 'high'   },
-  { occurredAt: Date.now() - 1000 * 60 * 60 * 5,  source: 'dayClose',       module: 'hardMode',    observation: 'not_now flags: 2 afternoon items',            confidence: 'medium' },
-  { occurredAt: Date.now() - 1000 * 60 * 60 * 26, source: 'summaryAgent',   module: 'weeklyReview', observation: 'Weekly summary generated',                   confidence: 'high'   },
-  { occurredAt: Date.now() - 1000 * 60 * 60 * 30, source: 'patternAgent',   module: 'patterns',    observation: 'Pattern explained: walk-mood correlation',    confidence: 'medium' },
-  { occurredAt: Date.now() - 1000 * 60 * 60 * 50, source: 'dayClose',       module: 'hardMode',    observation: 'Accuracy 0.75 — plan volume appropriate',    confidence: 'high'   },
-  { occurredAt: Date.now() - 1000 * 60 * 60 * 72, source: 'captureAgent',   module: 'capture',     observation: 'Capture signal: mood ~4. Positive signal.',   confidence: 'low'    },
+  {
+    occurredAt: Date.now() - 1000 * 60 * 30,
+    source: "captureAgent",
+    module: "capture",
+    observation: "Capture signal: mood ~2. Morning context.",
+    confidence: "low",
+  },
+  {
+    occurredAt: Date.now() - 1000 * 60 * 60 * 3,
+    source: "plannerAgent",
+    module: "hardMode",
+    observation: "Hard Mode plan: 4 items scheduled",
+    confidence: "high",
+  },
+  {
+    occurredAt: Date.now() - 1000 * 60 * 60 * 5,
+    source: "dayClose",
+    module: "hardMode",
+    observation: "not_now flags: 2 afternoon items",
+    confidence: "medium",
+  },
+  {
+    occurredAt: Date.now() - 1000 * 60 * 60 * 26,
+    source: "summaryAgent",
+    module: "weeklyReview",
+    observation: "Weekly summary generated",
+    confidence: "high",
+  },
+  {
+    occurredAt: Date.now() - 1000 * 60 * 60 * 30,
+    source: "patternAgent",
+    module: "patterns",
+    observation: "Pattern explained: walk-mood correlation",
+    confidence: "medium",
+  },
+  {
+    occurredAt: Date.now() - 1000 * 60 * 60 * 50,
+    source: "dayClose",
+    module: "hardMode",
+    observation: "Accuracy 0.75 — plan volume appropriate",
+    confidence: "high",
+  },
+  {
+    occurredAt: Date.now() - 1000 * 60 * 60 * 72,
+    source: "captureAgent",
+    module: "capture",
+    observation: "Capture signal: mood ~4. Positive signal.",
+    confidence: "low",
+  },
 ];
 
 const MOCK_CALIBRATION = {
-  preferredSuggestionVolume: 'moderate',
+  preferredSuggestionVolume: "moderate",
   hardModePlanAccuracy: 0.74,
   patternDismissRate: 0.2,
 };
@@ -64,9 +104,9 @@ function timeAgo(ts: number): string {
 }
 
 const CONFIDENCE_COLOR: Record<string, string> = {
-  low:    Colors.textMuted,
+  low: Colors.textMuted,
   medium: Colors.amber,
-  high:   Colors.sage,
+  high: Colors.sage,
 };
 
 // ─────────────────────────────────────────────
@@ -74,22 +114,22 @@ const CONFIDENCE_COLOR: Record<string, string> = {
 // ─────────────────────────────────────────────
 
 const FIELD_LABELS: Record<keyof typeof MOCK_WORKING_MODEL, string> = {
-  energyPatterns:      'Energy patterns',
-  habitResonance:      'Habit resonance',
-  flagPatterns:        'Flag patterns',
-  triggerSignals:      'Trigger signals',
-  suggestionResponse:  'Suggestion response',
-  reviewEngagement:    'Review engagement',
-  financeRelationship: 'Finance relationship',
+  energyPatterns: "Energy patterns",
+  habitResonance: "Habit resonance",
+  flagPatterns: "Flag patterns",
+  triggerSignals: "Trigger signals",
+  suggestionResponse: "Suggestion response",
+  reviewEngagement: "Review engagement",
+  financeRelationship: "Finance relationship",
 };
 
 function ModelField({ field, value }: { field: string; value: string }) {
-  const isEmpty = !value || value.trim() === '';
+  const isEmpty = !value || value.trim() === "";
   return (
     <View style={fieldStyles.wrap}>
       <Text style={fieldStyles.label}>{field}</Text>
       <Text style={[fieldStyles.value, isEmpty && fieldStyles.valueEmpty]}>
-        {isEmpty ? 'Not enough data yet.' : value}
+        {isEmpty ? "Not enough data yet." : value}
       </Text>
     </View>
   );
@@ -103,15 +143,20 @@ const fieldStyles = StyleSheet.create({
     borderBottomColor: Colors.borderSoft,
   },
   label: { ...Typography.eyebrow, color: Colors.textMuted, marginBottom: Spacing.xs },
-  value: { ...Typography.bodyMD, color: Colors.textSecondary, lineHeight: 22, fontFamily: 'DMSans_300Light' },
-  valueEmpty: { color: Colors.textMuted, fontStyle: 'italic' },
+  value: {
+    ...Typography.bodyMD,
+    color: Colors.textSecondary,
+    lineHeight: 22,
+    fontFamily: "DMSans_300Light",
+  },
+  valueEmpty: { color: Colors.textMuted, fontStyle: "italic" },
 });
 
 // ─────────────────────────────────────────────
 // MEMORY ENTRY
 // ─────────────────────────────────────────────
 
-function MemoryEntry({ entry }: { entry: typeof MOCK_MEMORY[0] }) {
+function MemoryEntry({ entry }: { entry: (typeof MOCK_MEMORY)[0] }) {
   return (
     <View style={memStyles.row}>
       <View style={[memStyles.dot, { backgroundColor: CONFIDENCE_COLOR[entry.confidence] }]} />
@@ -131,7 +176,7 @@ function MemoryEntry({ entry }: { entry: typeof MOCK_MEMORY[0] }) {
 
 const memStyles = StyleSheet.create({
   row: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: Spacing.md,
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.lg,
@@ -141,11 +186,11 @@ const memStyles = StyleSheet.create({
   dot: { width: 6, height: 6, borderRadius: 3, marginTop: 7, flexShrink: 0 },
   content: { flex: 1, gap: 4 },
   observation: { ...Typography.bodySM, color: Colors.textSecondary, lineHeight: 18 },
-  meta: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
+  meta: { flexDirection: "row", alignItems: "center", gap: Spacing.xs },
   source: { ...Typography.bodyXS, color: Colors.textMuted },
-  sep:    { ...Typography.bodyXS, color: Colors.textMuted },
+  sep: { ...Typography.bodyXS, color: Colors.textMuted },
   module: { ...Typography.bodyXS, color: Colors.textMuted },
-  time:   { ...Typography.bodyXS, color: Colors.textMuted },
+  time: { ...Typography.bodyXS, color: Colors.textMuted },
 });
 
 // ─────────────────────────────────────────────
@@ -157,21 +202,21 @@ export default function AiContextScreen() {
 
   const handleClear = () => {
     Alert.alert(
-      'Clear AI memory',
-      'This resets the working model and all memory entries. The AI starts fresh. This cannot be undone.',
+      "Clear AI memory",
+      "This resets the working model and all memory entries. The AI starts fresh. This cannot be undone.",
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: "Cancel", style: "cancel" },
         {
-          text: 'Clear',
-          style: 'destructive',
+          text: "Clear",
+          style: "destructive",
           onPress: () => setCleared(true),
         },
-      ]
+      ],
     );
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={styles.safe} edges={["top"]}>
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
@@ -192,8 +237,11 @@ export default function AiContextScreen() {
           </Text>
         </View>
       ) : (
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
           {/* Calibration strip */}
           <View style={styles.calibrationRow}>
             <View style={styles.calibrationItem}>
@@ -212,18 +260,22 @@ export default function AiContextScreen() {
             <View style={styles.calibrationDivider} />
             <View style={styles.calibrationItem}>
               <Text style={styles.calibrationLabel}>Suggestions</Text>
-              <Text style={styles.calibrationValue}>{MOCK_CALIBRATION.preferredSuggestionVolume}</Text>
+              <Text style={styles.calibrationValue}>
+                {MOCK_CALIBRATION.preferredSuggestionVolume}
+              </Text>
             </View>
           </View>
 
           {/* Working model */}
           <SectionLabel>Working model</SectionLabel>
           <View style={styles.modelCard}>
-            {(Object.keys(FIELD_LABELS) as Array<keyof typeof MOCK_WORKING_MODEL>).map((key, i, arr) => (
-              <View key={key} style={i === arr.length - 1 ? { borderBottomWidth: 0 } : {}}>
-                <ModelField field={FIELD_LABELS[key]} value={MOCK_WORKING_MODEL[key]} />
-              </View>
-            ))}
+            {(Object.keys(FIELD_LABELS) as Array<keyof typeof MOCK_WORKING_MODEL>).map(
+              (key, i, arr) => (
+                <View key={key} style={i === arr.length - 1 ? { borderBottomWidth: 0 } : {}}>
+                  <ModelField field={FIELD_LABELS[key]} value={MOCK_WORKING_MODEL[key]} />
+                </View>
+              ),
+            )}
           </View>
 
           {/* Memory entries */}
@@ -237,7 +289,8 @@ export default function AiContextScreen() {
           {/* Clear button */}
           <View style={styles.clearSection}>
             <Text style={styles.clearNote}>
-              Clearing memory resets everything above. The AI will start from scratch and rebuild understanding from your event log.
+              Clearing memory resets everything above. The AI will start from scratch and rebuild
+              understanding from your event log.
             </Text>
             <Button
               label="Clear AI memory"
@@ -257,8 +310,8 @@ export default function AiContextScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
   header: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    alignItems: "flex-start",
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.lg,
     borderBottomWidth: 1,
@@ -275,7 +328,7 @@ const styles = StyleSheet.create({
 
   // Calibration
   calibrationRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     backgroundColor: Colors.bgRaised,
     borderRadius: Radius.lg,
     borderWidth: 1,
@@ -283,7 +336,7 @@ const styles = StyleSheet.create({
     padding: Spacing.xl,
     marginBottom: Spacing.xxl,
   },
-  calibrationItem: { flex: 1, alignItems: 'center', gap: 4 },
+  calibrationItem: { flex: 1, alignItems: "center", gap: 4 },
   calibrationLabel: { ...Typography.eyebrow, color: Colors.textMuted },
   calibrationValue: { ...Typography.labelLG, color: Colors.textPrimary },
   calibrationDivider: { width: 1, backgroundColor: Colors.borderSoft },
@@ -294,7 +347,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     borderWidth: 1,
     borderColor: Colors.borderSoft,
-    overflow: 'hidden',
+    overflow: "hidden",
     marginBottom: Spacing.xxl,
   },
   memoryCard: {
@@ -302,7 +355,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     borderWidth: 1,
     borderColor: Colors.borderSoft,
-    overflow: 'hidden',
+    overflow: "hidden",
     marginBottom: Spacing.xxl,
   },
 
@@ -311,9 +364,9 @@ const styles = StyleSheet.create({
   clearNote: {
     ...Typography.bodySM,
     color: Colors.textMuted,
-    textAlign: 'center',
-    fontFamily: 'DMSans_300Light',
-    fontStyle: 'italic',
+    textAlign: "center",
+    fontFamily: "DMSans_300Light",
+    fontStyle: "italic",
     lineHeight: 20,
     paddingHorizontal: Spacing.lg,
   },
@@ -322,8 +375,8 @@ const styles = StyleSheet.create({
   // Cleared state
   clearedState: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     gap: Spacing.lg,
     paddingHorizontal: Spacing.xxl,
   },
@@ -332,8 +385,8 @@ const styles = StyleSheet.create({
   clearedSub: {
     ...Typography.bodyMD,
     color: Colors.textSecondary,
-    textAlign: 'center',
-    fontFamily: 'DMSans_300Light',
+    textAlign: "center",
+    fontFamily: "DMSans_300Light",
     lineHeight: 22,
   },
 });

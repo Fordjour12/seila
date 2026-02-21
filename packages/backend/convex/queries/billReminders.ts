@@ -24,4 +24,3 @@ export const billReminders = query({
     return { dueSoon };
   },
 });
-

@@ -2,7 +2,13 @@ import React from "react";
 import { Pressable, StyleSheet, Text, TextStyle, View, ViewStyle } from "react-native";
 import { Colors, Radius, Spacing, Typography } from "../constants/theme";
 
-export function SectionLabel({ children, style }: { children: React.ReactNode; style?: TextStyle }) {
+export function SectionLabel({
+  children,
+  style,
+}: {
+  children: React.ReactNode;
+  style?: TextStyle;
+}) {
   return <Text style={[styles.sectionLabel, style]}>{children}</Text>;
 }
 
@@ -58,7 +64,11 @@ export function Button({ label, onPress, variant = "primary", disabled, style }:
       disabled={disabled}
       style={[
         styles.button,
-        variant === "primary" ? styles.buttonPrimary : variant === "secondary" ? styles.buttonSecondary : styles.buttonGhost,
+        variant === "primary"
+          ? styles.buttonPrimary
+          : variant === "secondary"
+            ? styles.buttonSecondary
+            : styles.buttonGhost,
         disabled && styles.buttonDisabled,
         style,
       ]}
@@ -66,7 +76,11 @@ export function Button({ label, onPress, variant = "primary", disabled, style }:
       <Text
         style={[
           styles.buttonText,
-          variant === "primary" ? styles.buttonTextPrimary : variant === "secondary" ? styles.buttonTextSecondary : styles.buttonTextGhost,
+          variant === "primary"
+            ? styles.buttonTextPrimary
+            : variant === "secondary"
+              ? styles.buttonTextSecondary
+              : styles.buttonTextGhost,
         ]}
       >
         {label}

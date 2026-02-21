@@ -32,58 +32,60 @@ aiContext: defineTable({
   workingModel: v.object({
     // Narrative strings — AI writes, AI reads, max ~200 chars each
     energyPatterns: v.string(),
-    habitResonance: v.string(),       // which habits actually get done
-    flagPatterns: v.string(),         // what Hard Mode flags revealed
-    triggerSignals: v.string(),       // inferred stress/difficulty patterns
-    suggestionResponse: v.string(),   // what kinds of suggestions land
-    reviewEngagement: v.string(),     // how you use the weekly review
-    financeRelationship: v.string(),  // spending patterns and mood correlation
+    habitResonance: v.string(), // which habits actually get done
+    flagPatterns: v.string(), // what Hard Mode flags revealed
+    triggerSignals: v.string(), // inferred stress/difficulty patterns
+    suggestionResponse: v.string(), // what kinds of suggestions land
+    reviewEngagement: v.string(), // how you use the weekly review
+    financeRelationship: v.string(), // spending patterns and mood correlation
   }),
 
-  memory: v.array(v.object({
-    occurredAt: v.number(),
-    module: v.string(),
-    observation: v.string(),          // max 150 chars
-    confidence: v.union(
-      v.literal("low"),
-      v.literal("medium"),
-      v.literal("high")
-    ),
-    source: v.string(),               // which action wrote this
-  })),
+  memory: v.array(
+    v.object({
+      occurredAt: v.number(),
+      module: v.string(),
+      observation: v.string(), // max 150 chars
+      confidence: v.union(v.literal("low"), v.literal("medium"), v.literal("high")),
+      source: v.string(), // which action wrote this
+    }),
+  ),
 
   calibration: v.object({
     preferredSuggestionVolume: v.union(
       v.literal("minimal"),
       v.literal("moderate"),
-      v.literal("full")
+      v.literal("full"),
     ),
     hardModePlanAccuracy: v.number(), // 0–1, rolling average of non-flagged items
-    patternDismissRate: v.number(),   // 0–1, how often patterns get dismissed
+    patternDismissRate: v.number(), // 0–1, how often patterns get dismissed
     lastHardModeReflection: v.optional(v.number()),
   }),
-})
+});
 ```
 
 ### Tasks
 
 **10.1.1 — Schema and seed**
+
 - Add `aiContext` table to Convex schema
 - Write `mutations/initAiContext.ts` — creates the document with empty defaults if it doesn't exist
 - Call on first app launch (idempotent)
 
 **10.1.2 — Context reader utility**
+
 - Write `lib/readAiContext.ts` — shared utility all AI actions call at the start
 - Returns the full context document or sensible defaults if empty
 - Every existing AI action (`detectPatterns`, `generateWeeklySummary`, `generateHardModePlan`) gets updated to call this first
 
 **10.1.3 — Context writer utility**
+
 - Write `lib/writeAiContext.ts` — shared utility for appending a memory entry and updating the working model
 - Takes a `patch` object — AI writes only the fields it has new signal on
 - Enforces memory array cap (keep last 90 entries, drop oldest)
 - Every existing AI action gets updated to call this after completing
 
 **10.1.4 — Context viewer UI**
+
 - Read-only screen in settings: "What the AI knows about me"
 - Shows `workingModel` fields in plain language
 - Shows last 10 memory entries with timestamps
@@ -91,6 +93,7 @@ aiContext: defineTable({
 - No editing. This is a window, not a control panel.
 
 ### Exit condition
+
 Every AI action reads context before running and writes an observation after. The context viewer shows a working model that is visibly more accurate after 2 weeks of usage than it was on day one.
 
 ---
@@ -132,13 +135,14 @@ export const closeHardModeDay = internalAction(async (ctx) => {
   const context = await readAiContext(ctx);
   const plan = await ctx.runQuery(api.queries.currentHardModePlan);
   const todayEvents = await ctx.runQuery(api.queries.todayEvents);
-  const flags = todayEvents.filter(e => e.type === "hardmode.itemFlagged");
-  const completions = todayEvents.filter(e => isCompletionEvent(e));
+  const flags = todayEvents.filter((e) => e.type === "hardmode.itemFlagged");
+  const completions = todayEvents.filter((e) => isCompletionEvent(e));
 
   // Items that were planned but neither completed nor flagged
-  const ignored = plan.plannedItems.filter(item =>
-    !completions.find(c => c.payload.itemId === item.itemId) &&
-    !flags.find(f => f.payload.targetId === item.itemId)
+  const ignored = plan.plannedItems.filter(
+    (item) =>
+      !completions.find((c) => c.payload.itemId === item.itemId) &&
+      !flags.find((f) => f.payload.targetId === item.itemId),
   );
 
   // Ask the AI to reason over the gap
@@ -166,7 +170,7 @@ export const closeHardModeDay = internalAction(async (ctx) => {
 
 The prompt that drives the analysis. Lives in `lib/prompts/dayClose.ts`. Key instructions:
 
-- Reason about *why* items were flagged, not just that they were
+- Reason about _why_ items were flagged, not just that they were
 - Distinguish between "wrong item" (`not_aligned`) vs "wrong timing" (`not_now`) vs "too much" (`too_much`)
 - Note patterns across multiple days — if mornings are consistently flagged, say so
 - Update the relevant `workingModel` field with a revised narrative
@@ -174,15 +178,18 @@ The prompt that drives the analysis. Lives in `lib/prompts/dayClose.ts`. Key ins
 - Never frame ignored items as failures — they are signal about capacity, not compliance
 
 **10.2.3 — Schedule wiring**
+
 - Schedule `closeHardModeDay` to run at 11pm daily when a Hard Mode session is active
 - If Hard Mode ends mid-day (manual exit), trigger immediately on `hardmode.deactivated`
 
 **10.2.4 — Accuracy metric**
+
 - `hardModePlanAccuracy` = completed items / (planned items - `too_much` flags)
 - `too_much` flags are excluded from the denominator — they signal the plan was overfull, not that you failed
 - Displayed nowhere in the UI — used only by the AI to calibrate future plan volume
 
 **10.2.5 — Plan calibration in `generateHardModePlan`**
+
 - Update `generateHardModePlan` to read `hardModePlanAccuracy` from context
 - If accuracy < 0.5 over last 3 days: reduce plan by one item
 - If accuracy > 0.85 over last 3 days: AI may add one item (still respects module max)
@@ -190,6 +197,7 @@ The prompt that drives the analysis. Lives in `lib/prompts/dayClose.ts`. Key ins
 - If `not_aligned` flags cluster around a module: down-weight that module's items for the next 3 days
 
 ### Exit condition
+
 After 3 days of Hard Mode usage, `generateHardModePlan` produces a noticeably different plan than it did on day one — fewer items if you flagged a lot, different timing if you flagged by time, different modules if you flagged by category. The `aiContext` viewer shows observations that reflect what actually happened.
 
 ---
@@ -209,6 +217,7 @@ A chatbot implies a conversation. This is a drop box with a receipt. You drop so
 ### Tasks
 
 **10.3.1 — Capture input component**
+
 - Floating input on Today screen — one tap to open, returns on submit or dismiss
 - Placeholder: "How are you right now?" — never changes, never gets clever
 - Max 280 chars
@@ -243,11 +252,13 @@ export const processCapture = action(async (ctx, { text }: { text: string }) => 
   if (result.contextPatch) {
     await writeAiContext(ctx, {
       workingModelPatch: result.contextPatch,
-      observations: [{
-        source: "conversationalCapture",
-        observation: `User input signal: ${result.moodSignal ? `mood ~${result.moodSignal}` : "unscored"}`,
-        confidence: "low",
-      }],
+      observations: [
+        {
+          source: "conversationalCapture",
+          observation: `User input signal: ${result.moodSignal ? `mood ~${result.moodSignal}` : "unscored"}`,
+          confidence: "low",
+        },
+      ],
     });
   }
 
@@ -277,12 +288,14 @@ Lives in `lib/prompts/capture.ts`. Key instructions:
 - Never store the raw input text anywhere
 
 **10.3.4 — Reply display**
+
 - Reply appears inline beneath the input, fades after 30 seconds
 - No history of replies stored or displayed
 - If a suggestion was generated, it appears in the normal suggestion strip — not inline
 - Raw input text is never stored in the event log or anywhere else
 
 ### Exit condition
+
 You type "rough morning" into the Today screen. The AI replies in one sentence. If a suggestion is generated it appears in the strip. After 30 seconds the reply is gone. Nothing in the app records what you typed.
 
 ---
@@ -336,6 +349,7 @@ HARD LIMITS:
 ### Tasks
 
 **10.0.1 — Build prompt infrastructure before anything else**
+
 - Write `lib/prompts/base.ts`
 - Write `lib/callAI.ts` — shared wrapper around the Convex AI action, injects base prompt, handles errors
 - Update all existing AI actions to use `callAI` instead of raw API calls
@@ -391,4 +405,4 @@ After two weeks of usage post-Phase 10:
 
 ---
 
-*The system now remembers. It still doesn't decide.*
+_The system now remembers. It still doesn't decide._

@@ -7,17 +7,13 @@ import { makeFunctionReference } from "convex/server";
 const todayHabitsRef = makeFunctionReference<"query", {}, unknown>(
   "queries/todayHabits:internalTodayHabits",
 );
-const inboxRef = makeFunctionReference<"query", {}, unknown>(
-  "queries/taskQueries:internalInbox",
-);
+const inboxRef = makeFunctionReference<"query", {}, unknown>("queries/taskQueries:internalInbox");
 const hardModeSessionRef = makeFunctionReference<"query", {}, unknown>(
   "queries/hardModeSession:hardModeSession",
 );
-const recentEventsForPatternsRef = makeFunctionReference<
-  "query",
-  { since: number },
-  unknown
->("queries/activePatterns:getRecentEventsForPatterns");
+const recentEventsForPatternsRef = makeFunctionReference<"query", { since: number }, unknown>(
+  "queries/activePatterns:getRecentEventsForPatterns",
+);
 
 export const plannerAgent = new Agent(components.agent, {
   name: "plannerAgent",

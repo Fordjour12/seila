@@ -11,11 +11,7 @@ import {
 import { createTraceHarness } from "../trace-harness.js";
 
 type TaskEvent = LifeEvent<
-  | "task.created"
-  | "task.focused"
-  | "task.deferred"
-  | "task.completed"
-  | "task.abandoned",
+  "task.created" | "task.focused" | "task.deferred" | "task.completed" | "task.abandoned",
   { id: string; title?: string; deferUntil?: number; status?: string }
 >;
 
@@ -26,11 +22,7 @@ type TaskCommand =
   | Command<"task.complete", { taskId: string }>
   | Command<"task.abandon", { taskId: string }>;
 
-const taskHarness = createTraceHarness<
-  ReturnType<typeof taskReducer>,
-  TaskEvent,
-  TaskCommand
->({
+const taskHarness = createTraceHarness<ReturnType<typeof taskReducer>, TaskEvent, TaskCommand>({
   initialState: initialTaskState,
   reduce: taskReducer as (
     state: ReturnType<typeof taskReducer>,

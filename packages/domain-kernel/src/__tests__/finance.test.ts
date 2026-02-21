@@ -51,21 +51,19 @@ describe("finance reducer", () => {
   });
 
   test("logTransaction records manual transaction", () => {
-    const trace = financeTrace
-      .given([])
-      .when({
-        type: "finance.logTransaction",
-        idempotencyKey: "tx-1",
-        requestedAt: NOW,
-        payload: {
-          transactionId: "tx-1",
-          amount: 1299,
-          envelopeId: "env-food",
-          source: "manual",
-          merchantHint: "Cafe",
-        },
-        meta: {},
-      });
+    const trace = financeTrace.given([]).when({
+      type: "finance.logTransaction",
+      idempotencyKey: "tx-1",
+      requestedAt: NOW,
+      payload: {
+        transactionId: "tx-1",
+        amount: 1299,
+        envelopeId: "env-food",
+        source: "manual",
+        merchantHint: "Cafe",
+      },
+      meta: {},
+    });
 
     expect(trace.state.recentTransactions[0]?.transactionId).toBe("tx-1");
     expect(trace.state.recentTransactions[0]?.pendingImport).toBe(false);

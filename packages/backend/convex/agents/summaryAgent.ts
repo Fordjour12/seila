@@ -14,11 +14,9 @@ const checkinsForWeeklySummaryRef = makeFunctionReference<
   { since: number; until: number },
   unknown
 >("queries/weeklySummaryQueries:internalCheckinsForWeeklySummary");
-const moodTrendRef = makeFunctionReference<
-  "query",
-  { days?: number },
-  unknown
->("queries/moodTrend:internalMoodTrend");
+const moodTrendRef = makeFunctionReference<"query", { days?: number }, unknown>(
+  "queries/moodTrend:internalMoodTrend",
+);
 const activePatternsRef = makeFunctionReference<"query", {}, unknown>(
   "queries/activePatterns:internalActivePatterns",
 );

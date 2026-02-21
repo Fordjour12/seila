@@ -30,7 +30,9 @@ export async function callAI(input: {
   payload: Record<string, unknown>;
 }): Promise<DayCloseResult | CaptureResult | Record<string, never>> {
   if (input.promptKey === "capture") {
-    const text = String(input.payload.text ?? "").trim().toLowerCase();
+    const text = String(input.payload.text ?? "")
+      .trim()
+      .toLowerCase();
 
     if (!text) {
       return {
@@ -66,7 +68,8 @@ export async function callAI(input: {
     }
 
     return {
-      reply: "Signal received. I will use this context to keep recommendations appropriately light.",
+      reply:
+        "Signal received. I will use this context to keep recommendations appropriately light.",
     };
   }
 

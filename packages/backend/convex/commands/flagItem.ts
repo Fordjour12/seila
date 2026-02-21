@@ -27,12 +27,7 @@ export const flagItem = mutation({
     }
 
     const now = Date.now();
-    const nextPlan = applyHardModeFlagToPlan(
-      session.plan,
-      args.itemId,
-      args.flag,
-      now,
-    );
+    const nextPlan = applyHardModeFlagToPlan(session.plan, args.itemId, args.flag, now);
 
     await ctx.db.patch(args.sessionId, {
       plan: nextPlan,

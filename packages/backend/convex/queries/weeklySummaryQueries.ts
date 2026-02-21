@@ -49,12 +49,7 @@ export const tasksForWeeklySummary = query({
       .withIndex("by_createdAt", (q) => q.gte("createdAt", args.since))
       .collect();
 
-    return tasks.filter(
-      (t) =>
-        t.createdAt <= args.until ||
-        t.completedAt ||
-        t.abandonedAt
-    );
+    return tasks.filter((t) => t.createdAt <= args.until || t.completedAt || t.abandonedAt);
   },
 });
 

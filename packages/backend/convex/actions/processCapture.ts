@@ -104,22 +104,21 @@ export const processCapture = action({
     // Create a suggestion if the agent identified one
     if (parsed.suggestedAction) {
       try {
-        await ctx.runMutation(
-          internal.commands.createSuggestionInternal.createSuggestionInternal,
-          {
-            policy: "capture",
-            headline: tonePolicy(parsed.suggestedAction.headline),
-            subtext: tonePolicy(parsed.suggestedAction.subtext),
-            priority: 1,
-            action: {
-              type: "open_screen",
-              label: "Open",
-              payload: { screen: parsed.suggestedAction.screen ?? "checkin" },
-            },
-            expiresAt: Date.now() + 30 * 60 * 1000,
+        await ctx.runMutation(internal.commands.createSuggestionInternal.createSuggestionInternal, {
+          policy: "capture",
+          headline: tonePolicy(parsed.suggestedAction.headline),
+          subtext: tonePolicy(parsed.suggestedAction.subtext),
+          priority: 1,
+          action: {
+            type: "open_screen",
+            label: "Open",
+            payload: { screen: parsed.suggestedAction.screen ?? "checkin" },
           },
-        );
-      } catch { /* suggestion creation is non-critical */ }
+          expiresAt: Date.now() + 30 * 60 * 1000,
+        });
+      } catch {
+        /* suggestion creation is non-critical */
+      }
     }
 
     return {

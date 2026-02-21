@@ -41,8 +41,10 @@ export const multiCurrencySummary = query({
     return {
       baseCurrency,
       estimatedTotalInBase: baseValue,
-      currencies: Array.from(balancesByCurrency.entries()).map(([currency, amount]) => ({ currency, amount })),
+      currencies: Array.from(balancesByCurrency.entries()).map(([currency, amount]) => ({
+        currency,
+        amount,
+      })),
     };
   },
 });
-

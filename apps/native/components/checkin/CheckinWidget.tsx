@@ -62,12 +62,7 @@ export function CheckinWidget({ onPress }: CheckinWidgetProps) {
           </View>
         )}
       </View>
-      <Button
-        variant="primary"
-        size="sm"
-        onPress={onPress}
-        className="rounded-full px-5 shadow-sm"
-      >
+      <Button variant="primary" size="sm" onPress={onPress} className="rounded-full px-5 shadow-sm">
         {lastCheckin ? "Update" : "Start"}
       </Button>
     </SpicedCard>

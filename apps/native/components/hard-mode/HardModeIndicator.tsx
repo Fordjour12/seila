@@ -15,7 +15,9 @@ export function HardModeIndicator() {
       <View className="flex-row items-center justify-between">
         <View className="flex-row items-center gap-2">
           <View className="h-2 w-2 rounded-full bg-destructive animate-pulse" />
-          <Text className="text-foreground text-sm font-semibold tracking-tight">Hard Mode Active</Text>
+          <Text className="text-foreground text-sm font-semibold tracking-tight">
+            Hard Mode Active
+          </Text>
         </View>
         <Text className="text-muted-foreground text-xs font-medium">
           Ends {new Date(session.windowEnd).toLocaleDateString()}

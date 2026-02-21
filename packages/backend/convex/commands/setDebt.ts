@@ -20,9 +20,11 @@ export const setDebt = mutation({
     if (dedupe) return { deduplicated: true };
 
     if (!args.name.trim()) throw new ConvexError("name is required");
-    if (!Number.isInteger(args.balance) || args.balance < 0) throw new ConvexError("balance invalid");
+    if (!Number.isInteger(args.balance) || args.balance < 0)
+      throw new ConvexError("balance invalid");
     if (!Number.isInteger(args.aprBps) || args.aprBps < 0) throw new ConvexError("aprBps invalid");
-    if (!Number.isInteger(args.minPayment) || args.minPayment < 0) throw new ConvexError("minPayment invalid");
+    if (!Number.isInteger(args.minPayment) || args.minPayment < 0)
+      throw new ConvexError("minPayment invalid");
 
     const now = Date.now();
     if (args.debtId) {

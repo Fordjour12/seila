@@ -19,8 +19,12 @@ export const setSharedBudget = mutation({
     if (dedupe) return { deduplicated: true };
 
     if (!args.name.trim()) throw new ConvexError("name is required");
-    if (!Number.isInteger(args.budgetAmount) || args.budgetAmount <= 0) throw new ConvexError("budgetAmount invalid");
-    if (args.spentAmount !== undefined && (!Number.isInteger(args.spentAmount) || args.spentAmount < 0)) {
+    if (!Number.isInteger(args.budgetAmount) || args.budgetAmount <= 0)
+      throw new ConvexError("budgetAmount invalid");
+    if (
+      args.spentAmount !== undefined &&
+      (!Number.isInteger(args.spentAmount) || args.spentAmount < 0)
+    ) {
       throw new ConvexError("spentAmount invalid");
     }
 

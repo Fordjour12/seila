@@ -29,9 +29,7 @@ export function SuggestionCard({ suggestion, onDismiss, onAction }: Props) {
         <Text className="text-foreground text-lg font-bold tracking-tight leading-6">
           {suggestion.headline}
         </Text>
-        <Text className="text-muted-foreground text-sm leading-5">
-          {suggestion.subtext}
-        </Text>
+        <Text className="text-muted-foreground text-sm leading-5">{suggestion.subtext}</Text>
       </View>
       <View className="flex-row gap-3 mt-4 pt-3 border-t border-border/5">
         {suggestion.action ? (

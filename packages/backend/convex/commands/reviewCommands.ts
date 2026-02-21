@@ -10,11 +10,11 @@ function getWeekBounds(): { weekStart: number; weekEnd: number } {
   const weekStart = new Date(now);
   weekStart.setDate(diff);
   weekStart.setHours(0, 0, 0, 0);
-  
+
   const weekEnd = new Date(weekStart);
   weekEnd.setDate(weekEnd.getDate() + 6);
   weekEnd.setHours(23, 59, 59, 999);
-  
+
   return {
     weekStart: weekStart.getTime(),
     weekEnd: weekEnd.getTime(),
@@ -63,15 +63,11 @@ export const startReview = mutation({
       },
     });
 
-    await ctx.scheduler.runAfter(
-      0,
-      internal.actions.generateWeeklySummary.generateWeeklySummary,
-      {
-        reviewId,
-        weekStart,
-        weekEnd,
-      },
-    );
+    await ctx.scheduler.runAfter(0, internal.actions.generateWeeklySummary.generateWeeklySummary, {
+      reviewId,
+      weekStart,
+      weekEnd,
+    });
 
     return reviewId;
   },

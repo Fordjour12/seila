@@ -1,11 +1,6 @@
 import { v } from "convex/values";
 
-const primitivePayloadValueValidator = v.union(
-  v.string(),
-  v.number(),
-  v.boolean(),
-  v.null(),
-);
+const primitivePayloadValueValidator = v.union(v.string(), v.number(), v.boolean(), v.null());
 
 const primitiveArrayPayloadValueValidator = v.union(
   v.array(v.string()),
@@ -29,7 +24,4 @@ export const jsonPayloadValueValidator = v.union(
   v.array(v.object({})),
 );
 
-export const jsonPayloadObjectValidator = v.record(
-  v.string(),
-  jsonPayloadValueValidator,
-);
+export const jsonPayloadObjectValidator = v.record(v.string(), jsonPayloadValueValidator);

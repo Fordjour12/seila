@@ -38,11 +38,8 @@ function createAuth(ctx: GenericCtx<DataModel>) {
 
 export { createAuth };
 
-
 export async function safeGetAuthUserForQuery(ctx: QueryCtx | MutationCtx | ActionCtx) {
-  return await authComponent.safeGetAuthUser(
-    ctx as unknown as GenericCtx<DataModel>,
-  );
+  return await authComponent.safeGetAuthUser(ctx as unknown as GenericCtx<DataModel>);
 }
 
 export const getCurrentUser = query({

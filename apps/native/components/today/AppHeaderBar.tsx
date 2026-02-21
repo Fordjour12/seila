@@ -8,10 +8,10 @@
  *   // Place above ScrollView in TodayScreen
  */
 
-import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { router } from 'expo-router';
-import { Colors, Typography, Spacing, Radius } from '../../constants/theme';
+import React from "react";
+import { View, Text, Pressable, StyleSheet } from "react-native";
+import { router } from "expo-router";
+import { Colors, Typography, Spacing, Radius } from "../../constants/theme";
 
 interface AppHeaderBarProps {
   hardModeActive?: boolean;
@@ -26,7 +26,7 @@ export function AppHeaderBar({ hardModeActive = false }: AppHeaderBarProps) {
       <View style={styles.actions}>
         {/* Recovery Context */}
         <Pressable
-          onPress={() => router.push('/recovery')}
+          onPress={() => router.push("/recovery")}
           style={styles.iconBtn}
           accessibilityLabel="Recovery context"
         >
@@ -35,19 +35,19 @@ export function AppHeaderBar({ hardModeActive = false }: AppHeaderBarProps) {
 
         {/* Hard Mode */}
         <Pressable
-          onPress={() => router.push('/hardmode')}
+          onPress={() => router.push("/hardmode")}
           style={[styles.hardModeBtn, hardModeActive && styles.hardModeBtnActive]}
-          accessibilityLabel={hardModeActive ? 'Hard Mode active' : 'Activate Hard Mode'}
+          accessibilityLabel={hardModeActive ? "Hard Mode active" : "Activate Hard Mode"}
         >
           {hardModeActive && <View style={styles.hardModeDot} />}
           <Text style={[styles.hardModeBtnText, hardModeActive && styles.hardModeBtnTextActive]}>
-            {hardModeActive ? 'Hard Mode' : 'Hard Mode'}
+            {hardModeActive ? "Hard Mode" : "Hard Mode"}
           </Text>
         </Pressable>
 
         {/* Settings */}
         <Pressable
-          onPress={() => router.push('/settings')}
+          onPress={() => router.push("/settings")}
           style={styles.iconBtn}
           accessibilityLabel="Settings"
         >
@@ -60,23 +60,23 @@ export function AppHeaderBar({ hardModeActive = false }: AppHeaderBarProps) {
 
 const styles = StyleSheet.create({
   bar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: Spacing.xxl,
     paddingVertical: Spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: Colors.borderSoft,
   },
   logo: {
-    fontFamily: 'DMSerifDisplay_400Regular',
+    fontFamily: "DMSerifDisplay_400Regular",
     fontSize: 18,
     color: Colors.amber,
     letterSpacing: -0.3,
   },
   actions: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: Spacing.sm,
   },
   iconBtn: {
@@ -86,17 +86,17 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.bgRaised,
     borderWidth: 1,
     borderColor: Colors.borderSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   iconBtnText: {
     fontSize: 13,
     color: Colors.textMuted,
-    fontFamily: 'monospace',
+    fontFamily: "monospace",
   },
   hardModeBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: Spacing.xs,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs + 2,
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.bgRaised,
   },
   hardModeBtnActive: {
-    backgroundColor: 'rgba(212,146,58,0.1)',
+    backgroundColor: "rgba(212,146,58,0.1)",
     borderColor: Colors.amberBorder,
   },
   hardModeDot: {

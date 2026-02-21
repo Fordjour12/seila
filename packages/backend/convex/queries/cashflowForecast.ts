@@ -16,7 +16,12 @@ export const cashflowForecast = query({
       .filter((income) => income.occurredAt >= trailing60)
       .reduce((sum, income) => sum + income.amount, 0);
     const trailingExpense = transactions
-      .filter((transaction) => !transaction.pendingImport && !transaction.voidedAt && transaction.occurredAt >= trailing60)
+      .filter(
+        (transaction) =>
+          !transaction.pendingImport &&
+          !transaction.voidedAt &&
+          transaction.occurredAt >= trailing60,
+      )
       .reduce((sum, transaction) => sum + transaction.amount, 0);
 
     const dailyIncome = trailingIncome / 60;
@@ -32,4 +37,3 @@ export const cashflowForecast = query({
     };
   },
 });
-

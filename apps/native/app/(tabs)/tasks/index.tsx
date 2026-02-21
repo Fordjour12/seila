@@ -13,7 +13,7 @@
  *   - "Abandoned" not "failed"
  */
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -24,16 +24,16 @@ import {
   Animated,
   Platform,
   KeyboardAvoidingView,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors, Typography, Spacing, Radius } from '../../../constants/theme';
-import { SectionLabel, EmptyState } from '../../../components/ui';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Colors, Typography, Spacing, Radius } from "../../../constants/theme";
+import { SectionLabel, EmptyState } from "../../../components/ui";
 
 // ─────────────────────────────────────────────
 // TYPES + MOCK
 // ─────────────────────────────────────────────
 
-type TaskState = 'inbox' | 'focus' | 'deferred' | 'done' | 'abandoned';
+type TaskState = "inbox" | "focus" | "deferred" | "done" | "abandoned";
 
 interface Task {
   id: string;
@@ -43,19 +43,23 @@ interface Task {
 }
 
 const MOCK_TASKS: Task[] = [
-  { id: '1', text: 'Reply to Dr. Osei email',       state: 'focus',  capturedAt: 'Today' },
-  { id: '2', text: 'Book therapy appointment',       state: 'focus',  capturedAt: 'Today' },
-  { id: '3', text: 'Pick up prescription',           state: 'inbox',  capturedAt: 'Today' },
-  { id: '4', text: 'Read recovery workbook ch.4',    state: 'inbox',  capturedAt: 'Yesterday' },
-  { id: '5', text: 'Call mom back',                  state: 'inbox',  capturedAt: 'Yesterday' },
-  { id: '6', text: 'Look into support group times',  state: 'deferred', capturedAt: '3 days ago' },
+  { id: "1", text: "Reply to Dr. Osei email", state: "focus", capturedAt: "Today" },
+  { id: "2", text: "Book therapy appointment", state: "focus", capturedAt: "Today" },
+  { id: "3", text: "Pick up prescription", state: "inbox", capturedAt: "Today" },
+  { id: "4", text: "Read recovery workbook ch.4", state: "inbox", capturedAt: "Yesterday" },
+  { id: "5", text: "Call mom back", state: "inbox", capturedAt: "Yesterday" },
+  { id: "6", text: "Look into support group times", state: "deferred", capturedAt: "3 days ago" },
 ];
 
 // ─────────────────────────────────────────────
 // FOCUS SLOT
 // ─────────────────────────────────────────────
 
-function FocusSlot({ task, onComplete, onDefer }: {
+function FocusSlot({
+  task,
+  onComplete,
+  onDefer,
+}: {
   task?: Task;
   onComplete?: () => void;
   onDefer?: () => void;
@@ -98,9 +102,9 @@ const slotStyles = StyleSheet.create({
     borderRadius: Radius.md,
     borderWidth: 1,
     borderColor: Colors.borderSoft,
-    borderStyle: 'dashed',
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderStyle: "dashed",
+    alignItems: "center",
+    justifyContent: "center",
   },
   emptyText: { ...Typography.eyebrow, color: Colors.textMuted },
   filled: {
@@ -109,8 +113,8 @@ const slotStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.borderSoft,
     backgroundColor: Colors.bgRaised,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: Spacing.md,
     gap: Spacing.md,
   },
@@ -120,8 +124,8 @@ const slotStyles = StyleSheet.create({
     borderRadius: Radius.sm,
     borderWidth: 1.5,
     borderColor: Colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     flexShrink: 0,
   },
   checkInner: {
@@ -139,7 +143,13 @@ const slotStyles = StyleSheet.create({
 // INBOX ROW
 // ─────────────────────────────────────────────
 
-function InboxRow({ task, onFocus, onDefer, onDone, focusFull }: {
+function InboxRow({
+  task,
+  onFocus,
+  onDefer,
+  onDone,
+  focusFull,
+}: {
   task: Task;
   onFocus: () => void;
   onDefer: () => void;
@@ -174,22 +184,35 @@ function InboxRow({ task, onFocus, onDefer, onDone, focusFull }: {
       <Animated.View style={[inboxStyles.actions, { height: actionsHeight }]}>
         <View style={inboxStyles.actionsInner}>
           <Pressable
-            onPress={() => { onFocus(); setOpen(false); }}
-            style={[inboxStyles.actionBtn, inboxStyles.actionFocus, focusFull && inboxStyles.actionDisabled]}
+            onPress={() => {
+              onFocus();
+              setOpen(false);
+            }}
+            style={[
+              inboxStyles.actionBtn,
+              inboxStyles.actionFocus,
+              focusFull && inboxStyles.actionDisabled,
+            ]}
             disabled={focusFull}
           >
             <Text style={[inboxStyles.actionText, focusFull && { color: Colors.textMuted }]}>
-              {focusFull ? 'Focus full' : 'Focus'}
+              {focusFull ? "Focus full" : "Focus"}
             </Text>
           </Pressable>
           <Pressable
-            onPress={() => { onDefer(); setOpen(false); }}
+            onPress={() => {
+              onDefer();
+              setOpen(false);
+            }}
             style={[inboxStyles.actionBtn, inboxStyles.actionDefer]}
           >
             <Text style={inboxStyles.actionTextMuted}>Later</Text>
           </Pressable>
           <Pressable
-            onPress={() => { onDone(); setOpen(false); }}
+            onPress={() => {
+              onDone();
+              setOpen(false);
+            }}
             style={[inboxStyles.actionBtn, inboxStyles.actionDone]}
           >
             <Text style={inboxStyles.actionTextMuted}>Done</Text>
@@ -206,12 +229,12 @@ const inboxStyles = StyleSheet.create({
     borderRadius: Radius.md,
     borderWidth: 1,
     borderColor: Colors.borderSoft,
-    overflow: 'hidden',
+    overflow: "hidden",
     marginBottom: Spacing.sm,
   },
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: Spacing.md,
     padding: Spacing.lg,
   },
@@ -225,25 +248,25 @@ const inboxStyles = StyleSheet.create({
   text: { ...Typography.bodyMD, color: Colors.textPrimary, flex: 1 },
   meta: { ...Typography.bodyXS, color: Colors.textMuted },
   actions: {
-    overflow: 'hidden',
+    overflow: "hidden",
     borderTopWidth: 1,
     borderTopColor: Colors.borderSoft,
   },
   actionsInner: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: Spacing.sm,
     padding: Spacing.md,
   },
   actionBtn: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: Spacing.sm,
     borderRadius: Radius.sm,
     borderWidth: 1,
   },
   actionFocus: { backgroundColor: Colors.amberGlow, borderColor: Colors.amberBorder },
   actionDefer: { borderColor: Colors.border },
-  actionDone:  { borderColor: Colors.border },
+  actionDone: { borderColor: Colors.border },
   actionDisabled: { opacity: 0.4 },
   actionText: { ...Typography.labelSM, color: Colors.amber },
   actionTextMuted: { ...Typography.labelSM, color: Colors.textMuted },
@@ -254,16 +277,16 @@ const inboxStyles = StyleSheet.create({
 // ─────────────────────────────────────────────
 
 function CaptureBar({ onAdd }: { onAdd: (text: string) => void }) {
-  const [text, setText] = useState('');
+  const [text, setText] = useState("");
 
   const submit = () => {
     if (!text.trim()) return;
     onAdd(text.trim());
-    setText('');
+    setText("");
   };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <View style={captureStyles.row}>
         <TextInput
           style={captureStyles.input}
@@ -285,7 +308,7 @@ function CaptureBar({ onAdd }: { onAdd: (text: string) => void }) {
 
 const captureStyles = StyleSheet.create({
   row: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: Spacing.sm,
     backgroundColor: Colors.bg,
     paddingTop: Spacing.md,
@@ -309,8 +332,8 @@ const captureStyles = StyleSheet.create({
     backgroundColor: Colors.amber,
     borderRadius: Radius.md,
     paddingHorizontal: Spacing.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   btnText: { ...Typography.labelLG, color: Colors.bg },
 });
@@ -322,28 +345,31 @@ const captureStyles = StyleSheet.create({
 export default function TasksScreen() {
   const [tasks, setTasks] = useState(MOCK_TASKS);
 
-  const focusTasks = tasks.filter(t => t.state === 'focus');
-  const inboxTasks = tasks.filter(t => t.state === 'inbox');
-  const deferredTasks = tasks.filter(t => t.state === 'deferred');
+  const focusTasks = tasks.filter((t) => t.state === "focus");
+  const inboxTasks = tasks.filter((t) => t.state === "inbox");
+  const deferredTasks = tasks.filter((t) => t.state === "deferred");
   const focusFull = focusTasks.length >= 3;
 
   const updateState = (id: string, state: TaskState) => {
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, state } : t));
+    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, state } : t)));
   };
 
   const addTask = (text: string) => {
-    setTasks(prev => [...prev, {
-      id: Date.now().toString(),
-      text,
-      state: 'inbox',
-      capturedAt: 'Just now',
-    }]);
+    setTasks((prev) => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        text,
+        state: "inbox",
+        capturedAt: "Just now",
+      },
+    ]);
   };
 
   const focusSlots = Array.from({ length: 3 }, (_, i) => focusTasks[i] ?? null);
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
@@ -353,7 +379,7 @@ export default function TasksScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.eyebrow}>Tasks</Text>
-          <Text style={styles.title}>Focus on{'\n'}what matters.</Text>
+          <Text style={styles.title}>Focus on{"\n"}what matters.</Text>
         </View>
 
         {/* ── FOCUS ── */}
@@ -367,8 +393,8 @@ export default function TasksScreen() {
               <FocusSlot
                 key={task?.id ?? `empty-${i}`}
                 task={task ?? undefined}
-                onComplete={() => task && updateState(task.id, 'done')}
-                onDefer={() => task && updateState(task.id, 'inbox')}
+                onComplete={() => task && updateState(task.id, "done")}
+                onDefer={() => task && updateState(task.id, "inbox")}
               />
             ))}
           </View>
@@ -378,14 +404,14 @@ export default function TasksScreen() {
         {inboxTasks.length > 0 && (
           <View style={styles.section}>
             <SectionLabel>Inbox</SectionLabel>
-            {inboxTasks.map(task => (
+            {inboxTasks.map((task) => (
               <InboxRow
                 key={task.id}
                 task={task}
                 focusFull={focusFull}
-                onFocus={() => updateState(task.id, 'focus')}
-                onDefer={() => updateState(task.id, 'deferred')}
-                onDone={() => updateState(task.id, 'done')}
+                onFocus={() => updateState(task.id, "focus")}
+                onDefer={() => updateState(task.id, "deferred")}
+                onDone={() => updateState(task.id, "done")}
               />
             ))}
           </View>
@@ -395,14 +421,14 @@ export default function TasksScreen() {
         {deferredTasks.length > 0 && (
           <View style={styles.section}>
             <SectionLabel>Later</SectionLabel>
-            {deferredTasks.map(task => (
+            {deferredTasks.map((task) => (
               <InboxRow
                 key={task.id}
                 task={task}
                 focusFull={focusFull}
-                onFocus={() => updateState(task.id, 'focus')}
-                onDefer={() => updateState(task.id, 'deferred')}
-                onDone={() => updateState(task.id, 'done')}
+                onFocus={() => updateState(task.id, "focus")}
+                onDefer={() => updateState(task.id, "deferred")}
+                onDone={() => updateState(task.id, "done")}
               />
             ))}
           </View>
@@ -428,7 +454,12 @@ const styles = StyleSheet.create({
   eyebrow: { ...Typography.eyebrow, color: Colors.textMuted, marginBottom: Spacing.sm },
   title: { ...Typography.displayXL, color: Colors.textPrimary },
   section: { marginBottom: Spacing.xxl },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 14,
+  },
   sectionLabelInline: { marginBottom: 0, flex: 1 },
   sectionMeta: { ...Typography.labelSM, color: Colors.textMuted },
   focusSlots: { gap: Spacing.sm },

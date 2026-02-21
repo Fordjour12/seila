@@ -14,9 +14,16 @@ export const spendingAnomalies = query({
       .filter((tx) => !tx.pendingImport && !tx.voidedAt && tx.occurredAt >= last7)
       .reduce((sum, tx) => sum + tx.amount, 0);
 
-    const baseline = transactions
-      .filter((tx) => !tx.pendingImport && !tx.voidedAt && tx.occurredAt >= baseline28 && tx.occurredAt < last7)
-      .reduce((sum, tx) => sum + tx.amount, 0) / 4;
+    const baseline =
+      transactions
+        .filter(
+          (tx) =>
+            !tx.pendingImport &&
+            !tx.voidedAt &&
+            tx.occurredAt >= baseline28 &&
+            tx.occurredAt < last7,
+        )
+        .reduce((sum, tx) => sum + tx.amount, 0) / 4;
 
     const ratio = baseline > 0 ? recent / baseline : 0;
     const anomalies = [] as Array<{ type: string; headline: string; ratio: number }>;
@@ -36,4 +43,3 @@ export const spendingAnomalies = query({
     };
   },
 });
-

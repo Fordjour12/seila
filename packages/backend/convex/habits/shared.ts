@@ -56,7 +56,10 @@ function parseCadence(value: unknown): HabitCadence | null {
   return null;
 }
 
-function parseStringEnum<T extends string>(value: unknown, allowed: ReadonlyArray<T>): T | undefined {
+function parseStringEnum<T extends string>(
+  value: unknown,
+  allowed: ReadonlyArray<T>,
+): T | undefined {
   if (typeof value !== "string") {
     return undefined;
   }
@@ -100,7 +103,11 @@ function eventFromDoc(doc: Doc<"events">): HabitEvent | null {
           "evening",
           "anytime",
         ]),
-        difficulty: parseStringEnum<HabitDifficulty>(doc.payload.difficulty, ["low", "medium", "high"]),
+        difficulty: parseStringEnum<HabitDifficulty>(doc.payload.difficulty, [
+          "low",
+          "medium",
+          "high",
+        ]),
       },
       meta: {},
     };

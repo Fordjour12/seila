@@ -24,7 +24,10 @@ export const updateRecurringTransaction = mutation({
       throw new ConvexError("recurringId is required");
     }
 
-    if (args.nextDueAt !== undefined && (!Number.isInteger(args.nextDueAt) || args.nextDueAt <= 0)) {
+    if (
+      args.nextDueAt !== undefined &&
+      (!Number.isInteger(args.nextDueAt) || args.nextDueAt <= 0)
+    ) {
       throw new ConvexError("nextDueAt must be a valid timestamp");
     }
 

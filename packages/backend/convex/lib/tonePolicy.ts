@@ -7,33 +7,33 @@
  */
 
 const DISALLOWED_FRAGMENTS = [
-    "you failed",
-    "failure",
-    "you should",
-    "you need to",
-    "you must",
-    "must",
-    "lazy",
-    "guilt",
-    "shame",
-    "missed",
-    "behind",
-    "streak",
-    "bad job",
-    "wrong",
-    "disappointed",
+  "you failed",
+  "failure",
+  "you should",
+  "you need to",
+  "you must",
+  "must",
+  "lazy",
+  "guilt",
+  "shame",
+  "missed",
+  "behind",
+  "streak",
+  "bad job",
+  "wrong",
+  "disappointed",
 ];
 
 const SAFE_FALLBACK = "Signal acknowledged. Keeping things contained and intentional.";
 
 export function tonePolicy(text: string, fallback?: string): string {
-    const lower = text.toLowerCase();
+  const lower = text.toLowerCase();
 
-    for (const fragment of DISALLOWED_FRAGMENTS) {
-        if (lower.includes(fragment)) {
-            return fallback ?? SAFE_FALLBACK;
-        }
+  for (const fragment of DISALLOWED_FRAGMENTS) {
+    if (lower.includes(fragment)) {
+      return fallback ?? SAFE_FALLBACK;
     }
+  }
 
-    return text;
+  return text;
 }

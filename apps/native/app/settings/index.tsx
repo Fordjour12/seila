@@ -11,18 +11,12 @@
  *   - Data & Privacy (export all, reset)
  */
 
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  Pressable,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import { Colors, Typography, Spacing, Radius } from '../../constants/theme';
-import { Toggle, SectionLabel } from '../../components/ui';
+import React, { useState } from "react";
+import { View, Text, ScrollView, StyleSheet, Pressable } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { router } from "expo-router";
+import { Colors, Typography, Spacing, Radius } from "../../constants/theme";
+import { Toggle, SectionLabel } from "../../components/ui";
 
 // ─────────────────────────────────────────────
 // COMPONENTS
@@ -49,23 +43,16 @@ function SettingsRow({
     <Pressable
       onPress={onPress}
       disabled={!onPress}
-      style={({ pressed }) => [
-        styles.row,
-        pressed && onPress && styles.rowPressed,
-      ]}
+      style={({ pressed }) => [styles.row, pressed && onPress && styles.rowPressed]}
     >
       <View style={styles.rowIcon}>
         <Text style={styles.rowIconText}>{icon}</Text>
       </View>
       <View style={styles.rowContent}>
-        <Text style={[styles.rowLabel, danger && styles.rowLabelDanger]}>
-          {label}
-        </Text>
+        <Text style={[styles.rowLabel, danger && styles.rowLabelDanger]}>{label}</Text>
         {sublabel && <Text style={styles.rowSublabel}>{sublabel}</Text>}
       </View>
-      {right ?? (chevron && onPress && (
-        <Text style={styles.chevron}>›</Text>
-      ))}
+      {right ?? (chevron && onPress && <Text style={styles.chevron}>›</Text>)}
     </Pressable>
   );
 }
@@ -87,7 +74,7 @@ export default function SettingsScreen() {
   const [captureAutoSend, setCaptureAutoSend] = useState(false);
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={styles.safe} edges={["top"]}>
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
@@ -108,7 +95,7 @@ export default function SettingsScreen() {
             icon="◎"
             label="What the AI knows"
             sublabel="View your working model and memory"
-            onPress={() => router.push('/settings/aicontext')}
+            onPress={() => router.push("/settings/aicontext")}
           />
           <Divider />
           <SettingsRow
@@ -118,10 +105,7 @@ export default function SettingsScreen() {
             onPress={undefined}
             chevron={false}
             right={
-              <Toggle
-                value={captureAutoSend}
-                onToggle={() => setCaptureAutoSend(p => !p)}
-              />
+              <Toggle value={captureAutoSend} onToggle={() => setCaptureAutoSend((p) => !p)} />
             }
           />
         </SettingsGroup>
@@ -133,7 +117,7 @@ export default function SettingsScreen() {
             icon="○"
             label="Notification settings"
             sublabel="Per-module, quiet hours, tone"
-            onPress={() => router.push('/settings/notifications')}
+            onPress={() => router.push("/settings/notifications")}
           />
         </SettingsGroup>
 
@@ -149,7 +133,7 @@ export default function SettingsScreen() {
             right={
               <Toggle
                 value={hardModeExitConfirm}
-                onToggle={() => setHardModeExitConfirm(p => !p)}
+                onToggle={() => setHardModeExitConfirm((p) => !p)}
               />
             }
           />
@@ -169,7 +153,7 @@ export default function SettingsScreen() {
             icon="▷"
             label="Event log"
             sublabel="Every action this system has taken"
-            onPress={() => router.push('/settings/eventlog')}
+            onPress={() => router.push("/settings/eventlog")}
           />
           <Divider />
           <SettingsRow
@@ -186,10 +170,10 @@ export default function SettingsScreen() {
           <View style={styles.tonePolicyCard}>
             <Text style={styles.tonePolicyTitle}>Active rules</Text>
             {[
-              'Never use: fail, missed, behind, should, need to, streak',
-              'Never frame absence of action negatively',
-              'Suggestions: max 3 at a time, one module at a time',
-              'Silence preferred when confidence is low',
+              "Never use: fail, missed, behind, should, need to, streak",
+              "Never frame absence of action negatively",
+              "Suggestions: max 3 at a time, one module at a time",
+              "Silence preferred when confidence is low",
             ].map((rule, i) => (
               <View key={i} style={styles.toneRuleRow}>
                 <View style={styles.toneRuleDot} />
@@ -234,8 +218,8 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.lg,
     borderBottomWidth: 1,
@@ -254,12 +238,12 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     borderWidth: 1,
     borderColor: Colors.borderSoft,
-    overflow: 'hidden',
+    overflow: "hidden",
     marginBottom: Spacing.xxl,
   },
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: Spacing.md,
     paddingVertical: Spacing.lg,
     paddingHorizontal: Spacing.lg,
@@ -272,17 +256,21 @@ const styles = StyleSheet.create({
     borderRadius: Radius.sm,
     borderWidth: 1,
     borderColor: Colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     flexShrink: 0,
   },
-  rowIconText: { fontSize: 12, color: Colors.textMuted, fontFamily: 'monospace' },
+  rowIconText: { fontSize: 12, color: Colors.textMuted, fontFamily: "monospace" },
   rowContent: { flex: 1 },
   rowLabel: { ...Typography.bodyMD, color: Colors.textPrimary, marginBottom: 2 },
   rowLabelDanger: { color: Colors.rose },
   rowSublabel: { ...Typography.bodyXS, color: Colors.textMuted, lineHeight: 16 },
   chevron: { fontSize: 20, color: Colors.textMuted },
-  divider: { height: 1, backgroundColor: Colors.borderSoft, marginLeft: Spacing.lg + 32 + Spacing.md },
+  divider: {
+    height: 1,
+    backgroundColor: Colors.borderSoft,
+    marginLeft: Spacing.lg + 32 + Spacing.md,
+  },
 
   // Tone policy
   tonePolicyCard: {
@@ -291,12 +279,14 @@ const styles = StyleSheet.create({
   },
   tonePolicyTitle: { ...Typography.labelLG, color: Colors.textSecondary, marginBottom: Spacing.xs },
   toneRuleRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    alignItems: "flex-start",
     gap: Spacing.sm,
   },
   toneRuleDot: {
-    width: 4, height: 4, borderRadius: 2,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
     backgroundColor: Colors.textMuted,
     marginTop: 7,
     flexShrink: 0,
@@ -304,22 +294,22 @@ const styles = StyleSheet.create({
   toneRuleText: {
     ...Typography.bodySM,
     color: Colors.textSecondary,
-    fontFamily: 'DMSans_300Light',
+    fontFamily: "DMSans_300Light",
     flex: 1,
     lineHeight: 20,
   },
   tonePolicyNote: {
     ...Typography.bodyXS,
     color: Colors.textMuted,
-    fontStyle: 'italic',
-    fontFamily: 'DMSans_300Light',
+    fontStyle: "italic",
+    fontFamily: "DMSans_300Light",
     marginTop: Spacing.xs,
   },
 
   version: {
     ...Typography.bodyXS,
     color: Colors.textMuted,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: Spacing.lg,
   },
 });

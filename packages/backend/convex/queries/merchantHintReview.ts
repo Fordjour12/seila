@@ -24,7 +24,8 @@ export const merchantHintReview = query({
       const merchantKey = normalizeMerchant(
         typeof event.payload.merchantKey === "string" ? event.payload.merchantKey : undefined,
       );
-      const envelopeId = typeof event.payload.envelopeId === "string" ? event.payload.envelopeId : undefined;
+      const envelopeId =
+        typeof event.payload.envelopeId === "string" ? event.payload.envelopeId : undefined;
 
       if (!merchantKey || !envelopeId) continue;
 
@@ -40,8 +41,12 @@ export const merchantHintReview = query({
         return normalizeMerchant(transaction.merchantHint || transaction.note) === merchantKey;
       });
 
-      const classified = merchantTransactions.filter((transaction) => Boolean(transaction.envelopeId));
-      const matches = classified.filter((transaction) => transaction.envelopeId === latest.envelopeId);
+      const classified = merchantTransactions.filter((transaction) =>
+        Boolean(transaction.envelopeId),
+      );
+      const matches = classified.filter(
+        (transaction) => transaction.envelopeId === latest.envelopeId,
+      );
       const sampleSize = classified.length;
       const confidence = sampleSize > 0 ? matches.length / sampleSize : 0;
 

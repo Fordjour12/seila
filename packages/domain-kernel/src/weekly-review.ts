@@ -93,21 +93,18 @@ function getWeekBounds(date: Date = new Date()): { weekStart: number; weekEnd: n
   const diff = date.getDate() - day + (day === 0 ? -6 : 1);
   const weekStart = new Date(date.setDate(diff));
   weekStart.setHours(0, 0, 0, 0);
-  
+
   const weekEnd = new Date(weekStart);
   weekEnd.setDate(weekEnd.getDate() + 6);
   weekEnd.setHours(23, 59, 59, 999);
-  
+
   return {
     weekStart: weekStart.getTime(),
     weekEnd: weekEnd.getTime(),
   };
 }
 
-export function reviewReducer(
-  state: ReviewState,
-  event: ReviewEvent,
-): ReviewState {
+export function reviewReducer(state: ReviewState, event: ReviewEvent): ReviewState {
   if (event.type === "review.started") {
     const newReview: Review = {
       id: event.payload.id,

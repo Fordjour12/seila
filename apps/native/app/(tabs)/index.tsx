@@ -19,8 +19,7 @@ export default function TodayScreen() {
                 <Card.Title>Living room Sofa • Collection 2025</Card.Title>
               </View>
               <Card.Description>
-                This sofa is perfect for modern tropical spaces, baroque
-                inspired spaces.
+                This sofa is perfect for modern tropical spaces, baroque inspired spaces.
               </Card.Description>
             </Card.Body>
             <Card.Footer className="gap-3">

@@ -24,4 +24,3 @@ export const recordRecurringTelemetry = internalMutation({
     return { recorded: true };
   },
 });
-

@@ -216,15 +216,11 @@ function SuggestionCard({
   };
 
   return (
-    <Animated.View
-      style={[suggStyles.card, { transform: [{ translateX: slideAnim }] }]}
-    >
+    <Animated.View style={[suggStyles.card, { transform: [{ translateX: slideAnim }] }]}>
       <View style={suggStyles.dot} />
       <View style={suggStyles.content}>
         <Text style={suggStyles.headline}>{suggestion.headline}</Text>
-        {suggestion.subtext && (
-          <Text style={suggStyles.subtext}>{suggestion.subtext}</Text>
-        )}
+        {suggestion.subtext && <Text style={suggStyles.subtext}>{suggestion.subtext}</Text>}
       </View>
       <Pressable onPress={dismiss} style={suggStyles.dismiss}>
         <Text style={suggStyles.dismissText}>×</Text>
@@ -282,13 +278,7 @@ interface HabitItem {
   done: boolean;
 }
 
-function TodayHabitRow({
-  habit,
-  onToggle,
-}: {
-  habit: HabitItem;
-  onToggle: () => void;
-}) {
+function TodayHabitRow({ habit, onToggle }: { habit: HabitItem; onToggle: () => void }) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const handlePress = () => {
@@ -314,9 +304,7 @@ function TodayHabitRow({
           {habit.done && <Text style={habitStyles.checkMark}>✓</Text>}
         </View>
         <View style={habitStyles.info}>
-          <Text style={[habitStyles.name, habit.done && habitStyles.nameDone]}>
-            {habit.name}
-          </Text>
+          <Text style={[habitStyles.name, habit.done && habitStyles.nameDone]}>{habit.name}</Text>
           <Text style={habitStyles.anchor}>{habit.anchor}</Text>
         </View>
       </Pressable>
@@ -407,9 +395,7 @@ export default function TodayScreen() {
   });
 
   const toggleHabit = (id: string) => {
-    setHabits((prev) =>
-      prev.map((h) => (h.id === id ? { ...h, done: !h.done } : h)),
-    );
+    setHabits((prev) => prev.map((h) => (h.id === id ? { ...h, done: !h.done } : h)));
   };
 
   const completeTask = (id: string) => {
@@ -449,11 +435,7 @@ export default function TodayScreen() {
         {suggestions.length > 0 && (
           <View style={styles.section}>
             {suggestions.map((s) => (
-              <SuggestionCard
-                key={s.id}
-                suggestion={s}
-                onDismiss={() => dismissSuggestion(s.id)}
-              />
+              <SuggestionCard key={s.id} suggestion={s} onDismiss={() => dismissSuggestion(s.id)} />
             ))}
           </View>
         )}
@@ -461,20 +443,14 @@ export default function TodayScreen() {
         {/* ── HABITS ── */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <SectionLabel style={styles.sectionLabelInline}>
-              Habits
-            </SectionLabel>
+            <SectionLabel style={styles.sectionLabelInline}>Habits</SectionLabel>
             <Text style={styles.sectionMeta}>
               {doneCount}/{habits.length}
             </Text>
           </View>
           <View style={styles.card}>
             {habits.map((h) => (
-              <TodayHabitRow
-                key={h.id}
-                habit={h}
-                onToggle={() => toggleHabit(h.id)}
-              />
+              <TodayHabitRow key={h.id} habit={h} onToggle={() => toggleHabit(h.id)} />
             ))}
           </View>
         </View>
@@ -494,11 +470,7 @@ export default function TodayScreen() {
           ) : (
             <View style={styles.card}>
               {focus.map((t) => (
-                <FocusTaskRow
-                  key={t.id}
-                  task={t}
-                  onComplete={() => completeTask(t.id)}
-                />
+                <FocusTaskRow key={t.id} task={t} onComplete={() => completeTask(t.id)} />
               ))}
             </View>
           )}
@@ -507,13 +479,8 @@ export default function TodayScreen() {
         {/* ── LAST CHECK-IN ── */}
         <View style={styles.section}>
           <SectionLabel>Last check-in</SectionLabel>
-          <Pressable
-            onPress={() => router.push("/(tabs)/checkin")}
-            style={styles.checkinCard}
-          >
-            <Text style={styles.moodEmoji}>
-              {MOOD_EMOJI[MOCK_LAST_CHECKIN.mood]}
-            </Text>
+          <Pressable onPress={() => router.push("/(tabs)/checkin")} style={styles.checkinCard}>
+            <Text style={styles.moodEmoji}>{MOOD_EMOJI[MOCK_LAST_CHECKIN.mood]}</Text>
             <View style={styles.checkinInfo}>
               <Text style={styles.checkinLabel}>Mood · Energy</Text>
               <Text style={styles.checkinValues}>

@@ -40,9 +40,7 @@ export function WeeklyCheckin({ onComplete }: WeeklyCheckinProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const toggleFlag = (flag: CheckinFlag) => {
-    setFlags((prev) =>
-      prev.includes(flag) ? prev.filter((f) => f !== flag) : [...prev, flag],
-    );
+    setFlags((prev) => (prev.includes(flag) ? prev.filter((f) => f !== flag) : [...prev, flag]));
   };
 
   const MOOD_EMOJIS: Record<number, string> = {
@@ -102,9 +100,7 @@ export function WeeklyCheckin({ onComplete }: WeeklyCheckinProps) {
   return (
     <View className="p-4 gap-6">
       <View>
-        <Text className="text-lg font-medium text-foreground mb-3">
-          How was your week?
-        </Text>
+        <Text className="text-lg font-medium text-foreground mb-3">How was your week?</Text>
         <View className="flex-row justify-between">
           {[1, 2, 3, 4, 5].map((value) => (
             <View key={value} className="items-center">
@@ -123,9 +119,7 @@ export function WeeklyCheckin({ onComplete }: WeeklyCheckinProps) {
       </View>
 
       <View>
-        <Text className="text-lg font-medium text-foreground mb-3">
-          Energy level
-        </Text>
+        <Text className="text-lg font-medium text-foreground mb-3">Energy level</Text>
         <View className="flex-row justify-between">
           {[1, 2, 3, 4, 5].map((value) => (
             <Button
@@ -142,9 +136,7 @@ export function WeeklyCheckin({ onComplete }: WeeklyCheckinProps) {
       </View>
 
       <View>
-        <Text className="text-lg font-medium text-foreground mb-3">
-          Quick flags
-        </Text>
+        <Text className="text-lg font-medium text-foreground mb-3">Quick flags</Text>
         <View className="flex-row flex-wrap gap-2">
           {ALL_FLAGS.map((flag) => (
             <Button
@@ -159,9 +151,7 @@ export function WeeklyCheckin({ onComplete }: WeeklyCheckinProps) {
         </View>
       </View>
 
-      <Text className="text-xl font-medium text-foreground mt-4">
-        Weekly Reflection
-      </Text>
+      <Text className="text-xl font-medium text-foreground mt-4">Weekly Reflection</Text>
 
       <View>
         <Text className="text-sm text-muted mb-2">What felt good this week?</Text>

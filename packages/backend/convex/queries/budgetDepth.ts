@@ -16,11 +16,24 @@ export const budgetDepth = query({
 
     return envelopes.map((envelope) => {
       const currentSpent = transactions
-        .filter((transaction) => !transaction.pendingImport && !transaction.voidedAt && transaction.envelopeId === envelope._id && transaction.occurredAt >= monthStart)
+        .filter(
+          (transaction) =>
+            !transaction.pendingImport &&
+            !transaction.voidedAt &&
+            transaction.envelopeId === envelope._id &&
+            transaction.occurredAt >= monthStart,
+        )
         .reduce((sum, transaction) => sum + transaction.amount, 0);
 
       const prevSpent = transactions
-        .filter((transaction) => !transaction.pendingImport && !transaction.voidedAt && transaction.envelopeId === envelope._id && transaction.occurredAt >= prevMonthStart && transaction.occurredAt < monthStart)
+        .filter(
+          (transaction) =>
+            !transaction.pendingImport &&
+            !transaction.voidedAt &&
+            transaction.envelopeId === envelope._id &&
+            transaction.occurredAt >= prevMonthStart &&
+            transaction.occurredAt < monthStart,
+        )
         .reduce((sum, transaction) => sum + transaction.amount, 0);
 
       const ceiling = envelope.softCeiling ?? 0;
@@ -38,4 +51,3 @@ export const budgetDepth = query({
     });
   },
 });
-

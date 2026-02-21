@@ -27,7 +27,10 @@ export function TodayFocus() {
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "";
       if (message.includes("full")) {
-        Alert.alert("Focus list full", "You can only have 3 items in Focus. Complete or defer one first.");
+        Alert.alert(
+          "Focus list full",
+          "You can only have 3 items in Focus. Complete or defer one first.",
+        );
       } else {
         toast.show({ variant: "danger", label: "Failed to focus task" });
       }

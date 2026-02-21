@@ -18,9 +18,7 @@ export const currentHardModePlan = query({
       sessionId: session._id,
       dayStart: session.plan.dayStart,
       generatedAt: session.plan.generatedAt,
-      items: session.plan.items
-        .slice()
-        .sort((a, b) => a.scheduledAt - b.scheduledAt),
+      items: session.plan.items.slice().sort((a, b) => a.scheduledAt - b.scheduledAt),
     };
   },
 });
@@ -40,10 +38,7 @@ export const internalCurrentHardModePlan = internalQuery({
       sessionId: session._id,
       dayStart: session.plan.dayStart,
       generatedAt: session.plan.generatedAt,
-      items: session.plan.items
-        .slice()
-        .sort((a, b) => a.scheduledAt - b.scheduledAt),
+      items: session.plan.items.slice().sort((a, b) => a.scheduledAt - b.scheduledAt),
     };
   },
 });
-

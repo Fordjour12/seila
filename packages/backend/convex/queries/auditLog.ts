@@ -23,9 +23,7 @@ export const allEvents = query({
     const limit = args.limit ?? 100;
     const offset = args.offset ?? 0;
 
-    let events = await ctx.db
-      .query("events")
-      .collect();
+    let events = await ctx.db.query("events").collect();
 
     events = events.sort((a, b) => b.occurredAt - a.occurredAt);
 
@@ -47,9 +45,7 @@ export const eventsByModule = query({
     const limit = args.limit ?? 50;
     const prefix = args.module;
 
-    const events = await ctx.db
-      .query("events")
-      .collect();
+    const events = await ctx.db.query("events").collect();
 
     return events
       .sort((a, b) => b.occurredAt - a.occurredAt)
@@ -82,9 +78,7 @@ export const exportEvents = query({
     module: v.optional(v.union(...MODULE_TYPE_VALIDATORS)),
   },
   handler: async (ctx, args) => {
-    let events = await ctx.db
-      .query("events")
-      .collect();
+    let events = await ctx.db.query("events").collect();
 
     events = events.sort((a, b) => b.occurredAt - a.occurredAt);
 

@@ -15,7 +15,10 @@ export const merchantEnvelopeHints = query({
     const filterRequested = requested.size > 0;
 
     const events = await ctx.db.query("events").collect();
-    const latestByMerchant = new Map<string, { envelopeId: string; occurredAt: number; source: string }>();
+    const latestByMerchant = new Map<
+      string,
+      { envelopeId: string; occurredAt: number; source: string }
+    >();
 
     for (const event of events) {
       if (event.type !== "finance.merchantEnvelopeHintSet") {

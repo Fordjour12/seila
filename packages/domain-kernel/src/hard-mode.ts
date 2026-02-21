@@ -135,17 +135,15 @@ export function validatePlannedItemAgainstConstraints(
   }
 }
 
-export function validateHardModePlan(
-  plan: HardModePlan,
-  constraints: HardModeConstraint[],
-): void {
+export function validateHardModePlan(plan: HardModePlan, constraints: HardModeConstraint[]): void {
   for (const item of plan.items) {
     validatePlannedItemAgainstConstraints(item, constraints);
   }
 
   const maxItems = constraints
-    .filter((constraint): constraint is Extract<HardModeConstraint, { type: "max_planned_items" }> =>
-      constraint.type === "max_planned_items",
+    .filter(
+      (constraint): constraint is Extract<HardModeConstraint, { type: "max_planned_items" }> =>
+        constraint.type === "max_planned_items",
     )
     .sort((a, b) => a.value - b.value)[0];
 
@@ -257,10 +255,7 @@ export function applyHardModeFlagToPlan(
   };
 }
 
-export function hardModeReducer(
-  state: HardModeState,
-  event: HardModeEvent,
-): HardModeState {
+export function hardModeReducer(state: HardModeState, event: HardModeEvent): HardModeState {
   if (event.type === "hardMode.activated") {
     return {
       currentSession: {

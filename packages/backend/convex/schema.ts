@@ -21,9 +21,18 @@ export default defineSchema({
   }).index("by_idempotency_key", ["idempotencyKey"]),
   habits: defineTable({
     name: v.string(),
-    cadence: v.union(v.literal("daily"), v.literal("weekdays"), v.object({ customDays: v.array(v.number()) })),
+    cadence: v.union(
+      v.literal("daily"),
+      v.literal("weekdays"),
+      v.object({ customDays: v.array(v.number()) }),
+    ),
     anchor: v.optional(
-      v.union(v.literal("morning"), v.literal("afternoon"), v.literal("evening"), v.literal("anytime")),
+      v.union(
+        v.literal("morning"),
+        v.literal("afternoon"),
+        v.literal("evening"),
+        v.literal("anytime"),
+      ),
     ),
     difficulty: v.optional(v.union(v.literal("low"), v.literal("medium"), v.literal("high"))),
     archivedAt: v.optional(v.number()),
@@ -195,7 +204,13 @@ export default defineSchema({
   }).index("by_last_updated", ["lastUpdated"]),
   accounts: defineTable({
     name: v.string(),
-    type: v.union(v.literal("checking"), v.literal("savings"), v.literal("cash"), v.literal("credit"), v.literal("other")),
+    type: v.union(
+      v.literal("checking"),
+      v.literal("savings"),
+      v.literal("cash"),
+      v.literal("credit"),
+      v.literal("other"),
+    ),
     balance: v.number(),
     currency: v.optional(v.string()),
     institution: v.optional(v.string()),
@@ -252,7 +267,13 @@ export default defineSchema({
   }).index("by_active", ["isActive"]),
   investments: defineTable({
     name: v.string(),
-    type: v.union(v.literal("stock"), v.literal("fund"), v.literal("crypto"), v.literal("cash"), v.literal("other")),
+    type: v.union(
+      v.literal("stock"),
+      v.literal("fund"),
+      v.literal("crypto"),
+      v.literal("cash"),
+      v.literal("other"),
+    ),
     currentValue: v.number(),
     costBasis: v.number(),
     createdAt: v.number(),

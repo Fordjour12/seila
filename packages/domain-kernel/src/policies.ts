@@ -106,9 +106,7 @@ export const morningHabitPromptPolicy: PolicyFn = (state) => {
 };
 
 export const checkinPromptPolicy: PolicyFn = (state) => {
-  const latest = state.checkins.checkins
-    .slice()
-    .sort((a, b) => b.occurredAt - a.occurredAt)[0];
+  const latest = state.checkins.checkins.slice().sort((a, b) => b.occurredAt - a.occurredAt)[0];
 
   if (latest && state.now - latest.occurredAt < 24 * HOUR_MS) {
     return [];

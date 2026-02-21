@@ -1,9 +1,6 @@
 import type { LifeEvent } from "./index.js";
 
-export type PatternType =
-  | "mood_habit"
-  | "energy_checkin_timing"
-  | "spending_mood";
+export type PatternType = "mood_habit" | "energy_checkin_timing" | "spending_mood";
 
 export type Pattern = {
   id: string;
@@ -46,10 +43,7 @@ export const initialPatternState: PatternState = {
 
 export const PATTERN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
-export function patternReducer(
-  state: PatternState,
-  event: PatternEvent,
-): PatternState {
+export function patternReducer(state: PatternState, event: PatternEvent): PatternState {
   if (event.type === "pattern.detected") {
     const next: Pattern = {
       id: event.payload.patternId,
@@ -132,10 +126,7 @@ export function patternReducer(
   return state;
 }
 
-export function applyPatternTtl(
-  state: PatternState,
-  now: number,
-): PatternState {
+export function applyPatternTtl(state: PatternState, now: number): PatternState {
   const patterns: PatternState["patterns"] = { ...state.patterns };
 
   for (const pattern of Object.values(state.patterns)) {

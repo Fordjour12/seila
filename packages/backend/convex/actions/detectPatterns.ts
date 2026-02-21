@@ -150,7 +150,12 @@ function createEnergyTimingCandidate(input: {
 
 function createSpendingMoodCandidate(input: {
   checkins: Array<{ mood: number; occurredAt: number }>;
-  transactions: Array<{ amount: number; occurredAt: number; pendingImport: boolean; voidedAt?: number }>;
+  transactions: Array<{
+    amount: number;
+    occurredAt: number;
+    pendingImport: boolean;
+    voidedAt?: number;
+  }>;
 }): Candidate | null {
   const spendingByDay = new Map<number, number>();
   for (const transaction of input.transactions) {
@@ -293,7 +298,10 @@ export const detectPatterns: ReturnType<typeof internalAction> = internalAction(
         let finalSubtext = subtext;
 
         if (recoveryContext?.hardDayLooksLike) {
-          finalSubtext = `${subtext} Context note: ${recoveryContext.hardDayLooksLike}`.slice(0, 220);
+          finalSubtext = `${subtext} Context note: ${recoveryContext.hardDayLooksLike}`.slice(
+            0,
+            220,
+          );
         }
 
         return { ...candidate, headline, subtext: finalSubtext };

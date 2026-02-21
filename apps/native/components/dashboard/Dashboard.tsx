@@ -67,7 +67,9 @@ export function Dashboard({ compact = false }: DashboardProps) {
               <View className="flex-row items-center gap-2">
                 <Text className="text-3xl">{MOOD_EMOJIS[Math.round(moodTrend.averageMood)]}</Text>
                 <View>
-                  <Text className="text-foreground font-medium">{moodTrend.averageMood.toFixed(1)}/5</Text>
+                  <Text className="text-foreground font-medium">
+                    {moodTrend.averageMood.toFixed(1)}/5
+                  </Text>
                   <Text className="text-muted text-xs">{moodTrend.daysTracked} days</Text>
                 </View>
               </View>
@@ -107,13 +109,19 @@ export function Dashboard({ compact = false }: DashboardProps) {
         <Surface variant="secondary" className="p-4 rounded-xl">
           <Text className="text-muted text-xs mb-2">Last Weekly Review</Text>
           <Text className="text-foreground text-sm font-medium mb-1">
-            Week of {new Date(lastReview.weekStart).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+            Week of{" "}
+            {new Date(lastReview.weekStart).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+            })}
           </Text>
           {lastReview.intentions && lastReview.intentions.length > 0 && (
             <View className="mt-2">
               <Text className="text-muted text-xs mb-1">Intentions:</Text>
               {lastReview.intentions.slice(0, 2).map((int: string, i: number) => (
-                <Text key={i} className="text-foreground text-sm">• {int}</Text>
+                <Text key={i} className="text-foreground text-sm">
+                  • {int}
+                </Text>
               ))}
             </View>
           )}

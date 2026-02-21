@@ -9,9 +9,13 @@ export const netWorthView = query({
       ctx.db.query("debts").collect(),
     ]);
 
-    const accountAssets = accounts.filter((account) => !account.isHidden).reduce((sum, account) => sum + account.balance, 0);
+    const accountAssets = accounts
+      .filter((account) => !account.isHidden)
+      .reduce((sum, account) => sum + account.balance, 0);
     const investmentAssets = investments.reduce((sum, item) => sum + item.currentValue, 0);
-    const liabilities = debts.filter((debt) => debt.isActive).reduce((sum, debt) => sum + debt.balance, 0);
+    const liabilities = debts
+      .filter((debt) => debt.isActive)
+      .reduce((sum, debt) => sum + debt.balance, 0);
 
     return {
       assets: accountAssets + investmentAssets,
@@ -25,4 +29,3 @@ export const netWorthView = query({
     };
   },
 });
-

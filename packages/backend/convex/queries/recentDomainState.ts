@@ -10,7 +10,10 @@ export const recentDomainState = internalQuery({
         .withIndex("by_dismissed_at", (q) => q.eq("dismissedAt", undefined))
         .order("desc")
         .take(3),
-      ctx.db.query("tasks").withIndex("by_status", (q) => q.eq("status", "focus")).collect(),
+      ctx.db
+        .query("tasks")
+        .withIndex("by_status", (q) => q.eq("status", "focus"))
+        .collect(),
       ctx.db.query("quietDays").withIndex("by_day_start").order("desc").take(1),
     ]);
 

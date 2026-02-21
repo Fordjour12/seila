@@ -72,21 +72,16 @@ const readAiContextRef = makeFunctionReference<"query", {}, AiContextDoc>(
   "queries/aiContext:internalReadAiContext",
 );
 
-const writeAiContextRef = makeFunctionReference<
-  "mutation",
-  AiContextPatch,
-  { updated: boolean }
->("commands/aiContext:applyAiContextPatch");
+const writeAiContextRef = makeFunctionReference<"mutation", AiContextPatch, { updated: boolean }>(
+  "commands/aiContext:applyAiContextPatch",
+);
 
 export async function readAiContext(ctx: unknown) {
   const actionCtx = ctx as ActionCtx;
   return (await actionCtx.runQuery(readAiContextRef, {})) as AiContextDoc;
 }
 
-export async function writeAiContext(
-  ctx: unknown,
-  patch: AiContextPatch,
-) {
+export async function writeAiContext(ctx: unknown, patch: AiContextPatch) {
   const actionCtx = ctx as ActionCtx;
   return (await actionCtx.runMutation(writeAiContextRef, patch)) as { updated: boolean };
 }

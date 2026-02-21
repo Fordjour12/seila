@@ -17,7 +17,9 @@ export const spendingTrend = query({
   handler: async (ctx, args) => {
     const weeks = Math.min(Math.max(args.weeks ?? 6, 1), 16);
     const now = Date.now();
-    const currentWeekStart = startOfUtcDay(now - ((new Date(now).getUTCDay() + 6) % 7) * 24 * 60 * 60 * 1000);
+    const currentWeekStart = startOfUtcDay(
+      now - ((new Date(now).getUTCDay() + 6) % 7) * 24 * 60 * 60 * 1000,
+    );
     const earliest = currentWeekStart - (weeks - 1) * WEEK_MS;
 
     const transactions = await ctx.db
@@ -35,7 +37,9 @@ export const spendingTrend = query({
         continue;
       }
 
-      const offsetWeeks = Math.floor((currentWeekStart - startOfUtcDay(transaction.occurredAt)) / WEEK_MS);
+      const offsetWeeks = Math.floor(
+        (currentWeekStart - startOfUtcDay(transaction.occurredAt)) / WEEK_MS,
+      );
       if (offsetWeeks < 0 || offsetWeeks >= weeks) {
         continue;
       }

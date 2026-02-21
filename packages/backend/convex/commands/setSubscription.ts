@@ -22,7 +22,8 @@ export const setSubscription = mutation({
 
     if (!args.name.trim()) throw new ConvexError("name is required");
     if (!Number.isInteger(args.amount) || args.amount <= 0) throw new ConvexError("amount invalid");
-    if (!Number.isInteger(args.nextDueAt) || args.nextDueAt <= 0) throw new ConvexError("nextDueAt invalid");
+    if (!Number.isInteger(args.nextDueAt) || args.nextDueAt <= 0)
+      throw new ConvexError("nextDueAt invalid");
 
     const now = Date.now();
     if (args.subscriptionId) {

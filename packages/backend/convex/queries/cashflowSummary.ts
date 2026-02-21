@@ -12,18 +12,36 @@ export const cashflowSummary = query({
     ]);
 
     const now = Date.now();
-    const monthStart = Date.UTC(new Date(now).getUTCFullYear(), new Date(now).getUTCMonth(), 1, 0, 0, 0, 0);
+    const monthStart = Date.UTC(
+      new Date(now).getUTCFullYear(),
+      new Date(now).getUTCMonth(),
+      1,
+      0,
+      0,
+      0,
+      0,
+    );
     const trailing30 = now - 30 * DAY_MS;
 
     const monthIncome = incomes
       .filter((income) => income.occurredAt >= monthStart)
       .reduce((sum, income) => sum + income.amount, 0);
     const monthExpense = transactions
-      .filter((transaction) => !transaction.voidedAt && !transaction.pendingImport && transaction.occurredAt >= monthStart)
+      .filter(
+        (transaction) =>
+          !transaction.voidedAt &&
+          !transaction.pendingImport &&
+          transaction.occurredAt >= monthStart,
+      )
       .reduce((sum, transaction) => sum + transaction.amount, 0);
 
     const trailingExpense = transactions
-      .filter((transaction) => !transaction.voidedAt && !transaction.pendingImport && transaction.occurredAt >= trailing30)
+      .filter(
+        (transaction) =>
+          !transaction.voidedAt &&
+          !transaction.pendingImport &&
+          transaction.occurredAt >= trailing30,
+      )
       .reduce((sum, transaction) => sum + transaction.amount, 0);
     const dailyBurn = trailingExpense / 30;
     const totalBalance = accounts

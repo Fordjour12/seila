@@ -1,5 +1,13 @@
 import React, { useMemo, useState } from "react";
-import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { router } from "expo-router";
 
 import { Colors, Radius, Spacing, Typography } from "@/constants/theme";
@@ -61,7 +69,9 @@ export function TodayScreenCalm() {
           <SectionLabel style={styles.sectionLabelInline}>Next action</SectionLabel>
           <View style={styles.featureCard}>
             <Text style={styles.featureLabel}>Focus now</Text>
-            <Text style={styles.featureValue}>{nextFocus ? nextFocus.text : "No focus task set"}</Text>
+            <Text style={styles.featureValue}>
+              {nextFocus ? nextFocus.text : "No focus task set"}
+            </Text>
             <Pressable style={styles.featureAction} onPress={() => router.push("/(tabs)/tasks")}>
               <Text style={styles.featureActionText}>Open Tasks</Text>
             </Pressable>
@@ -85,7 +95,9 @@ export function TodayScreenCalm() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <SectionLabel style={styles.sectionLabelInline}>Habits</SectionLabel>
-            <Text style={styles.meta}>{doneCount}/{habits.length}</Text>
+            <Text style={styles.meta}>
+              {doneCount}/{habits.length}
+            </Text>
           </View>
           <View style={styles.card}>
             {habits.map((habit) => (
@@ -93,7 +105,9 @@ export function TodayScreenCalm() {
                 key={habit.id}
                 style={styles.row}
                 onPress={() => {
-                  setHabits((prev) => prev.map((h) => (h.id === habit.id ? { ...h, done: !h.done } : h)));
+                  setHabits((prev) =>
+                    prev.map((h) => (h.id === habit.id ? { ...h, done: !h.done } : h)),
+                  );
                 }}
               >
                 <View style={[styles.dot, habit.done && styles.dotDone]} />
@@ -109,7 +123,11 @@ export function TodayScreenCalm() {
             <Text style={styles.meta}>{focus.length}/3</Text>
           </View>
           {focus.length === 0 ? (
-            <EmptyState icon="○" title="Focus is clear" subtitle="Add tasks from your inbox when ready" />
+            <EmptyState
+              icon="○"
+              title="Focus is clear"
+              subtitle="Add tasks from your inbox when ready"
+            />
           ) : (
             <View style={styles.card}>
               {focus.map((task) => (

@@ -26,7 +26,9 @@ export const dayCloseInput = internalQuery({
           .first();
 
     const events = await ctx.db.query("events").collect();
-    const todayEvents = events.filter((event) => event.occurredAt >= dayStart && event.occurredAt < dayEnd);
+    const todayEvents = events.filter(
+      (event) => event.occurredAt >= dayStart && event.occurredAt < dayEnd,
+    );
 
     return {
       dayStart,

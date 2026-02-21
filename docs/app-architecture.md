@@ -1,4 +1,5 @@
 # Life OS
+
 ### Personal Recovery-First Operating System — Architecture, Modules & Design Specification `v2.1`
 
 > **Single-user system.** This is not a product. It is a personal tool built for one person. There is no multi-tenancy, no user table, no auth complexity, no onboarding flow. Every design decision optimizes for the owner's experience exclusively.
@@ -9,15 +10,15 @@
 
 > The values baked into every design decision.
 
-| | Principle |
-|---|---|
-| 🛡️ | **Shame is a bug.** No streaks, no failure states — only progress events. |
-| 🤝 | **AI proposes; humans decide.** No mutation happens without explicit user command. |
-| 📜 | **Events are source of truth.** State is always derived — never stored directly. |
-| 🌿 | **Suggestions stay sparse.** 1–3 visible proposals at a time, never a to-do avalanche. |
-| 😴 | **Rest is a valid state.** The app does nothing unless the user wants it to. |
-| 🔒 | **Privacy by design.** Sensitive data stays on-device or encrypted at rest. |
-| 🎛️ | **Surrender is a valid strategy.** Hard Mode lets the AI architect your plans — you flag, it learns. |
+|     | Principle                                                                                            |
+| --- | ---------------------------------------------------------------------------------------------------- |
+| 🛡️  | **Shame is a bug.** No streaks, no failure states — only progress events.                            |
+| 🤝  | **AI proposes; humans decide.** No mutation happens without explicit user command.                   |
+| 📜  | **Events are source of truth.** State is always derived — never stored directly.                     |
+| 🌿  | **Suggestions stay sparse.** 1–3 visible proposals at a time, never a to-do avalanche.               |
+| 😴  | **Rest is a valid state.** The app does nothing unless the user wants it to.                         |
+| 🔒  | **Privacy by design.** Sensitive data stays on-device or encrypted at rest.                          |
+| 🎛️  | **Surrender is a valid strategy.** Hard Mode lets the AI architect your plans — you flag, it learns. |
 
 ---
 
@@ -27,26 +28,26 @@ Life OS is built on a strict event-driven loop. All state is derived from an imm
 
 ### Command Loop
 
-| Step | Action |
-|------|--------|
-| ① | UI dispatches a **Command** with an `idempotencyKey` |
-| ② | Convex kernel validates input and authenticates the user |
-| ③ | Backend deduplicates by `idempotencyKey`, appends **Event(s)** to the log |
-| ④ | **Reducers** derive current `DomainState` from the full event stream |
-| ⑤ | **Policy engine** generates bounded Suggestions (max 3 visible at once) |
-| ⑥ | UI receives live updates via Convex reactive queries |
+| Step | Action                                                                    |
+| ---- | ------------------------------------------------------------------------- |
+| ①    | UI dispatches a **Command** with an `idempotencyKey`                      |
+| ②    | Convex kernel validates input and authenticates the user                  |
+| ③    | Backend deduplicates by `idempotencyKey`, appends **Event(s)** to the log |
+| ④    | **Reducers** derive current `DomainState` from the full event stream      |
+| ⑤    | **Policy engine** generates bounded Suggestions (max 3 visible at once)   |
+| ⑥    | UI receives live updates via Convex reactive queries                      |
 
 ### Monorepo Structure
 
 Built with **Bun + Turborepo** for fast, cache-aware builds across all packages.
 
-| Package / App | Role |
-|---|---|
-| `apps/native` | Expo React Native client — Expo Router, Uniflow, HeroUI Native |
-| `packages/backend` | Convex backend — auth, commands, queries, policies, AI actions |
+| Package / App            | Role                                                                      |
+| ------------------------ | ------------------------------------------------------------------------- |
+| `apps/native`            | Expo React Native client — Expo Router, Uniflow, HeroUI Native            |
+| `packages/backend`       | Convex backend — auth, commands, queries, policies, AI actions            |
 | `packages/domain-kernel` | Canonical domain primitives: types, reducers, policy engine, test harness |
-| `packages/env` | Shared environment parsing (Zod schemas, typed access) |
-| `packages/ui` | Shared design tokens, component primitives, theming |
+| `packages/env`           | Shared environment parsing (Zod schemas, typed access)                    |
+| `packages/ui`            | Shared design tokens, component primitives, theming                       |
 
 ---
 
@@ -56,13 +57,13 @@ The kernel is the single source of behavioral truth. It is **pure TypeScript** �
 
 ### Layers
 
-| Layer | Responsibility |
-|---|---|
-| **Commands** | Typed intents from the UI. Validated before anything is written. |
-| **Events** | Immutable facts appended to the log. Never deleted or mutated. |
-| **Reducers** | Pure functions: `(State, Event) => State`. Derive all domain state. |
-| **Policies** | Read-only rules that emit Suggestions. Never mutate state. |
-| **Trace / Harness** | Test utilities to replay event sequences and assert on outcomes. |
+| Layer               | Responsibility                                                      |
+| ------------------- | ------------------------------------------------------------------- |
+| **Commands**        | Typed intents from the UI. Validated before anything is written.    |
+| **Events**          | Immutable facts appended to the log. Never deleted or mutated.      |
+| **Reducers**        | Pure functions: `(State, Event) => State`. Derive all domain state. |
+| **Policies**        | Read-only rules that emit Suggestions. Never mutate state.          |
+| **Trace / Harness** | Test utilities to replay event sequences and assert on outcomes.    |
 
 > **Invariant:** The kernel has zero knowledge of Convex, HTTP, or device APIs. The Convex layer (`packages/backend/convex/kernel`) is an orchestration adapter — it calls kernel functions and handles persistence.
 
@@ -72,11 +73,11 @@ Every event follows a consistent shape, enabling generic replay tools and audit 
 
 ```ts
 type LifeEvent<T extends string, P> = {
-  type: T;              // e.g. "habit.completed"
-  occurredAt: number;   // ms epoch
+  type: T; // e.g. "habit.completed"
+  occurredAt: number; // ms epoch
   idempotencyKey: string;
   payload: P;
-}
+};
 ```
 
 ---
@@ -85,33 +86,33 @@ type LifeEvent<T extends string, P> = {
 
 Six first-class capability domains. Each module is a self-contained slice of kernel + backend + UI, sharing the same command/event/reducer pattern and plugging into the policy engine without coupling to each other.
 
-| # | Module | Purpose | Key Commands | Key Queries |
-|---|---|---|---|---|
-| 1 | **Habits** | Flexible routines without streak shame | `logHabit`, `skipHabit`, `snoozeHabit` | `todayHabits`, `habitHistory` |
-| 2 | **Check-in** | Daily/weekly mood + energy snapshots | `submitCheckin`, `updateCheckin` | `recentCheckins`, `moodTrend` |
-| 3 | **Finance** | Spending awareness, not judgment | `logTransaction`, `setEnvelope`, `linkAccount` | `envelopeSummary`, `spendingTrend` |
-| 4 | **Patterns** | AI-detected behavioral correlations | `dismissPattern`, `pinPattern` | `activePatterns`, `patternHistory` |
-| 5 | **Weekly Review** | Structured reflection with AI scaffolding | `startReview`, `submitReview`, `addNote` | `currentReview`, `reviewHistory` |
-| 6 | **Tasks** | Lightweight capture & triage (no overload) | `captureTask`, `completeTask`, `deferTask` | `todayFocus`, `inbox` |
+| #   | Module            | Purpose                                    | Key Commands                                   | Key Queries                        |
+| --- | ----------------- | ------------------------------------------ | ---------------------------------------------- | ---------------------------------- |
+| 1   | **Habits**        | Flexible routines without streak shame     | `logHabit`, `skipHabit`, `snoozeHabit`         | `todayHabits`, `habitHistory`      |
+| 2   | **Check-in**      | Daily/weekly mood + energy snapshots       | `submitCheckin`, `updateCheckin`               | `recentCheckins`, `moodTrend`      |
+| 3   | **Finance**       | Spending awareness, not judgment           | `logTransaction`, `setEnvelope`, `linkAccount` | `envelopeSummary`, `spendingTrend` |
+| 4   | **Patterns**      | AI-detected behavioral correlations        | `dismissPattern`, `pinPattern`                 | `activePatterns`, `patternHistory` |
+| 5   | **Weekly Review** | Structured reflection with AI scaffolding  | `startReview`, `submitReview`, `addNote`       | `currentReview`, `reviewHistory`   |
+| 6   | **Tasks**         | Lightweight capture & triage (no overload) | `captureTask`, `completeTask`, `deferTask`     | `todayFocus`, `inbox`              |
 
 ---
 
 ## Module 1: Habits
 
-*Flexible routines without shame.*
+_Flexible routines without shame._
 
 Habits are the foundational module — the primary daily touchpoint and seed data for pattern detection. The design avoids streak-based gamification entirely.
 
 ### Domain Model
 
-| Field | Type | Notes |
-|---|---|---|
-| `id` | `Id<"habits">` | Convex document ID |
-| `name` | `string` | Label |
-| `cadence` | `Cadence` | `daily \| weekdays \| custom days` |
-| `anchor` | `TimeOfDay?` | `morning \| afternoon \| evening \| anytime` |
-| `difficulty` | `Difficulty?` | `low \| medium \| high` — informs policy weighting |
-| `archivedAt` | `number?` | Soft delete via archive event |
+| Field        | Type           | Notes                                              |
+| ------------ | -------------- | -------------------------------------------------- |
+| `id`         | `Id<"habits">` | Convex document ID                                 |
+| `name`       | `string`       | Label                                              |
+| `cadence`    | `Cadence`      | `daily \| weekdays \| custom days`                 |
+| `anchor`     | `TimeOfDay?`   | `morning \| afternoon \| evening \| anytime`       |
+| `difficulty` | `Difficulty?`  | `low \| medium \| high` — informs policy weighting |
+| `archivedAt` | `number?`      | Soft delete via archive event                      |
 
 ### Events
 
@@ -127,19 +128,19 @@ Habits are the foundational module — the primary daily touchpoint and seed dat
 
 ## Module 2: Check-in
 
-*Daily + weekly self-awareness.*
+_Daily + weekly self-awareness._
 
 Check-ins are brief, low-friction snapshots of how a person is doing. They are the primary input signal for the pattern awareness engine.
 
 ### Schema
 
-| Field | Type | Description |
-|---|---|---|
-| `mood` | `1–5 scale` | Emoji-anchored (😞 → 😊) |
-| `energy` | `1–5 scale` | Low to high energy level |
-| `flags` | `string[]` | Quick tags: anxious, grateful, overwhelmed, calm... |
-| `note` | `string?` | Optional free-text — private by default |
-| `type` | `daily \| weekly` | Daily is brief; weekly prompts reflection questions |
+| Field    | Type              | Description                                         |
+| -------- | ----------------- | --------------------------------------------------- |
+| `mood`   | `1–5 scale`       | Emoji-anchored (😞 → 😊)                            |
+| `energy` | `1–5 scale`       | Low to high energy level                            |
+| `flags`  | `string[]`        | Quick tags: anxious, grateful, overwhelmed, calm... |
+| `note`   | `string?`         | Optional free-text — private by default             |
+| `type`   | `daily \| weekly` | Daily is brief; weekly prompts reflection questions |
 
 ### Weekly Check-in
 
@@ -155,7 +156,7 @@ The AI may suggest an optional fourth question based on recent patterns, but the
 
 ## Module 3: Finance
 
-*Spending awareness, not judgment.*
+_Spending awareness, not judgment._
 
 Finance in Life OS is not a budgeting app. It is an awareness layer — helping the user notice patterns in their relationship with money without shame, urgency, or optimization pressure.
 
@@ -165,22 +166,22 @@ Finance in Life OS is not a budgeting app. It is an awareness layer — helping 
 
 Envelopes are flexible spending buckets — not rigid budget categories. A user can have "eating out", "self-care", and "unexpected" envelopes, each with a soft monthly ceiling.
 
-| Field | Type | Notes |
-|---|---|---|
-| `name` | `string` | User-defined label |
+| Field         | Type      | Notes                                |
+| ------------- | --------- | ------------------------------------ |
+| `name`        | `string`  | User-defined label                   |
 | `softCeiling` | `number?` | Optional monthly awareness threshold |
-| `emoji` | `string?` | Visual identifier |
-| `isPrivate` | `boolean` | Hides from summaries if sensitive |
+| `emoji`       | `string?` | Visual identifier                    |
+| `isPrivate`   | `boolean` | Hides from summaries if sensitive    |
 
 ### Transactions
 
-| Field | Type | Notes |
-|---|---|---|
-| `amount` | `number (cents)` | Always stored as integer cents |
-| `envelopeId` | `Id<"envelopes">?` | Optional — can be uncategorized |
-| `source` | `manual \| imported` | AI never creates transactions |
-| `merchantHint` | `string?` | For pattern matching — not required |
-| `note` | `string?` | User-added context |
+| Field          | Type                 | Notes                               |
+| -------------- | -------------------- | ----------------------------------- |
+| `amount`       | `number (cents)`     | Always stored as integer cents      |
+| `envelopeId`   | `Id<"envelopes">?`   | Optional — can be uncategorized     |
+| `source`       | `manual \| imported` | AI never creates transactions       |
+| `merchantHint` | `string?`            | For pattern matching — not required |
+| `note`         | `string?`            | User-added context                  |
 
 ### Account Linking (Optional)
 
@@ -206,21 +207,21 @@ Users can optionally connect a Plaid-linked bank account. Imported transactions 
 
 ## Module 4: Pattern Awareness
 
-*AI-detected behavioral correlations.*
+_AI-detected behavioral correlations._
 
 Pattern Awareness is the AI layer of Life OS. It observes cross-module signals and surfaces meaningful correlations — without judgment, without urgency, and with strict sparsity limits.
 
 ### How Patterns Work
 
-A pattern is a statistically notable correlation between two or more event streams, surfaced when it crosses a confidence threshold and is likely to be *useful* — not just interesting.
+A pattern is a statistically notable correlation between two or more event streams, surfaced when it crosses a confidence threshold and is likely to be _useful_ — not just interesting.
 
-| Pattern Type | Example |
-|---|---|
-| Mood × Habit | "Your mood scores are 0.8 points higher on days you log a walk" |
-| Energy × Sleep | "Energy tends to drop on days after late check-ins" |
-| Spending × Mood | "Impulse food spend is 2x higher on low-mood days" |
-| Habit × Time | "You complete morning habits 80% more on weekdays" |
-| Review consistency | "Weeks with a check-in on Sunday tend to start stronger" |
+| Pattern Type       | Example                                                         |
+| ------------------ | --------------------------------------------------------------- |
+| Mood × Habit       | "Your mood scores are 0.8 points higher on days you log a walk" |
+| Energy × Sleep     | "Energy tends to drop on days after late check-ins"             |
+| Spending × Mood    | "Impulse food spend is 2x higher on low-mood days"              |
+| Habit × Time       | "You complete morning habits 80% more on weekdays"              |
+| Review consistency | "Weeks with a check-in on Sunday tend to start stronger"        |
 
 ### Sparsity Rules
 
@@ -245,18 +246,18 @@ A pattern is a statistically notable correlation between two or more event strea
 
 ## Module 5: Weekly Review
 
-*Structured reflection with AI scaffolding.*
+_Structured reflection with AI scaffolding._
 
 The Weekly Review is a guided, asynchronous session that helps the user close out the week and set light intentions for the next. It draws on all modules to provide context.
 
 ### Review Structure
 
-| Step | Phase | Description |
-|---|---|---|
-| 1 | **Look Back** | AI-generated summary of the week: habits completed, mood trend, notable finance events, patterns detected |
-| 2 | **Reflect** | Three fixed prompts + up to one AI-suggested prompt based on the week's patterns |
-| 3 | **Intentions** | User sets 1–3 focus areas for next week — loose intentions, not commitments |
-| 4 | **Close** | Review is sealed. A summary card is stored for future reference. |
+| Step | Phase          | Description                                                                                               |
+| ---- | -------------- | --------------------------------------------------------------------------------------------------------- |
+| 1    | **Look Back**  | AI-generated summary of the week: habits completed, mood trend, notable finance events, patterns detected |
+| 2    | **Reflect**    | Three fixed prompts + up to one AI-suggested prompt based on the week's patterns                          |
+| 3    | **Intentions** | User sets 1–3 focus areas for next week — loose intentions, not commitments                               |
+| 4    | **Close**      | Review is sealed. A summary card is stored for future reference.                                          |
 
 ### Events
 
@@ -281,7 +282,7 @@ The look-back summary is generated by a Convex AI action reading the past 7 days
 
 ## Module 6: Tasks
 
-*Capture and triage without overload.*
+_Capture and triage without overload._
 
 Tasks in Life OS are intentionally lightweight. The system is not a project manager. It is a low-friction inbox for things the user wants to hold onto, with a daily focus view that surfaces at most 3 items.
 
@@ -303,7 +304,7 @@ All captured tasks land in the **Inbox**. The user triages them into **Focus** (
 
 ## Policy Engine
 
-*Suggestions, not commands.*
+_Suggestions, not commands._
 
 The policy engine is a collection of pure functions that read current state and emit Suggestions — the only mechanism by which the system proactively communicates with the user.
 
@@ -315,24 +316,24 @@ type Suggestion = {
   module: Module;
   type: SuggestionType;
   priority: "low" | "medium" | "high";
-  headline: string;        // max 60 chars
-  subtext?: string;        // max 120 chars
+  headline: string; // max 60 chars
+  subtext?: string; // max 120 chars
   action?: SuggestedCommand; // optional one-tap action
   expiresAt?: number;
-}
+};
 ```
 
 ### Active Policies
 
-| Policy | Triggers When |
-|---|---|
-| `MorningHabitPrompt` | No habits logged by 10am on a habit day |
-| `CheckinPrompt` | No daily check-in by 8pm |
-| `WeeklyReviewReady` | Sunday evening, last review was >6 days ago |
-| `EnvelopeApproaching` | Spending reaches 80% of soft ceiling mid-month |
-| `PatternSurface` | New pattern detected with confidence > threshold |
-| `FocusEmpty` | Focus list is empty and inbox has 3+ items |
-| `RestPermission` | User has been highly active for 5+ consecutive days |
+| Policy                | Triggers When                                       |
+| --------------------- | --------------------------------------------------- |
+| `MorningHabitPrompt`  | No habits logged by 10am on a habit day             |
+| `CheckinPrompt`       | No daily check-in by 8pm                            |
+| `WeeklyReviewReady`   | Sunday evening, last review was >6 days ago         |
+| `EnvelopeApproaching` | Spending reaches 80% of soft ceiling mid-month      |
+| `PatternSurface`      | New pattern detected with confidence > threshold    |
+| `FocusEmpty`          | Focus list is empty and inbox has 3+ items          |
+| `RestPermission`      | User has been highly active for 5+ consecutive days |
 
 > **Sparsity Enforcement:** The policy runner collects all triggered suggestions, then applies a hard limit of 3 visible at any time, ranked by priority and recency. Lower-priority suggestions are queued and surface as others expire.
 
@@ -359,19 +360,19 @@ type Suggestion = {
 
 ### AI Action Boundaries
 
-| ✅ AI CAN | ❌ AI CANNOT |
-|---|---|
-| Read events and derived state | Write events directly |
-| Generate suggestion text | Mutate derived state |
-| Produce pattern insights | Create or categorize transactions |
-| Scaffold weekly review summaries | Execute commands without confirmation |
-| Propose (not execute) commands | Act outside the current Hard Mode scope |
+| ✅ AI CAN                        | ❌ AI CANNOT                            |
+| -------------------------------- | --------------------------------------- |
+| Read events and derived state    | Write events directly                   |
+| Generate suggestion text         | Mutate derived state                    |
+| Produce pattern insights         | Create or categorize transactions       |
+| Scaffold weekly review summaries | Execute commands without confirmation   |
+| Propose (not execute) commands   | Act outside the current Hard Mode scope |
 
 ---
 
 ## Hard Mode
 
-*You hand the wheel to the AI. You keep the brake.*
+_You hand the wheel to the AI. You keep the brake._
 
 Hard Mode is an **opt-in, time-bounded, scoped delegation layer**. The user surrenders planning authority to the AI for a defined window across chosen modules. The AI makes the calls; the user flags misalignments. Flags are never failures — they are signal.
 
@@ -390,33 +391,37 @@ Decision fatigue is real — especially in recovery. Choosing what to do, when t
 Every Hard Mode session is governed by three parameters the user sets at activation. The AI operates only within these bounds.
 
 #### 1. Time Window
+
 The AI holds authority for a fixed duration. When it ends, the system automatically returns to standard mode with no action required.
 
-| Option | Use case |
-|---|---|
-| **One day** | High-stress day, decision fatigue spike |
+| Option       | Use case                                        |
+| ------------ | ----------------------------------------------- |
+| **One day**  | High-stress day, decision fatigue spike         |
 | **One week** | Structured recovery push, new routine formation |
-| **Custom** | User-defined end date/time |
+| **Custom**   | User-defined end date/time                      |
 
 There is no indefinite Hard Mode. The window must be set. It can be extended, but extension requires a fresh, explicit opt-in — not a default renewal.
 
 #### 2. Module Scope
+
 The user chooses which modules the AI controls. Unselected modules continue operating in standard mode.
 
-| Module | What AI controls in Hard Mode |
-|---|---|
-| **Habits** | Selects which habits to schedule each day and at what anchor time |
-| **Tasks** | Populates today's Focus from the inbox (still max 3) |
-| **Check-in** | Schedules check-in timing and selects the reflection prompt |
-| **Finance** | Proposes envelope adjustments and flags anomalies proactively |
+| Module            | What AI controls in Hard Mode                                         |
+| ----------------- | --------------------------------------------------------------------- |
+| **Habits**        | Selects which habits to schedule each day and at what anchor time     |
+| **Tasks**         | Populates today's Focus from the inbox (still max 3)                  |
+| **Check-in**      | Schedules check-in timing and selects the reflection prompt           |
+| **Finance**       | Proposes envelope adjustments and flags anomalies proactively         |
 | **Weekly Review** | Initiates and structures the review without waiting for user to start |
 
 > **Finance Hard Mode note:** The AI can propose envelope changes and surface spending observations more aggressively, but it **never** moves money, changes ceilings, or confirms imported transactions. Those remain user-gated regardless of mode.
 
 #### 3. Preference Anchors
+
 Before activating, the user sets a small number of non-negotiable constraints the AI must respect. These are not preferences — they are hard limits the AI will not cross.
 
 Examples:
+
 - "No tasks before 9am"
 - "Don't schedule habits on Sundays"
 - "Keep finance suggestions private"
@@ -432,20 +437,20 @@ Flagging is the user's only real-time input during Hard Mode. It is intentionall
 
 ```ts
 type Flag = {
-  targetId: string;          // the planned item being flagged
-  targetType: FlagTarget;    // "habit" | "task" | "checkin" | "finance" | "review"
-  reason?: FlagReason;       // optional: "not_now" | "not_aligned" | "too_much"
+  targetId: string; // the planned item being flagged
+  targetType: FlagTarget; // "habit" | "task" | "checkin" | "finance" | "review"
+  reason?: FlagReason; // optional: "not_now" | "not_aligned" | "too_much"
   occurredAt: number;
-}
+};
 ```
 
 #### Flag behaviours
 
-| Flag | Immediate effect | Learning effect |
-|---|---|---|
-| **Not now** | Item deferred to later in the day | AI adjusts timing preference for this type |
-| **Not aligned** | Item removed from today entirely | AI down-weights this item category for this user |
-| **Too much** | Day's plan trimmed by one item | AI recalibrates volume preference |
+| Flag            | Immediate effect                  | Learning effect                                  |
+| --------------- | --------------------------------- | ------------------------------------------------ |
+| **Not now**     | Item deferred to later in the day | AI adjusts timing preference for this type       |
+| **Not aligned** | Item removed from today entirely  | AI down-weights this item category for this user |
+| **Too much**    | Day's plan trimmed by one item    | AI recalibrates volume preference                |
 
 Flags never produce a visible consequence to the user beyond the item changing. No "are you sure?", no explanation prompt, no streak broken. The flag is silent signal, not a conversation starter.
 
@@ -465,15 +470,15 @@ type HardModePlan = {
   constraints: HardModeConstraint[];
   plannedItems: PlannedItem[];
   generatedAt: number;
-}
+};
 
 type PlannedItem = {
   module: Module;
   itemId: string;
-  scheduledFor: number;      // ms epoch
-  rationale: string;         // max 80 chars, shown on long-press
+  scheduledFor: number; // ms epoch
+  rationale: string; // max 80 chars, shown on long-press
   confidence: "low" | "medium" | "high";
-}
+};
 ```
 
 The `rationale` field is surfaced on long-press only — the user is not bombarded with AI justifications. It exists for transparency when they want it.
@@ -500,6 +505,7 @@ Low-confidence items are scheduled last and are the first to be dropped if the p
 The user can exit at any time with no friction. There is no confirmation dialog, no summary of how many times they flagged, no "are you sure you want to give up?" The exit is instant and silent.
 
 On exit:
+
 - All unexecuted planned items are cleared
 - Modules return to standard mode immediately
 - A `hardmode.deactivated` event is written with `exitedEarly: true`
@@ -533,7 +539,7 @@ Long-pressing any item reveals its `rationale`. Tapping the flag icon triggers t
 
 ## Hard Mode
 
-*Surrender the wheel. Flag what doesn't fit.*
+_Surrender the wheel. Flag what doesn't fit._
 
 Hard Mode is an opt-in state where the AI becomes the sole architect of the user's plans. The user gives up the right to choose — and gains the right to flag anything that doesn't feel aligned. No streaks, no failure, no guilt about the flag.
 
@@ -554,26 +560,26 @@ type HardModeScope = {
   checkin: boolean;
   finance: boolean;
   weeklyReview: boolean;
-}
+};
 
 type HardModeSession = {
   scope: HardModeScope;
   startedAt: number;
-  expiresAt: number;      // max 7 days from start
+  expiresAt: number; // max 7 days from start
   flags: Flag[];
-}
+};
 ```
 
 ### What the AI Owns (Within Scope)
 
-| Module | What the AI Controls |
-|---|---|
-| **Habits** | Selects which habits appear today based on energy trend, day of week, and recent load |
-| **Tasks** | Fills the Focus view (up to 3) from the inbox, ranked by inferred priority |
-| **Check-in** | Chooses timing and prompts of the daily check-in |
-| **Finance** | Sets envelope soft ceilings based on recent spending patterns |
-| **Weekly Review** | Schedules the review window and selects reflection prompts |
-| **Patterns** | Surfaces and pins patterns without waiting for user triage |
+| Module            | What the AI Controls                                                                  |
+| ----------------- | ------------------------------------------------------------------------------------- |
+| **Habits**        | Selects which habits appear today based on energy trend, day of week, and recent load |
+| **Tasks**         | Fills the Focus view (up to 3) from the inbox, ranked by inferred priority            |
+| **Check-in**      | Chooses timing and prompts of the daily check-in                                      |
+| **Finance**       | Sets envelope soft ceilings based on recent spending patterns                         |
+| **Weekly Review** | Schedules the review window and selects reflection prompts                            |
+| **Patterns**      | Surfaces and pins patterns without waiting for user triage                            |
 
 ### What the User Always Keeps
 
@@ -595,14 +601,14 @@ A flag is not a complaint. It is signal. The user can flag anything the AI chose
 ```ts
 type Flag = {
   targetId: string;
-  targetType: FlagTarget;   // habit | task | pattern | suggestion | review_prompt
-  reason?: string;          // optional, owner-supplied
+  targetType: FlagTarget; // habit | task | pattern | suggestion | review_prompt
+  reason?: string; // optional, owner-supplied
   context: {
-    energy?: number;        // from most recent check-in
+    energy?: number; // from most recent check-in
     mood?: number;
     dayOfWeek: number;
   };
-}
+};
 ```
 
 ### AI Planning Rules
@@ -628,15 +634,15 @@ A Hard Mode plan is a structured `Suggestion` batch that the system auto-confirm
 
 ## Build Roadmap
 
-| Phase | Focus | Deliverables |
-|---|---|---|
-| **α Alpha** | Core Loop | Monorepo setup, auth, Habits module, Check-in module, basic policy engine |
-| **β Beta** | AI Layer | Pattern detection, Weekly Review with AI summary, Finance module (manual) |
-| **1.0** | Complete | Finance account linking (Plaid), Tasks module, full policy suite, audit log UI |
-| **1.1** | Hard Mode | Hard Mode activation flow, AI planner action, flag mechanism, preference anchors |
-| **1.x** | Depth | Cross-module dashboards, export (events as JSON), notification personalization |
-| **2.0** | Hard Mode | AI planner, flag system, scoped Hard Mode, low-energy auto-downgrade |
+| Phase       | Focus     | Deliverables                                                                     |
+| ----------- | --------- | -------------------------------------------------------------------------------- |
+| **α Alpha** | Core Loop | Monorepo setup, auth, Habits module, Check-in module, basic policy engine        |
+| **β Beta**  | AI Layer  | Pattern detection, Weekly Review with AI summary, Finance module (manual)        |
+| **1.0**     | Complete  | Finance account linking (Plaid), Tasks module, full policy suite, audit log UI   |
+| **1.1**     | Hard Mode | Hard Mode activation flow, AI planner action, flag mechanism, preference anchors |
+| **1.x**     | Depth     | Cross-module dashboards, export (events as JSON), notification personalization   |
+| **2.0**     | Hard Mode | AI planner, flag system, scoped Hard Mode, low-energy auto-downgrade             |
 
 ---
 
-*Life OS is not productivity software. It's a system that holds space for being human — one event at a time.*
+_Life OS is not productivity software. It's a system that holds space for being human — one event at a time._

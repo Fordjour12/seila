@@ -38,20 +38,21 @@ export function WeeklyReview() {
   const [intention3, setIntention3] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const summary: WeeklySummary | null = currentReview?.summaryGenerated &&
+  const summary: WeeklySummary | null =
+    currentReview?.summaryGenerated &&
     currentReview.summary &&
     currentReview.brightSpot &&
     currentReview.worthNoticing
-    ? {
-      bullets: currentReview.summary
-        .split("\n")
-        .map((line) => line.trim())
-        .filter(Boolean)
-        .slice(0, 5),
-      brightSpot: currentReview.brightSpot,
-      worthNoticing: currentReview.worthNoticing,
-    }
-    : null;
+      ? {
+          bullets: currentReview.summary
+            .split("\n")
+            .map((line) => line.trim())
+            .filter(Boolean)
+            .slice(0, 5),
+          brightSpot: currentReview.brightSpot,
+          worthNoticing: currentReview.worthNoticing,
+        }
+      : null;
 
   if (!isAuthenticated) {
     return null;
@@ -111,13 +112,13 @@ export function WeeklyReview() {
           {summary ? (
             <View className="gap-1">
               {summary.bullets.map((bullet, i) => (
-                <Text key={i} className="text-foreground text-sm">• {bullet}</Text>
+                <Text key={i} className="text-foreground text-sm">
+                  • {bullet}
+                </Text>
               ))}
             </View>
           ) : (
-            <Text className="text-muted text-sm">
-              Generating your weekly summary...
-            </Text>
+            <Text className="text-muted text-sm">Generating your weekly summary...</Text>
           )}
         </View>
 
@@ -135,10 +136,7 @@ export function WeeklyReview() {
           </Text>
         </View>
 
-        <Button
-          variant="primary"
-          onPress={() => setPhase("reflect")}
-        >
+        <Button variant="primary" onPress={() => setPhase("reflect")}>
           Continue to Reflection
         </Button>
       </SpicedCard>
@@ -285,7 +283,7 @@ export function WeeklyReview() {
           variant="primary"
           onPress={async () => {
             const intentions = [intention1, intention2, intention3]
-              .filter(i => i.trim())
+              .filter((i) => i.trim())
               .slice(0, 3);
 
             if (intentions.length === 0) {

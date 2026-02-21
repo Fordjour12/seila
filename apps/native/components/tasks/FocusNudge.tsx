@@ -17,7 +17,8 @@ export function FocusNudge() {
   return (
     <SpicedCard className="p-4 bg-primary/5 border-primary/20 shadow-none">
       <Text className="text-foreground text-sm font-medium">
-        You have {inboxTasks?.length} task{inboxTasks?.length === 1 ? "" : "s"} in your inbox ready for your focus.
+        You have {inboxTasks?.length} task{inboxTasks?.length === 1 ? "" : "s"} in your inbox ready
+        for your focus.
       </Text>
     </SpicedCard>
   );

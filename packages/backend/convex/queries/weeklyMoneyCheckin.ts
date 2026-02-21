@@ -29,4 +29,3 @@ export const currentWeeklyMoneyCheckin = query({
       : null;
   },
 });
-

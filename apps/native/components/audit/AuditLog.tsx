@@ -4,7 +4,15 @@ import { Button, Surface } from "heroui-native";
 import { useState } from "react";
 import { Text, View, ScrollView, Share } from "react-native";
 
-type AuditModule = "checkin" | "finance" | "habit" | "task" | "review" | "pattern" | "suggestion" | "hardmode";
+type AuditModule =
+  | "checkin"
+  | "finance"
+  | "habit"
+  | "task"
+  | "review"
+  | "pattern"
+  | "suggestion"
+  | "hardmode";
 
 const MODULES = [
   { value: "", label: "All" },
@@ -14,25 +22,23 @@ const MODULES = [
   { value: "review", label: "Reviews" },
   { value: "finance", label: "Finance" },
   { value: "pattern", label: "Patterns" },
- ] as const satisfies ReadonlyArray<{ value: "" | AuditModule; label: string }>;
+] as const satisfies ReadonlyArray<{ value: "" | AuditModule; label: string }>;
 
 export function AuditLog() {
   const [selectedModule, setSelectedModule] = useState<"" | AuditModule>("");
 
-  const events = useQuery(
-    api.queries.auditLog.allEvents,
-    { module: selectedModule || undefined, limit: 50 }
-  );
-  
-  const eventCount = useQuery(
-    api.queries.auditLog.eventCount,
-    { module: selectedModule || undefined }
-  );
+  const events = useQuery(api.queries.auditLog.allEvents, {
+    module: selectedModule || undefined,
+    limit: 50,
+  });
 
-  const exportData = useQuery(
-    api.queries.auditLog.exportEvents,
-    { module: selectedModule || undefined },
-  );
+  const eventCount = useQuery(api.queries.auditLog.eventCount, {
+    module: selectedModule || undefined,
+  });
+
+  const exportData = useQuery(api.queries.auditLog.exportEvents, {
+    module: selectedModule || undefined,
+  });
 
   const formatDate = (timestamp: number) => {
     const date = new Date(timestamp);
@@ -62,7 +68,7 @@ export function AuditLog() {
   const handleShare = async () => {
     try {
       const json = JSON.stringify(exportData, null, 2);
-      
+
       await Share.share({
         message: json,
         title: "Life OS Event Log Export",
@@ -95,11 +101,7 @@ export function AuditLog() {
       </ScrollView>
 
       <View className="flex-row gap-2 mb-4">
-        <Button
-          size="sm"
-          variant="secondary"
-          onPress={handleShare}
-        >
+        <Button size="sm" variant="secondary" onPress={handleShare}>
           Export JSON
         </Button>
       </View>

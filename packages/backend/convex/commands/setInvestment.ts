@@ -7,7 +7,13 @@ export const setInvestment = mutation({
     idempotencyKey: v.string(),
     investmentId: v.optional(v.id("investments")),
     name: v.string(),
-    type: v.union(v.literal("stock"), v.literal("fund"), v.literal("crypto"), v.literal("cash"), v.literal("other")),
+    type: v.union(
+      v.literal("stock"),
+      v.literal("fund"),
+      v.literal("crypto"),
+      v.literal("cash"),
+      v.literal("other"),
+    ),
     currentValue: v.number(),
     costBasis: v.number(),
   },
@@ -19,8 +25,10 @@ export const setInvestment = mutation({
     if (dedupe) return { deduplicated: true };
 
     if (!args.name.trim()) throw new ConvexError("name is required");
-    if (!Number.isInteger(args.currentValue) || args.currentValue < 0) throw new ConvexError("currentValue invalid");
-    if (!Number.isInteger(args.costBasis) || args.costBasis < 0) throw new ConvexError("costBasis invalid");
+    if (!Number.isInteger(args.currentValue) || args.currentValue < 0)
+      throw new ConvexError("currentValue invalid");
+    if (!Number.isInteger(args.costBasis) || args.costBasis < 0)
+      throw new ConvexError("costBasis invalid");
 
     const now = Date.now();
     if (args.investmentId) {

@@ -39,13 +39,13 @@ export const applyAiContextPatch = internalMutation({
 
     const nextMemory = [
       ...(existing.memory ?? []),
-      ...((args.memoryEntries ?? []).map((entry) => ({
+      ...(args.memoryEntries ?? []).map((entry) => ({
         occurredAt: entry.occurredAt ?? Date.now(),
         module: entry.module,
         observation: truncate(entry.observation, 150),
         confidence: entry.confidence,
         source: entry.source,
-      }))),
+      })),
     ].slice(-MAX_MEMORY_ENTRIES);
 
     const next = {

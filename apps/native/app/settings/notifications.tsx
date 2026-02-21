@@ -7,18 +7,12 @@
  * All notification copy must follow tone policy.
  */
 
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  Pressable,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import { Colors, Typography, Spacing, Radius } from '../../constants/theme';
-import { SectionLabel, Toggle } from '../../components/ui';
+import React, { useState } from "react";
+import { View, Text, ScrollView, StyleSheet, Pressable } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { router } from "expo-router";
+import { Colors, Typography, Spacing, Radius } from "../../constants/theme";
+import { SectionLabel, Toggle } from "../../components/ui";
 
 // ─────────────────────────────────────────────
 // TYPES
@@ -35,50 +29,50 @@ interface ModuleNotifConfig {
 
 const MODULES: ModuleNotifConfig[] = [
   {
-    id: 'checkin',
-    icon: '○',
-    label: 'Check-in',
-    description: 'Daily prompt to log mood and energy',
+    id: "checkin",
+    icon: "○",
+    label: "Check-in",
+    description: "Daily prompt to log mood and energy",
     enabled: true,
-    exampleCopy: 'How are you doing today?',
+    exampleCopy: "How are you doing today?",
   },
   {
-    id: 'habits',
-    icon: '◇',
-    label: 'Habits',
-    description: 'Gentle reminder if morning anchor approaches',
+    id: "habits",
+    icon: "◇",
+    label: "Habits",
+    description: "Gentle reminder if morning anchor approaches",
     enabled: true,
-    exampleCopy: 'Morning walk is still open.',
+    exampleCopy: "Morning walk is still open.",
   },
   {
-    id: 'finance',
-    icon: '◈',
-    label: 'Finance',
-    description: 'Import inbox when new transactions arrive',
+    id: "finance",
+    icon: "◈",
+    label: "Finance",
+    description: "Import inbox when new transactions arrive",
     enabled: false,
-    exampleCopy: '3 transactions waiting in your inbox.',
+    exampleCopy: "3 transactions waiting in your inbox.",
   },
   {
-    id: 'review',
-    icon: '▷',
-    label: 'Weekly review',
-    description: 'Sunday reminder to close the week',
+    id: "review",
+    icon: "▷",
+    label: "Weekly review",
+    description: "Sunday reminder to close the week",
     enabled: true,
-    exampleCopy: 'Ready to close the week when you are.',
+    exampleCopy: "Ready to close the week when you are.",
   },
   {
-    id: 'patterns',
-    icon: '⋮',
-    label: 'Patterns',
-    description: 'When a new pattern is detected',
+    id: "patterns",
+    icon: "⋮",
+    label: "Patterns",
+    description: "When a new pattern is detected",
     enabled: false,
-    exampleCopy: 'The AI noticed something worth seeing.',
+    exampleCopy: "The AI noticed something worth seeing.",
   },
 ];
 
 const HOURS = Array.from({ length: 24 }, (_, i) => {
   const h = i % 12 === 0 ? 12 : i % 12;
-  const ampm = i < 12 ? 'AM' : 'PM';
+  const ampm = i < 12 ? "AM" : "PM";
   return { value: i, label: `${h}:00 ${ampm}` };
 });
 
@@ -86,7 +80,11 @@ const HOURS = Array.from({ length: 24 }, (_, i) => {
 // TIME PICKER (simple segmented)
 // ─────────────────────────────────────────────
 
-function TimePicker({ value, onChange, label }: {
+function TimePicker({
+  value,
+  onChange,
+  label,
+}: {
   value: number;
   onChange: (v: number) => void;
   label: string;
@@ -96,10 +94,14 @@ function TimePicker({ value, onChange, label }: {
   return (
     <View style={tpStyles.wrap}>
       <Text style={tpStyles.label}>{label}</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={tpStyles.scroll}>
-        {SLOTS.map(h => {
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={tpStyles.scroll}
+      >
+        {SLOTS.map((h) => {
           const hDisplay = h > 12 ? h - 12 : h;
-          const ampm = h < 12 ? 'AM' : 'PM';
+          const ampm = h < 12 ? "AM" : "PM";
           const isSelected = value === h;
           return (
             <Pressable
@@ -108,7 +110,8 @@ function TimePicker({ value, onChange, label }: {
               style={[tpStyles.slot, isSelected && tpStyles.slotActive]}
             >
               <Text style={[tpStyles.slotText, isSelected && tpStyles.slotTextActive]}>
-                {hDisplay}{ampm}
+                {hDisplay}
+                {ampm}
               </Text>
             </Pressable>
           );
@@ -142,21 +145,12 @@ const tpStyles = StyleSheet.create({
 // MODULE ROW
 // ─────────────────────────────────────────────
 
-function ModuleNotifRow({
-  config,
-  onToggle,
-}: {
-  config: ModuleNotifConfig;
-  onToggle: () => void;
-}) {
+function ModuleNotifRow({ config, onToggle }: { config: ModuleNotifConfig; onToggle: () => void }) {
   const [expanded, setExpanded] = useState(false);
 
   return (
     <View style={modStyles.wrap}>
-      <Pressable
-        onPress={() => config.enabled && setExpanded(p => !p)}
-        style={modStyles.row}
-      >
+      <Pressable onPress={() => config.enabled && setExpanded((p) => !p)} style={modStyles.row}>
         <View style={modStyles.icon}>
           <Text style={modStyles.iconText}>{config.icon}</Text>
         </View>
@@ -183,23 +177,24 @@ const modStyles = StyleSheet.create({
     borderBottomColor: Colors.borderSoft,
   },
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: Spacing.md,
     paddingVertical: Spacing.lg,
     paddingHorizontal: Spacing.lg,
   },
   icon: {
-    width: 32, height: 32,
+    width: 32,
+    height: 32,
     backgroundColor: Colors.bgFloat,
     borderRadius: Radius.sm,
     borderWidth: 1,
     borderColor: Colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     flexShrink: 0,
   },
-  iconText: { fontSize: 12, color: Colors.textMuted, fontFamily: 'monospace' },
+  iconText: { fontSize: 12, color: Colors.textMuted, fontFamily: "monospace" },
   info: { flex: 1 },
   label: { ...Typography.bodyMD, color: Colors.textPrimary, marginBottom: 2 },
   desc: { ...Typography.bodyXS, color: Colors.textMuted, lineHeight: 16 },
@@ -213,8 +208,8 @@ const modStyles = StyleSheet.create({
   exampleText: {
     ...Typography.bodySM,
     color: Colors.textSecondary,
-    fontStyle: 'italic',
-    fontFamily: 'DMSans_300Light',
+    fontStyle: "italic",
+    fontFamily: "DMSans_300Light",
   },
 });
 
@@ -229,11 +224,11 @@ export default function NotificationsScreen() {
   const [quietEnabled, setQuietEnabled] = useState(true);
 
   const toggleModule = (id: string) => {
-    setModules(prev => prev.map(m => m.id === id ? { ...m, enabled: !m.enabled } : m));
+    setModules((prev) => prev.map((m) => (m.id === id ? { ...m, enabled: !m.enabled } : m)));
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={styles.safe} edges={["top"]}>
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
           <Text style={styles.backText}>‹</Text>
@@ -241,25 +236,24 @@ export default function NotificationsScreen() {
         <Text style={styles.title}>Notifications</Text>
       </View>
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Tone note */}
         <View style={styles.toneNote}>
           <Text style={styles.toneNoteText}>
-            All notifications follow the tone policy — no urgency language, no streak pressure, no guilt.
-            Examples shown are exactly what you'll receive.
+            All notifications follow the tone policy — no urgency language, no streak pressure, no
+            guilt. Examples shown are exactly what you'll receive.
           </Text>
         </View>
 
         {/* Modules */}
         <SectionLabel>By module</SectionLabel>
         <View style={styles.card}>
-          {modules.map(m => (
-            <ModuleNotifRow
-              key={m.id}
-              config={m}
-              onToggle={() => toggleModule(m.id)}
-            />
+          {modules.map((m) => (
+            <ModuleNotifRow key={m.id} config={m} onToggle={() => toggleModule(m.id)} />
           ))}
         </View>
 
@@ -271,7 +265,7 @@ export default function NotificationsScreen() {
               <Text style={styles.quietLabel}>Enable quiet hours</Text>
               <Text style={styles.quietSublabel}>No notifications during this window</Text>
             </View>
-            <Toggle value={quietEnabled} onToggle={() => setQuietEnabled(p => !p)} />
+            <Toggle value={quietEnabled} onToggle={() => setQuietEnabled((p) => !p)} />
           </View>
 
           {quietEnabled && (
@@ -293,7 +287,8 @@ export default function NotificationsScreen() {
         <View style={styles.card}>
           <View style={styles.windowInfo}>
             <Text style={styles.windowDesc}>
-              Prefer notifications in the morning or afternoon? The system avoids sending check-in reminders after your quiet hours begin.
+              Prefer notifications in the morning or afternoon? The system avoids sending check-in
+              reminders after your quiet hours begin.
             </Text>
           </View>
           <View style={styles.windowDivider} />
@@ -311,8 +306,8 @@ export default function NotificationsScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.lg,
     borderBottomWidth: 1,
@@ -336,8 +331,8 @@ const styles = StyleSheet.create({
   toneNoteText: {
     ...Typography.bodySM,
     color: Colors.textSecondary,
-    fontFamily: 'DMSans_300Light',
-    fontStyle: 'italic',
+    fontFamily: "DMSans_300Light",
+    fontStyle: "italic",
     lineHeight: 20,
   },
 
@@ -346,15 +341,15 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     borderWidth: 1,
     borderColor: Colors.borderSoft,
-    overflow: 'hidden',
+    overflow: "hidden",
     marginBottom: Spacing.xxl,
   },
 
   // Quiet hours
   quietHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     padding: Spacing.lg,
     gap: Spacing.md,
   },
@@ -367,9 +362,9 @@ const styles = StyleSheet.create({
   quietSummary: {
     ...Typography.bodyXS,
     color: Colors.textMuted,
-    textAlign: 'center',
+    textAlign: "center",
     paddingBottom: Spacing.lg,
-    fontStyle: 'italic',
+    fontStyle: "italic",
   },
 
   // Window
@@ -377,7 +372,7 @@ const styles = StyleSheet.create({
   windowDesc: {
     ...Typography.bodySM,
     color: Colors.textSecondary,
-    fontFamily: 'DMSans_300Light',
+    fontFamily: "DMSans_300Light",
     lineHeight: 20,
   },
   windowDivider: { height: 1, backgroundColor: Colors.borderSoft },

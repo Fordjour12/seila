@@ -40,4 +40,3 @@ export const setFinanceSecuritySettings = mutation({
     return { settingsId, deduplicated: false };
   },
 });
-

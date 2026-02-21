@@ -80,7 +80,14 @@ export const closeHardModeDay = internalAction({
   handler: async (
     ctx,
     args,
-  ): Promise<{ processed: boolean; reason?: string; completions?: number; flags?: number; ignored?: number; accuracy?: number }> => {
+  ): Promise<{
+    processed: boolean;
+    reason?: string;
+    completions?: number;
+    flags?: number;
+    ignored?: number;
+    accuracy?: number;
+  }> => {
     const aiContext = await readAiContext(ctx);
     const now = args.now ?? Date.now();
 
@@ -117,7 +124,9 @@ export const closeHardModeDay = internalAction({
         })
         .filter((id): id is string => id !== null),
     );
-    const ignored = (plan.items ?? []).filter((item) => !completedIds.has(item.id) && !flaggedIds.has(item.id));
+    const ignored = (plan.items ?? []).filter(
+      (item) => !completedIds.has(item.id) && !flaggedIds.has(item.id),
+    );
 
     // Same thread as the plan — agent sees full session history
     const { thread } = await plannerAgent.continueThread(ctx, {
@@ -141,9 +150,7 @@ Flagged: ${JSON.stringify(
             };
           }),
         )}
-Ignored (planned but neither done nor flagged): ${JSON.stringify(
-          ignored.map((item) => item.id),
-        )}
+Ignored (planned but neither done nor flagged): ${JSON.stringify(ignored.map((item) => item.id))}
 
 Reason about what you learned:
 - not_aligned: wrong item for this person
@@ -168,12 +175,10 @@ hardModePlanAccuracy = completed / (planned - too_much_flags)`,
         dayCloseResult = parsed;
       } else {
         // Fallback: rule-based calculation
-        const tooMuchFlags = flags.filter(
-          (event) => {
-            const payload = event.payload as Record<string, unknown> | undefined;
-            return payload?.flag === "too_much" || payload?.reason === "too_much";
-          },
-        ).length;
+        const tooMuchFlags = flags.filter((event) => {
+          const payload = event.payload as Record<string, unknown> | undefined;
+          return payload?.flag === "too_much" || payload?.reason === "too_much";
+        }).length;
         const denominator = Math.max(1, (plan.items ?? []).length - tooMuchFlags);
         const accuracy = Math.min(1, completions.length / denominator);
 
@@ -187,10 +192,7 @@ hardModePlanAccuracy = completed / (planned - too_much_flags)`,
       }
     } catch {
       // Agent failure — use rule-based fallback
-      const accuracy = Math.min(
-        1,
-        completions.length / Math.max(1, (plan.items ?? []).length),
-      );
+      const accuracy = Math.min(1, completions.length / Math.max(1, (plan.items ?? []).length));
 
       dayCloseResult = {
         observations: [
@@ -202,9 +204,7 @@ hardModePlanAccuracy = completed / (planned - too_much_flags)`,
     }
 
     // Apply agent observations to tone policy
-    const safeObservations = dayCloseResult.observations.map((obs) =>
-      tonePolicy(obs),
-    );
+    const safeObservations = dayCloseResult.observations.map((obs) => tonePolicy(obs));
 
     // Rolling average for accuracy calibration
     const prevAccuracy = aiContext.calibration.hardModePlanAccuracy;

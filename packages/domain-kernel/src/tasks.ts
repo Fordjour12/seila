@@ -89,10 +89,7 @@ export const initialTaskState: TaskState = {
   abandoned: [],
 };
 
-export function taskReducer(
-  state: TaskState,
-  event: TaskEvent,
-): TaskState {
+export function taskReducer(state: TaskState, event: TaskEvent): TaskState {
   if (event.type === "task.created") {
     const newTask: Task = {
       id: event.payload.id,

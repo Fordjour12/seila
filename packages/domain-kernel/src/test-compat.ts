@@ -43,10 +43,7 @@ export function expect<T>(actual: T) {
     toEqual(expected: unknown): void {
       const left = JSON.stringify(actual);
       const right = JSON.stringify(expected);
-      assertCondition(
-        left === right,
-        `Expected ${left} to deeply equal ${right}`,
-      );
+      assertCondition(left === right, `Expected ${left} to deeply equal ${right}`);
     },
     toHaveLength(expectedLength: number): void {
       assertCondition(
@@ -63,25 +60,16 @@ export function expect<T>(actual: T) {
       );
     },
     toBeDefined(): void {
-      assertCondition(
-        actual !== undefined,
-        "Expected value to be defined",
-      );
+      assertCondition(actual !== undefined, "Expected value to be defined");
     },
     toBeNull(): void {
       assertCondition(actual === null, `Expected ${formatValue(actual)} to be null`);
     },
     toBeUndefined(): void {
-      assertCondition(
-        actual === undefined,
-        `Expected ${formatValue(actual)} to be undefined`,
-      );
+      assertCondition(actual === undefined, `Expected ${formatValue(actual)} to be undefined`);
     },
     toBeGreaterThanOrEqual(expected: number): void {
-      assertCondition(
-        typeof actual === "number",
-        "Expected value to be a number",
-      );
+      assertCondition(typeof actual === "number", "Expected value to be a number");
       const value = actual as unknown as number;
       assertCondition(
         value >= expected,
@@ -89,10 +77,7 @@ export function expect<T>(actual: T) {
       );
     },
     toThrow(expected?: string | RegExp): void {
-      assertCondition(
-        typeof actual === "function",
-        "toThrow requires a function value",
-      );
+      assertCondition(typeof actual === "function", "toThrow requires a function value");
       let threw = false;
       let thrownMessage = "";
       try {

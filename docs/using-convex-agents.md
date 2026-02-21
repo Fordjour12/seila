@@ -1,5 +1,4 @@
-
-# What `@convex-dev/agent` actually gives you**
+# What `@convex-dev/agent` actually gives you\*\*
 
 Three things you'd otherwise build yourself:
 
@@ -68,15 +67,15 @@ export const patternAgent = new Agent(components.agent, {
       handler: async (ctx, { patternId }) => {
         // returns the raw correlation data the rule engine found
         return await ctx.runQuery(api.queries.patternData, { patternId });
-      }
+      },
     }),
     getAiContext: tool({
       args: {},
       handler: async (ctx) => {
         return await ctx.runQuery(api.queries.aiContext);
-      }
+      },
     }),
-  }
+  },
 });
 
 // convex/actions/explainPattern.ts
@@ -104,28 +103,28 @@ export const summaryAgent = new Agent(components.agent, {
       args: { module: v.string() },
       handler: async (ctx, { module }) => {
         return await ctx.runQuery(api.queries.weekEvents, { module });
-      }
+      },
     }),
     getMoodTrend: tool({
       args: {},
       handler: async (ctx) => {
         return await ctx.runQuery(api.queries.moodTrend, { days: 7 });
-      }
+      },
     }),
     getAiContext: tool({
       args: {},
       handler: async (ctx) => {
         return await ctx.runQuery(api.queries.aiContext);
-      }
+      },
     }),
   },
   maxSteps: 5, // agent can call up to 5 tools before generating final output
 });
 
-// convex/actions/generateWeeklySummary.ts  
+// convex/actions/generateWeeklySummary.ts
 export const generateWeeklySummary = internalAction(async (ctx, { reviewId }) => {
   const { thread } = await summaryAgent.createThread(ctx);
-  
+
   const result = await thread.generateText(ctx, {
     prompt: `Generate this week's summary. 
              Use your tools to gather what you need.
@@ -134,10 +133,10 @@ export const generateWeeklySummary = internalAction(async (ctx, { reviewId }) =>
   });
 
   const filtered = tonePolicy(result.text);
-  
+
   // write observation to aiContext after
   await writeAiContext(ctx, {
-    observations: [{ source: "weeklySummary", observation: "Summary generated" }]
+    observations: [{ source: "weeklySummary", observation: "Summary generated" }],
   });
 
   return filtered;
@@ -158,28 +157,28 @@ export const plannerAgent = new Agent(components.agent, {
   tools: {
     getActiveHabits: tool({
       args: {},
-      handler: async (ctx) => ctx.runQuery(api.queries.activeHabits)
+      handler: async (ctx) => ctx.runQuery(api.queries.activeHabits),
     }),
     getInboxTasks: tool({
       args: {},
-      handler: async (ctx) => ctx.runQuery(api.queries.inbox)
+      handler: async (ctx) => ctx.runQuery(api.queries.inbox),
     }),
     getLastCheckin: tool({
       args: {},
-      handler: async (ctx) => ctx.runQuery(api.queries.lastCheckin)
+      handler: async (ctx) => ctx.runQuery(api.queries.lastCheckin),
     }),
     getHardModeConstraints: tool({
       args: {},
-      handler: async (ctx) => ctx.runQuery(api.queries.hardModeConstraints)
+      handler: async (ctx) => ctx.runQuery(api.queries.hardModeConstraints),
     }),
     getAiContext: tool({
       args: {},
-      handler: async (ctx) => ctx.runQuery(api.queries.aiContext)
+      handler: async (ctx) => ctx.runQuery(api.queries.aiContext),
     }),
     getDayHistory: tool({
       // agent can look back at recent days if it needs calibration signal
       args: { days: v.number() },
-      handler: async (ctx, { days }) => ctx.runQuery(api.queries.recentDays, { days })
+      handler: async (ctx, { days }) => ctx.runQuery(api.queries.recentDays, { days }),
     }),
   },
   maxSteps: 6,
@@ -204,7 +203,7 @@ export const generateHardModePlan = internalAction(async (ctx, { sessionId }) =>
 
   // existing guards — these do not change regardless of agent
   const plan = JSON.parse(result.text);
-  validateHardModePlan(plan, session.constraints);  // kernel validation
+  validateHardModePlan(plan, session.constraints); // kernel validation
   applyLowEnergyFailsafe(plan, await getLastCheckin(ctx)); // energy check
 
   await ctx.runMutation(api.mutations.savePlan, { sessionId, plan });
@@ -221,8 +220,8 @@ This is where thread persistence pays off most clearly:
 // convex/actions/closeHardModeDay.ts
 export const closeHardModeDay = internalAction(async (ctx, { sessionId }) => {
   const todayEvents = await ctx.runQuery(api.queries.todayEvents);
-  const flags = todayEvents.filter(e => e.type === "hardmode.itemFlagged");
-  const completions = todayEvents.filter(e => isCompletionEvent(e));
+  const flags = todayEvents.filter((e) => e.type === "hardmode.itemFlagged");
+  const completions = todayEvents.filter((e) => isCompletionEvent(e));
 
   // same thread as the plan — agent sees what it planned AND what happened
   const { thread } = await plannerAgent.createThread(ctx, {

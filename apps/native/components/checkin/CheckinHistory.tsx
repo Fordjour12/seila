@@ -75,25 +75,26 @@ export function CheckinHistory() {
             {checkin.flags && checkin.flags.length > 0 && (
               <View className="flex-row flex-wrap gap-1 mb-2">
                 {checkin.flags.map((flag: string) => (
-                  <View
-                    key={flag}
-                    className="bg-default-100 px-2 py-1 rounded"
-                  >
+                  <View key={flag} className="bg-default-100 px-2 py-1 rounded">
                     <Text className="text-xs text-muted">{flag}</Text>
                   </View>
                 ))}
               </View>
             )}
 
-            {checkin.note && (
-              <Text className="text-sm text-muted italic">"{checkin.note}"</Text>
-            )}
+            {checkin.note && <Text className="text-sm text-muted italic">"{checkin.note}"</Text>}
 
             {checkin.weeklyAnswers && (
               <View className="mt-2 gap-1">
-                <Text className="text-xs text-muted">Felt good: {checkin.weeklyAnswers.feltGood}</Text>
-                <Text className="text-xs text-muted">Felt hard: {checkin.weeklyAnswers.feltHard}</Text>
-                <Text className="text-xs text-muted">Carry forward: {checkin.weeklyAnswers.carryForward}</Text>
+                <Text className="text-xs text-muted">
+                  Felt good: {checkin.weeklyAnswers.feltGood}
+                </Text>
+                <Text className="text-xs text-muted">
+                  Felt hard: {checkin.weeklyAnswers.feltHard}
+                </Text>
+                <Text className="text-xs text-muted">
+                  Carry forward: {checkin.weeklyAnswers.carryForward}
+                </Text>
               </View>
             )}
           </Surface>

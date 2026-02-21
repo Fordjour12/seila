@@ -62,9 +62,7 @@ export function DailyCheckin({ onComplete }: DailyCheckinProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const toggleFlag = (flag: (typeof ALL_FLAGS)[number]) => {
-    setFlags((prev) =>
-      prev.includes(flag) ? prev.filter((f) => f !== flag) : [...prev, flag],
-    );
+    setFlags((prev) => (prev.includes(flag) ? prev.filter((f) => f !== flag) : [...prev, flag]));
   };
 
   const handleSubmit = async () => {
@@ -104,9 +102,7 @@ export function DailyCheckin({ onComplete }: DailyCheckinProps) {
   return (
     <View className="p-4 gap-6">
       <View>
-        <Text className="text-lg font-medium text-foreground mb-3">
-          How are you feeling?
-        </Text>
+        <Text className="text-lg font-medium text-foreground mb-3">How are you feeling?</Text>
         <View className="flex-row justify-between">
           {[1, 2, 3, 4, 5].map((value) => (
             <View key={value} className="items-center">
@@ -144,9 +140,7 @@ export function DailyCheckin({ onComplete }: DailyCheckinProps) {
       </View>
 
       <View>
-        <Text className="text-lg font-medium text-foreground mb-3">
-          What's on your mind?
-        </Text>
+        <Text className="text-lg font-medium text-foreground mb-3">What's on your mind?</Text>
         <View className="flex-row flex-wrap gap-2">
           {ALL_FLAGS.map((flag) => (
             <Button

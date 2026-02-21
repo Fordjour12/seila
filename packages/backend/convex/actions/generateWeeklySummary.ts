@@ -116,7 +116,9 @@ export const generateWeeklySummary = internalAction({
       ],
       calibrationPatch: {
         preferredSuggestionVolume:
-          aiContext.calibration.preferredSuggestionVolume === "full" ? "moderate" : aiContext.calibration.preferredSuggestionVolume,
+          aiContext.calibration.preferredSuggestionVolume === "full"
+            ? "moderate"
+            : aiContext.calibration.preferredSuggestionVolume,
       },
     });
 

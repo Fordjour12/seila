@@ -109,29 +109,28 @@ export function EnvelopeCard({ envelope }: { envelope: EnvelopeSummary }) {
           <Text style={styles.envelopeSpent}>{formatGhs(envelope.spent)}</Text>
           {hasCeiling ? (
             <Text
-          style={[
-            styles.envelopeCeiling,
-            isOverBudget ? styles.envelopeOverBudget : undefined,
-          ]}
-        >
+              style={[styles.envelopeCeiling, isOverBudget ? styles.envelopeOverBudget : undefined]}
+            >
               / {formatGhs(envelope.softCeiling!)}
             </Text>
           ) : null}
         </View>
       </View>
       {hasCeiling ? (
-      <View style={styles.progressTrack}>
-        <View
-          style={[
-            styles.progressFill,
-            { width: `${progressPercent}%` },
-            isOverBudget ? styles.progressFillOverBudget : undefined,
-          ]}
-        />
-      </View>
+        <View style={styles.progressTrack}>
+          <View
+            style={[
+              styles.progressFill,
+              { width: `${progressPercent}%` },
+              isOverBudget ? styles.progressFillOverBudget : undefined,
+            ]}
+          />
+        </View>
       ) : null}
       {hasCeiling ? (
-        <Text style={[styles.utilizationText, isOverBudget ? styles.utilizationTextOver : undefined]}>
+        <Text
+          style={[styles.utilizationText, isOverBudget ? styles.utilizationTextOver : undefined]}
+        >
           {Math.round(envelope.utilization * 100)}% used
         </Text>
       ) : null}
@@ -141,12 +140,7 @@ export function EnvelopeCard({ envelope }: { envelope: EnvelopeSummary }) {
 
 export function EnvelopesList({ envelopes }: { envelopes: EnvelopeSummary[] }) {
   if (envelopes.length === 0) {
-    return (
-      <EmptyState
-        title="No envelopes yet"
-        body="Create envelopes to budget your spending"
-      />
-    );
+    return <EmptyState title="No envelopes yet" body="Create envelopes to budget your spending" />;
   }
 
   return (
@@ -181,10 +175,7 @@ export function TransactionItem({ transaction }: { transaction: Transaction }) {
 export function TransactionsList({ transactions }: { transactions: Transaction[] }) {
   if (transactions.length === 0) {
     return (
-      <EmptyState
-        title="No transactions yet"
-        body="Log your first expense to start tracking"
-      />
+      <EmptyState title="No transactions yet" body="Log your first expense to start tracking" />
     );
   }
 
@@ -198,7 +189,7 @@ export function TransactionsList({ transactions }: { transactions: Transaction[]
 }
 
 interface AddTransactionSheetProps {
-  onAdd: (amount: number, envelopeId?: string, note?: string) => void;
+  onAdd: (amount: number, envelopeId?: string, note?: string) => void | Promise<void>;
   onClose: () => void;
   envelopes: EnvelopeSummary[];
 }
@@ -208,18 +199,22 @@ export function AddTransactionSheet({ onAdd, onClose, envelopes }: AddTransactio
   const [note, setNote] = useState("");
   const [selectedEnvelope, setSelectedEnvelope] = useState<string | undefined>();
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     const cents = Math.round(parseFloat(amount) * 100);
     if (cents > 0) {
-      onAdd(cents, selectedEnvelope, note || undefined);
-      onClose();
+      try {
+        await onAdd(cents, selectedEnvelope, note || undefined);
+        onClose();
+      } catch {
+        // Route-level handlers surface toast messages; keep form open on failure.
+      }
     }
   };
 
   return (
     <View style={styles.sheet}>
       <Text style={styles.sheetTitle}>Log Expense</Text>
-      
+
       <View style={styles.inputGroup}>
         <Text style={styles.inputLabel}>Amount (GHS)</Text>
         <TextInput
@@ -242,10 +237,15 @@ export function AddTransactionSheet({ onAdd, onClose, envelopes }: AddTransactio
                 styles.envelopeChip,
                 selectedEnvelope === env.envelopeId && styles.envelopeChipSelected,
               ]}
-              onPress={() => setSelectedEnvelope(selectedEnvelope === env.envelopeId ? undefined : env.envelopeId)}
+              onPress={() =>
+                setSelectedEnvelope(
+                  selectedEnvelope === env.envelopeId ? undefined : env.envelopeId,
+                )
+              }
             >
               <Text style={styles.envelopeChipText}>
-                {env.emoji ? `${env.emoji} ` : ""}{env.name}
+                {env.emoji ? `${env.emoji} ` : ""}
+                {env.name}
               </Text>
             </Pressable>
           ))}
@@ -266,14 +266,19 @@ export function AddTransactionSheet({ onAdd, onClose, envelopes }: AddTransactio
 
       <View style={styles.sheetActions}>
         <Button label="Cancel" variant="ghost" onPress={onClose} />
-        <Button label="Add Expense" variant="primary" onPress={handleAdd} disabled={!amount || parseFloat(amount) <= 0} />
+        <Button
+          label="Add Expense"
+          variant="primary"
+          onPress={handleAdd}
+          disabled={!amount || parseFloat(amount) <= 0}
+        />
       </View>
     </View>
   );
 }
 
 interface AddEnvelopeSheetProps {
-  onAdd: (name: string, softCeiling?: number, emoji?: string) => void;
+  onAdd: (name: string, softCeiling?: number, emoji?: string) => void | Promise<void>;
   onClose: () => void;
 }
 
@@ -282,14 +287,18 @@ export function AddEnvelopeSheet({ onAdd, onClose }: AddEnvelopeSheetProps) {
   const [softCeiling, setSoftCeiling] = useState("");
   const [emoji, setEmoji] = useState("");
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (name.trim()) {
-      onAdd(
-        name.trim(),
-        softCeiling ? Math.round(parseFloat(softCeiling) * 100) : undefined,
-        emoji || undefined
-      );
-      onClose();
+      try {
+        await onAdd(
+          name.trim(),
+          softCeiling ? Math.round(parseFloat(softCeiling) * 100) : undefined,
+          emoji || undefined,
+        );
+        onClose();
+      } catch {
+        // Route-level handlers surface toast messages; keep form open on failure.
+      }
     }
   };
 
@@ -334,7 +343,12 @@ export function AddEnvelopeSheet({ onAdd, onClose }: AddEnvelopeSheetProps) {
 
       <View style={styles.sheetActions}>
         <Button label="Cancel" variant="ghost" onPress={onClose} />
-        <Button label="Create Envelope" variant="primary" onPress={handleAdd} disabled={!name.trim()} />
+        <Button
+          label="Create Envelope"
+          variant="primary"
+          onPress={handleAdd}
+          disabled={!name.trim()}
+        />
       </View>
     </View>
   );
@@ -347,7 +361,12 @@ interface AddAccountSheetProps {
   envelopes: EnvelopeSummary[];
 }
 
-export function AddAccountSheet({ onAddTransaction, onAddEnvelope, onAddAccount, envelopes }: AddAccountSheetProps) {
+export function AddAccountSheet({
+  onAddTransaction,
+  onAddEnvelope,
+  onAddAccount,
+  envelopes,
+}: AddAccountSheetProps) {
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [showEnvelopeForm, setShowEnvelopeForm] = useState(false);
   const [showAccountForm, setShowAccountForm] = useState(false);
@@ -405,7 +424,12 @@ export function AddAccountSheet({ onAddTransaction, onAddEnvelope, onAddAccount,
 }
 
 interface AddAccountFormProps {
-  onAdd: (name: string, type: string, balance?: number, institution?: string) => void;
+  onAdd: (
+    name: string,
+    type: string,
+    balance?: number,
+    institution?: string,
+  ) => void | Promise<void>;
   onClose: () => void;
 }
 
@@ -415,15 +439,19 @@ export function AddAccountForm({ onAdd, onClose }: AddAccountFormProps) {
   const [balance, setBalance] = useState("");
   const [institution, setInstitution] = useState("");
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (name.trim()) {
-      onAdd(
-        name.trim(),
-        type,
-        balance ? Math.round(parseFloat(balance) * 100) : 0,
-        institution || undefined
-      );
-      onClose();
+      try {
+        await onAdd(
+          name.trim(),
+          type,
+          balance ? Math.round(parseFloat(balance) * 100) : 0,
+          institution || undefined,
+        );
+        onClose();
+      } catch {
+        // Route-level handlers surface toast messages; keep form open on failure.
+      }
     }
   };
 
@@ -445,13 +473,12 @@ export function AddAccountForm({ onAdd, onClose }: AddAccountFormProps) {
           {accountTypes.map((accType) => (
             <Pressable
               key={accType.value}
-              style={[
-                styles.typeChip,
-                type === accType.value && styles.typeChipSelected,
-              ]}
+              style={[styles.typeChip, type === accType.value && styles.typeChipSelected]}
               onPress={() => setType(accType.value)}
             >
-              <Text style={styles.typeChipText}>{accType.icon} {accType.label}</Text>
+              <Text style={styles.typeChipText}>
+                {accType.icon} {accType.label}
+              </Text>
             </Pressable>
           ))}
         </ScrollView>
@@ -519,7 +546,7 @@ const styles = StyleSheet.create({
   },
   heading: { ...Typography.labelLG, color: Colors.textPrimary },
   body: { ...Typography.bodySM, color: Colors.textSecondary },
-  
+
   actionsRow: {
     flexDirection: "row",
     gap: Spacing.md,

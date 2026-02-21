@@ -113,7 +113,9 @@ export function TodayScreenCommand() {
               key={habit.id}
               style={styles.taskRow}
               onPress={() => {
-                setHabits((prev) => prev.map((h) => (h.id === habit.id ? { ...h, done: !h.done } : h)));
+                setHabits((prev) =>
+                  prev.map((h) => (h.id === habit.id ? { ...h, done: !h.done } : h)),
+                );
               }}
             >
               <Text style={[styles.taskText, habit.done && styles.taskDone]}>{habit.name}</Text>
