@@ -22,6 +22,7 @@
     "@expo/vector-icons": "^15.0.3",
     "@gorhom/bottom-sheet": "^5",
     "@react-native-community/datetimepicker": "8.6.0",
+    "@react-navigation/bottom-tabs": "^7.14.0",
     "@react-navigation/drawer": "^7.3.9",
     "@react-navigation/elements": "^2.8.1",
     "@seila/backend": "workspace:*",

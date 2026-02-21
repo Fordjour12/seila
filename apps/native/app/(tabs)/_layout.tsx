@@ -1,6 +1,7 @@
 import React from "react";
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { TabBar } from "../../lib/tabbar";
 
 type IconName = React.ComponentProps<typeof Ionicons>["name"];
 
@@ -28,17 +29,22 @@ function getTabIconName(icon: IconName, isFocused: boolean): IconName {
 export default function TabLayout() {
   return (
     <Tabs
+      tabBar={(props) => <TabBar {...props} />}
       screenOptions={({ route }) => {
         const tab = TAB_MAP[route.name];
         return {
           headerShown: false,
-          tabBarIcon: ({ focused, color, size }) => (
-            <Ionicons
-              name={getTabIconName(tab?.icon || "ellipse-outline", focused)}
-              size={size}
-              color={color}
-            />
-          ),
+          tabBarLabel: tab?.label || route.name.replace(/\/index$/, ""),
+          tabBarIcon: ({ focused, color, size }) => {
+            if (!tab) return <Ionicons name="ellipse-outline" size={size} color={color} />;
+            return (
+              <Ionicons
+                name={getTabIconName(tab.icon, focused)}
+                size={size}
+                color={color}
+              />
+            );
+          },
         };
       }}
     />
