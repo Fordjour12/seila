@@ -14,6 +14,7 @@ export const savingsGoals = query({
         name: goal.name,
         targetAmount: goal.targetAmount,
         currentAmount: goal.currentAmount,
+        envelopeId: goal.envelopeId,
         deadlineAt: goal.deadlineAt,
         progress: goal.targetAmount > 0 ? Math.min(goal.currentAmount / goal.targetAmount, 1) : 0,
       }))

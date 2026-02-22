@@ -1,5 +1,5 @@
 import React from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import type { Id } from "@seila/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
@@ -12,7 +12,6 @@ import {
   contributeSavingsGoalRef,
   logIncomeRef,
   savingsGoalsRef,
-  savingsSimulationRef,
   setSavingsGoalRef,
 } from "../../../lib/finance-refs";
 import { formatGhs } from "../../../lib/ghs";
@@ -26,31 +25,22 @@ export default function FinanceAccountsScreen() {
   const cashflow = useQuery(cashflowSummaryRef, {});
   const cashflowForecast = useQuery(cashflowForecastRef, {});
   const goals = useQuery(savingsGoalsRef, {});
-  const savingsSimulation = useQuery(savingsSimulationRef, {});
 
   const logIncome = useMutation(logIncomeRef);
   const setSavingsGoal = useMutation(setSavingsGoalRef);
   const contributeSavingsGoal = useMutation(contributeSavingsGoalRef);
 
   const incomePresets = React.useMemo(() => [5000, 10000, 25000, 50000], []);
-  const goalPresets = React.useMemo(
-    () => [
-      { name: "Emergency Fund", targetAmount: 300000 },
-      { name: "Travel Buffer", targetAmount: 120000 },
-      { name: "Device Upgrade", targetAmount: 80000 },
-    ],
-    [],
-  );
 
-  const [isAddingGoal, setIsAddingGoal] = React.useState(false);
   const [isLoggingIncome, setIsLoggingIncome] = React.useState(false);
+  const [showIncomeInput, setShowIncomeInput] = React.useState(false);
+  const [customIncomeAmount, setCustomIncomeAmount] = React.useState("");
 
   const isLoading =
     accountSummary === undefined ||
     cashflow === undefined ||
     cashflowForecast === undefined ||
-    goals === undefined ||
-    savingsSimulation === undefined;
+    goals === undefined;
 
   const handleLogIncome = async (amount: number) => {
     setIsLoggingIncome(true);
@@ -61,26 +51,12 @@ export default function FinanceAccountsScreen() {
         source: "manual",
       });
       toast.show({ variant: "success", label: "Income logged" });
+      setShowIncomeInput(false);
+      setCustomIncomeAmount("");
     } catch {
       toast.show({ variant: "danger", label: "Failed to log income" });
     } finally {
       setIsLoggingIncome(false);
-    }
-  };
-
-  const handleQuickAddGoal = async (name: string, targetAmount: number) => {
-    setIsAddingGoal(true);
-    try {
-      await setSavingsGoal({
-        idempotencyKey: `finance.goal:${name}:${Date.now()}`,
-        name,
-        targetAmount,
-      });
-      toast.show({ variant: "success", label: "Savings goal added" });
-    } catch {
-      toast.show({ variant: "danger", label: "Failed to add savings goal" });
-    } finally {
-      setIsAddingGoal(false);
     }
   };
 
@@ -150,7 +126,38 @@ export default function FinanceAccountsScreen() {
                     <Text className="text-xs text-foreground font-medium">+{formatGhs(preset)}</Text>
                   </Pressable>
                 ))}
+                <Pressable
+                  className={`border border-border rounded-full px-3 py-1.5 bg-background ${showIncomeInput ? "bg-warning/10 border-warning/20" : ""}`}
+                  onPress={() => setShowIncomeInput(!showIncomeInput)}
+                >
+                  <Text className={`text-xs font-medium ${showIncomeInput ? "text-warning" : "text-foreground"}`}>Custom</Text>
+                </Pressable>
               </View>
+
+              {showIncomeInput && (
+                <View className="flex-row gap-2 mt-2">
+                  <TextInput
+                    className="flex-1 bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground"
+                    placeholder="Enter amount"
+                    placeholderTextColor="#6b7280"
+                    value={customIncomeAmount}
+                    onChangeText={setCustomIncomeAmount}
+                    keyboardType="decimal-pad"
+                  />
+                  <Pressable
+                    className="bg-warning rounded-lg px-4 py-2"
+                    onPress={() => {
+                      const amount = Math.round(parseFloat(customIncomeAmount) * 100);
+                      if (amount > 0) {
+                        handleLogIncome(amount);
+                      }
+                    }}
+                    disabled={isLoggingIncome || !customIncomeAmount}
+                  >
+                    <Text className="text-sm font-medium text-background">Add</Text>
+                  </Pressable>
+                </View>
+              )}
             </View>
           </View>
 
@@ -165,52 +172,36 @@ export default function FinanceAccountsScreen() {
           </View>
 
           <View className="gap-3">
-            <SectionLabel>Savings Goals</SectionLabel>
+            <View className="flex-row justify-between items-center">
+              <SectionLabel>Savings Goals</SectionLabel>
+              <Pressable onPress={() => router.push("/(tabs)/finance/savings")}>
+                <Text className="text-sm text-warning font-medium">Manage</Text>
+              </Pressable>
+            </View>
             <View className="bg-surface rounded-2xl border border-border p-4 shadow-sm">
               {(goals || []).length === 0 ? (
-                <View className="gap-3">
-                  <Text className="text-sm text-muted-foreground">No active goals. Start saving with a preset.</Text>
-                  <View className="flex-row flex-wrap gap-2">
-                    {goalPresets.map((preset) => (
-                      <Pressable
-                        key={preset.name}
-                        className={`border border-border rounded-full px-3 py-1.5 bg-background ${isAddingGoal ? "opacity-50" : "active:bg-muted"}`}
-                        onPress={() => handleQuickAddGoal(preset.name, preset.targetAmount)}
-                        disabled={isAddingGoal}
-                      >
-                        <Text className="text-xs text-foreground font-medium">{preset.name}</Text>
-                      </Pressable>
-                    ))}
-                  </View>
-                </View>
+                <Text className="text-sm text-muted-foreground">
+                  No savings goals. Tap "Manage" to create one.
+                </Text>
               ) : (
                 <View className="gap-4">
-                  {(goals || []).map((goal, index) => (
-                    <View key={goal.goalId} className={`${index > 0 ? "border-t border-border pt-4" : ""} gap-3`}>
+                  {(goals || []).slice(0, 3).map((goal, index) => (
+                    <View key={goal.goalId} className={`${index > 0 ? "border-t border-border pt-4" : ""} gap-2`}>
                       <View className="flex-row justify-between items-center">
-                        <View>
-                          <Text className="text-base text-foreground font-medium">{goal.name}</Text>
-                          <Text className="text-xs text-muted-foreground mt-0.5">
-                            {formatGhs(goal.currentAmount)} / {formatGhs(goal.targetAmount)}
-                          </Text>
-                        </View>
-                        <View className="items-end">
-                          <Text className="text-sm font-medium text-warning">{Math.round((goal.progress || 0) * 100)}%</Text>
-                        </View>
+                        <Text className="text-base font-medium text-foreground">{goal.name}</Text>
+                        <Text className="text-sm font-medium text-warning">{Math.round((goal.progress || 0) * 100)}%</Text>
                       </View>
-                      
-                      <View className="h-1.5 bg-border rounded-full overflow-hidden">
-                        <View 
-                          className="h-full bg-warning rounded-full" 
-                          style={{ width: `${Math.min(100, Math.max(0, (goal.progress || 0) * 100))}%` }} 
+                      <View className="h-1.5 bg-background rounded-full overflow-hidden">
+                        <View
+                          className="h-full bg-warning rounded-full"
+                          style={{ width: `${Math.min(100, Math.max(0, (goal.progress || 0) * 100))}%` }}
                         />
                       </View>
-
-                      <View className="flex-row flex-wrap gap-2 mt-1">
-                        {[1000, 5000, 10000].map((amount) => (
+                      <View className="flex-row flex-wrap gap-2">
+                        {[1000, 5000].map((amount) => (
                           <Pressable
                             key={`${goal.goalId}:${amount}`}
-                            className="bg-background border border-border rounded-full px-3 py-1.5 active:bg-muted"
+                            className="bg-background border border-border rounded-full px-3 py-1 active:bg-muted"
                             onPress={() => handleContributeGoal(goal.goalId, amount)}
                           >
                             <Text className="text-xs text-foreground font-medium">+{formatGhs(amount)}</Text>
@@ -219,14 +210,53 @@ export default function FinanceAccountsScreen() {
                       </View>
                     </View>
                   ))}
+                  {(goals || []).length > 3 && (
+                    <Pressable onPress={() => router.push("/(tabs)/finance/savings")}>
+                      <Text className="text-sm text-warning text-center">View all {(goals || []).length} goals</Text>
+                    </Pressable>
+                  )}
                 </View>
               )}
-              
-              <View className="mt-5 pt-4 border-t border-border">
-                <Text className="text-xs text-muted-foreground leading-relaxed">
-                  Micro-savings simulation: <Text className="text-foreground font-medium">{formatGhs(savingsSimulation?.microSavingsMonthly || 0)}</Text> / month · <Text className="text-foreground font-medium">{formatGhs(savingsSimulation?.allocationPerGoal || 0)}</Text> per goal
-                </Text>
-              </View>
+            </View>
+          </View>
+
+          <View className="gap-3">
+            <SectionLabel>Quick Navigation</SectionLabel>
+            <View className="gap-3">
+              {[
+                {
+                  label: "Transactions",
+                  meta: "View all transactions",
+                  route: "/(tabs)/finance/transactions",
+                },
+                {
+                  label: "Recurring",
+                  meta: "Payment schedules",
+                  route: "/(tabs)/finance/recurring",
+                },
+                {
+                  label: "Merchant Hints",
+                  meta: "Review suggestions",
+                  route: "/(tabs)/finance/merchant-hints",
+                },
+                {
+                  label: "Insights",
+                  meta: "Financial analytics",
+                  route: "/(tabs)/finance/insights",
+                },
+              ].map((nav) => (
+                <Pressable
+                  key={nav.route}
+                  className="bg-surface rounded-2xl border border-border p-4 flex-row justify-between items-center active:bg-muted/10"
+                  onPress={() => router.push(nav.route as any)}
+                >
+                  <View>
+                    <Text className="text-base font-medium text-foreground">{nav.label}</Text>
+                    <Text className="text-xs text-muted-foreground mt-0.5">{nav.meta}</Text>
+                  </View>
+                  <Text className="text-muted-foreground opacity-50">→</Text>
+                </Pressable>
+              ))}
             </View>
           </View>
         </>

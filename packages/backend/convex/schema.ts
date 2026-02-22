@@ -230,6 +230,7 @@ export default defineSchema({
     name: v.string(),
     targetAmount: v.number(),
     currentAmount: v.number(),
+    envelopeId: v.optional(v.id("envelopes")),
     deadlineAt: v.optional(v.number()),
     archivedAt: v.optional(v.number()),
     createdAt: v.number(),

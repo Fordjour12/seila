@@ -154,6 +154,7 @@ export const savingsGoalsRef = makeFunctionReference<
     name: string;
     targetAmount: number;
     currentAmount: number;
+    envelopeId?: string;
     deadlineAt?: number;
     progress: number;
   }>
@@ -167,6 +168,7 @@ export const setSavingsGoalRef = makeFunctionReference<
     name: string;
     targetAmount: number;
     currentAmount?: number;
+    envelopeId?: Id<"envelopes">;
     deadlineAt?: number;
   },
   { goalId?: Id<"savingsGoals">; deduplicated: boolean }
@@ -177,6 +179,12 @@ export const contributeSavingsGoalRef = makeFunctionReference<
   { idempotencyKey: string; goalId: Id<"savingsGoals">; amount: number },
   { goalId?: Id<"savingsGoals">; deduplicated: boolean }
 >("commands/setSavingsGoal:contributeSavingsGoal");
+
+export const deleteSavingsGoalRef = makeFunctionReference<
+  "mutation",
+  { goalId: Id<"savingsGoals"> },
+  { success: boolean }
+>("commands/setSavingsGoal:deleteSavingsGoal");
 
 export const transactionSearchRef = makeFunctionReference<
   "query",
@@ -322,22 +330,6 @@ export const budgetDepthRef = makeFunctionReference<
     available: number;
   }>
 >("queries/budgetDepth:budgetDepth");
-
-export const savingsSimulationRef = makeFunctionReference<
-  "query",
-  {},
-  {
-    microSavingsMonthly: number;
-    allocationPerGoal: number;
-    projections: Array<{
-      goalId: string;
-      name: string;
-      currentAmount: number;
-      targetAmount: number;
-      projectedNextMonth: number;
-    }>;
-  }
->("queries/savingsSimulation:savingsSimulation");
 
 export const spendingAnomaliesRef = makeFunctionReference<
   "query",

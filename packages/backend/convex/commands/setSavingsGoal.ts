@@ -9,6 +9,7 @@ export const setSavingsGoal = mutation({
     name: v.string(),
     targetAmount: v.number(),
     currentAmount: v.optional(v.number()),
+    envelopeId: v.optional(v.id("envelopes")),
     deadlineAt: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
@@ -31,6 +32,7 @@ export const setSavingsGoal = mutation({
         name: args.name.trim(),
         targetAmount: args.targetAmount,
         currentAmount: args.currentAmount ?? existing.currentAmount,
+        envelopeId: args.envelopeId,
         deadlineAt: args.deadlineAt,
         updatedAt: now,
       });
@@ -41,11 +43,28 @@ export const setSavingsGoal = mutation({
       name: args.name.trim(),
       targetAmount: args.targetAmount,
       currentAmount: args.currentAmount ?? 0,
+      envelopeId: args.envelopeId,
       deadlineAt: args.deadlineAt,
       createdAt: now,
       updatedAt: now,
     });
     return { goalId, deduplicated: false };
+  },
+});
+
+export const deleteSavingsGoal = mutation({
+  args: {
+    goalId: v.id("savingsGoals"),
+  },
+  handler: async (ctx, args) => {
+    const goal = await ctx.db.get(args.goalId);
+    if (!goal) throw new ConvexError("Goal not found");
+
+    await ctx.db.patch(args.goalId, {
+      archivedAt: Date.now(),
+    });
+
+    return { success: true };
   },
 });
 
