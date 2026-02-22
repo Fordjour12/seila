@@ -139,7 +139,7 @@ export default function FinanceScreen() {
             <View className="flex-row justify-between items-center">
               <SectionLabel>Budget Envelopes</SectionLabel>
               <Pressable
-                onPress={() => router.push("/(tabs)/finance/add-envelope")}
+                onPress={() => router.push("/(tabs)/finance/envelopes/add" as any)}
               >
                 <Text className="text-sm text-warning font-medium">Add</Text>
               </Pressable>
@@ -147,7 +147,7 @@ export default function FinanceScreen() {
             <EnvelopesList
               envelopes={envelopes || []}
               onEnvelopePress={(envelopeId) =>
-                router.push(`/(tabs)/finance/edit-envelope?id=${envelopeId}`)
+                router.push(`/(tabs)/finance/envelopes/edit?id=${envelopeId}` as any)
               }
             />
           </View>
@@ -157,7 +157,7 @@ export default function FinanceScreen() {
             <View className="flex-row flex-wrap gap-2">
               <Pressable
                 className="bg-surface rounded-2xl border border-border p-4 flex-1 min-w-[140] gap-1 shadow-sm active:bg-muted/10"
-                onPress={() => router.push("/(tabs)/finance/add-transaction")}
+                onPress={() => router.push("/(tabs)/finance/transactions/add" as any)}
               >
                 <Text className="text-base font-medium text-foreground">
                   Log Transaction
@@ -168,7 +168,7 @@ export default function FinanceScreen() {
               </Pressable>
               <Pressable
                 className="bg-surface rounded-2xl border border-border p-4 flex-1 min-w-[140] gap-1 shadow-sm active:bg-muted/10"
-                onPress={() => router.push("/(tabs)/finance/add-recurring")}
+                onPress={() => router.push("/(tabs)/finance/recurring/add" as any)}
               >
                 <Text className="text-base font-medium text-foreground">
                   Add Recurring
@@ -208,6 +208,26 @@ export default function FinanceScreen() {
                   label: "Insights",
                   meta: "Advanced metrics and anomalies",
                   route: "/(tabs)/finance/insights",
+                },
+                {
+                  label: "Debt",
+                  meta: "Prioritize payoff strategy",
+                  route: "/(tabs)/finance/planning/debt",
+                },
+                {
+                  label: "Investments",
+                  meta: "Track portfolio value",
+                  route: "/(tabs)/finance/planning/investments",
+                },
+                {
+                  label: "Subscriptions",
+                  meta: "Manage recurring services",
+                  route: "/(tabs)/finance/planning/subscriptions",
+                },
+                {
+                  label: "Shared Budgets",
+                  meta: "Collaborative envelopes",
+                  route: "/(tabs)/finance/planning/shared-budgets",
                 },
               ].map((nav) => (
                 <Pressable

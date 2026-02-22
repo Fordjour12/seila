@@ -33,6 +33,8 @@ export const recurringTransactionsRef = makeFunctionReference<
     amount: number;
     cadence: "weekly" | "biweekly" | "monthly";
     nextDueAt: number;
+    kind: "regular" | "subscription";
+    category?: string;
     envelopeId?: string;
     merchantHint?: string;
     note?: string;
@@ -62,6 +64,8 @@ export const scheduleRecurringTransactionRef = makeFunctionReference<
     envelopeId?: Id<"envelopes">;
     merchantHint?: string;
     note?: string;
+    kind?: "regular" | "subscription";
+    category?: string;
   },
   { recurringId?: string; deduplicated: boolean }
 >("commands/scheduleRecurringTransaction:scheduleRecurringTransaction");
@@ -71,9 +75,16 @@ export const updateRecurringTransactionRef = makeFunctionReference<
   {
     idempotencyKey: string;
     recurringId: string;
+    amount?: number;
     cadence?: "weekly" | "biweekly" | "monthly";
     nextDueAt?: number;
     envelopeId?: Id<"envelopes">;
+    clearEnvelope?: boolean;
+    merchantHint?: string;
+    note?: string;
+    kind?: "regular" | "subscription";
+    category?: string;
+    clearCategory?: boolean;
   },
   { recurringId?: string; deduplicated: boolean }
 >("commands/updateRecurringTransaction:updateRecurringTransaction");
@@ -317,6 +328,100 @@ export const cashflowForecastRef = makeFunctionReference<
     expectedExpense30: number;
   }
 >("queries/cashflowForecast:cashflowForecast");
+
+export const setDebtRef = makeFunctionReference<
+  "mutation",
+  {
+    idempotencyKey: string;
+    debtId?: Id<"debts">;
+    name: string;
+    balance: number;
+    aprBps: number;
+    minPayment: number;
+    isActive?: boolean;
+  },
+  { debtId?: Id<"debts">; deduplicated: boolean }
+>("commands/setDebt:setDebt");
+
+export const setInvestmentRef = makeFunctionReference<
+  "mutation",
+  {
+    idempotencyKey: string;
+    investmentId?: Id<"investments">;
+    name: string;
+    type: "stock" | "fund" | "crypto" | "cash" | "other";
+    currentValue: number;
+    costBasis: number;
+  },
+  { investmentId?: Id<"investments">; deduplicated: boolean }
+>("commands/setInvestment:setInvestment");
+
+export const setSubscriptionRef = makeFunctionReference<
+  "mutation",
+  {
+    idempotencyKey: string;
+    subscriptionId?: Id<"subscriptions">;
+    name: string;
+    amount: number;
+    cadence: "monthly" | "yearly";
+    nextDueAt: number;
+    category?: string;
+    isActive?: boolean;
+  },
+  { subscriptionId?: Id<"subscriptions">; deduplicated: boolean }
+>("commands/setSubscription:setSubscription");
+
+export const setSharedBudgetRef = makeFunctionReference<
+  "mutation",
+  {
+    idempotencyKey: string;
+    sharedBudgetId?: Id<"sharedBudgets">;
+    name: string;
+    budgetAmount: number;
+    spentAmount?: number;
+    members: string[];
+  },
+  { sharedBudgetId?: Id<"sharedBudgets">; deduplicated: boolean }
+>("commands/setSharedBudget:setSharedBudget");
+
+export const hideAccountRef = makeFunctionReference<
+  "mutation",
+  { accountId: Id<"accounts">; hidden: boolean },
+  void
+>("commands/setAccount:hideAccount");
+
+export const transactionByIdRef = makeFunctionReference<
+  "query",
+  { transactionId: Id<"transactions"> },
+  {
+    _id: Id<"transactions">;
+    amount: number;
+    envelopeId?: Id<"envelopes">;
+    source: "manual" | "imported";
+    merchantHint?: string;
+    note?: string;
+    tags?: string[];
+    occurredAt: number;
+    pendingImport: boolean;
+    voidedAt?: number;
+    createdAt: number;
+    updatedAt: number;
+  }
+>("queries/transactionById:transactionById");
+
+export const updateTransactionRef = makeFunctionReference<
+  "mutation",
+  {
+    idempotencyKey: string;
+    transactionId: Id<"transactions">;
+    amount?: number;
+    envelopeId?: Id<"envelopes">;
+    clearEnvelope?: boolean;
+    merchantHint?: string;
+    note?: string;
+  },
+  { transactionId?: Id<"transactions">; deduplicated: boolean }
+>("commands/updateTransaction:updateTransaction");
 
 export const budgetDepthRef = makeFunctionReference<
   "query",

@@ -32,27 +32,23 @@ This document analyzes the coverage between `@apps/native/app/(tabs)/finance/` (
 
 ### Critical (UI Cannot Function Properly)
 
-| Missing Item | Location | Issue |
-|--------------|----------|-------|
-| **Bulk assign envelope** | `bulkUpdateTransactions` mutation | Backend missing `assign_envelope` action handling |
-| **Edit recurring details** | `updateRecurringTransaction` | Only updates `cadence`, `nextDueAt`, `envelopeId` — not `amount` or `merchantHint` |
+All previously identified critical issues are now implemented.
 
 ### Missing Screens (Backend Exists, No UI)
 
-| Feature | Backend | Status |
-|---------|---------|--------|
-| Debt Management | `setDebt`, `debtStrategy` | No dedicated screen |
-| Investment Management | `setInvestment`, `investmentSummary` | No dedicated screen |
-| Subscription Management | `setSubscription` | No dedicated screen (only shows in insights) |
-| Shared Budgets | `sharedBudgetSummary`, `setSharedBudget` | No UI |
+All previously missing finance management screens are now available:
+- `debt.tsx`
+- `investments.tsx`
+- `subscriptions.tsx`
+- `shared-budgets.tsx`
 
 ### Nice-to-Have (Partial Implementation)
 
 | Feature | Status |
 |---------|--------|
-| Edit Transaction | Can void and re-log, but no direct edit |
-| Delete/Archive Account | Only `hideAccount` exists |
-| Multi-currency | GHS-only for now, FX rate UI can be hidden |
+| Edit Transaction | Implemented with dedicated `edit-transaction.tsx` flow |
+| Delete/Archive Account | Archive UI implemented using `hideAccount` |
+| Multi-currency | FX controls hidden in Insights for GHS-first UX |
 
 ---
 
@@ -93,21 +89,22 @@ These are the minimum required features for a functional finance app:
 
 ## Recommended Actions
 
-### Priority 1 (Critical)
+### Priority 1 (Critical) - Done
 
 1. Fix `updateRecurringTransaction` to support `amount` and `merchantHint` updates
 2. Implement `assign_envelope` action in `bulkUpdateTransactions`
 
-### Priority 2 (Complete the Loop)
+### Priority 2 (Complete the Loop) - Done
 
 3. Create debt management screen or remove `setDebt`, `debtStrategy`
 4. Create investment management screen or remove `setInvestment`, `investmentSummary`
 5. Create subscription management screen or remove `setSubscription`
+6. Create shared budget management screen or remove `setSharedBudget`, `sharedBudgetSummary`
 
-### Priority 3 (Cleanup)
+### Priority 3 (Cleanup) - Remaining
 
-6. Remove unused backend functions listed in "Can Do Away Without"
-7. Hide/disable incomplete features (low-spend reset, multi-currency FX)
+7. Remove unused backend functions listed in "Can Do Away Without"
+8. Disable or fully complete low-spend reset flow
 
 ---
 

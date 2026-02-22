@@ -1,7 +1,7 @@
 import { Stack } from "expo-router";
-import { Colors } from "../../../constants/theme";
+import { Colors } from "../../../../constants/theme";
 
-export default function FinanceLayout() {
+export default function MerchantHintsLayout() {
   return (
     <Stack
       screenOptions={{
@@ -13,7 +13,7 @@ export default function FinanceLayout() {
         name="index"
         options={{
           headerShown: false,
-          title: "Finance",
+          title: "Merchant Hints",
           headerBackVisible: true,
           headerStyle: { backgroundColor: Colors.bgRaised },
           headerTintColor: Colors.textPrimary,

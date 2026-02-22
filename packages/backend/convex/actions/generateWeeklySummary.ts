@@ -95,7 +95,7 @@ export const generateWeeklySummary = internalAction({
     const parsed = parseWeeklySummary(safe);
     const safeSummary = parsed ?? fallbackWeeklySummary();
 
-    await ctx.runMutation(internal.commands.reviewCommands.applyGeneratedSummary, {
+    await ctx.runMutation(internal.commands.misc.reviewCommands.applyGeneratedSummary, {
       reviewId: args.reviewId,
       bullets: safeSummary.bullets,
       brightSpot: safeSummary.brightSpot,
