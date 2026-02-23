@@ -123,6 +123,7 @@ import type * as queries_receiptAttachments from "../queries/receiptAttachments.
 import type * as queries_recentCheckins from "../queries/recentCheckins.js";
 import type * as queries_recentDomainState from "../queries/recentDomainState.js";
 import type * as queries_recoveryContext from "../queries/recoveryContext.js";
+import type * as queries_recurringOverview from "../queries/recurringOverview.js";
 import type * as queries_recurringTransactions from "../queries/recurringTransactions.js";
 import type * as queries_reviewHistory from "../queries/reviewHistory.js";
 import type * as queries_reviewQueries from "../queries/reviewQueries.js";
@@ -263,6 +264,7 @@ declare const fullApi: ApiFromModules<{
   "queries/recentCheckins": typeof queries_recentCheckins;
   "queries/recentDomainState": typeof queries_recentDomainState;
   "queries/recoveryContext": typeof queries_recoveryContext;
+  "queries/recurringOverview": typeof queries_recurringOverview;
   "queries/recurringTransactions": typeof queries_recurringTransactions;
   "queries/reviewHistory": typeof queries_reviewHistory;
   "queries/reviewQueries": typeof queries_reviewQueries;

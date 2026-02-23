@@ -303,8 +303,8 @@ export default function FinanceAccountsScreen() {
                 {
                   key: "recurring-payment-schedules",
                   badge: "RC",
-                  label: "Recurring",
-                  meta: "Payment schedules",
+                  label: "Schedules",
+                  meta: "Recurring and subscriptions",
                   route: "/(tabs)/finance/recurring",
                 },
 

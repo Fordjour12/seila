@@ -9,7 +9,7 @@ import { useToast } from "heroui-native";
 
 import {
   cancelRecurringTransactionRef,
-  recurringTransactionsRef,
+  recurringOverviewRef,
   updateRecurringTransactionRef,
 } from "../../../../lib/finance-refs";
 import { formatGhs } from "../../../../lib/ghs";
@@ -29,40 +29,21 @@ type RecurringEntry = {
   amount: number;
   cadence: RecurringCadence;
   envelopeId?: string;
-  kind?: string;
+  kind?: "regular" | "subscription";
   merchantHint?: string;
   nextDueAt: number;
   note?: string;
   recurringId: string;
-  renderKey: string;
 };
 
-function cadenceMonthlyEquivalent(amount: number, cadence: RecurringCadence) {
-  if (cadence === "weekly") return Math.round(amount * 4.345);
-  if (cadence === "biweekly") return Math.round(amount * 2.1725);
-  return amount;
-}
-
-function buildRecurringRenderKey(item: {
-  recurringId?: string;
-  amount: number;
-  cadence: string;
-  merchantHint?: string;
-  note?: string;
-  nextDueAt: number;
-}) {
-  const recurringId = (item.recurringId || "").trim();
-  if (recurringId.length > 0) return `id:${recurringId}`;
-  const merchant = (item.merchantHint || item.note || "unknown").trim().toLowerCase();
-  return `sig:${merchant}:${item.amount}:${item.cadence}:${item.nextDueAt}`;
-}
+type RecurringFilter = "all" | "subscription" | "regular";
 
 export default function FinanceRecurringScreen() {
   const router = useRouter();
   const { toast } = useToast();
 
   const envelopes = useQuery(api.queries.envelopeSummary.envelopeSummary);
-  const recurringTransactions = useQuery(recurringTransactionsRef, { limit: 50 });
+  const recurringOverview = useQuery(recurringOverviewRef, { limit: 100 });
 
   const updateRecurringTransaction = useMutation(updateRecurringTransactionRef);
   const cancelRecurringTransaction = useMutation(cancelRecurringTransactionRef);
@@ -70,27 +51,10 @@ export default function FinanceRecurringScreen() {
   const [busyRecurringId, setBusyRecurringId] = React.useState<string | null>(null);
   const [selectedRecurringId, setSelectedRecurringId] = React.useState<string | null>(null);
   const [showDatePicker, setShowDatePicker] = React.useState(false);
+  const [filter, setFilter] = React.useState<RecurringFilter>("all");
 
   const recurringEntries = React.useMemo<RecurringEntry[]>(() => {
-    const source = recurringTransactions || [];
-    const seenRecurringIds = new Set<string>();
-    const keyCollisions = new Map<string, number>();
-    const entries: RecurringEntry[] = [];
-
-    for (const item of source) {
-      const recurringId = (item.recurringId || "").trim();
-      if (recurringId && seenRecurringIds.has(recurringId)) {
-        continue;
-      }
-      if (recurringId) {
-        seenRecurringIds.add(recurringId);
-      }
-
-      const baseKey = buildRecurringRenderKey(item);
-      const collisionCount = (keyCollisions.get(baseKey) || 0) + 1;
-      keyCollisions.set(baseKey, collisionCount);
-
-      entries.push({
+    return (recurringOverview?.items || []).map((item) => ({
         amount: item.amount,
         cadence: item.cadence,
         envelopeId: item.envelopeId,
@@ -99,26 +63,17 @@ export default function FinanceRecurringScreen() {
         nextDueAt: item.nextDueAt,
         note: item.note,
         recurringId: item.recurringId,
-        renderKey: `${baseKey}:${collisionCount}`,
-      });
-    }
+      }));
+  }, [recurringOverview]);
 
-    entries.sort((a, b) => a.nextDueAt - b.nextDueAt);
-    return entries;
-  }, [recurringTransactions]);
+  const filteredEntries = React.useMemo(() => {
+    if (filter === "all") return recurringEntries;
+    return recurringEntries.filter((item) => item.kind === filter);
+  }, [filter, recurringEntries]);
 
-  const isLoading = recurringTransactions === undefined || envelopes === undefined;
+  const isLoading = recurringOverview === undefined || envelopes === undefined;
 
-  const monthlyEquivalent = React.useMemo(
-    () => recurringEntries.reduce((sum, item) => sum + cadenceMonthlyEquivalent(item.amount, item.cadence), 0),
-    [recurringEntries],
-  );
-
-  const dueSoonCount = React.useMemo(() => {
-    const now = Date.now();
-    const soon = now + 7 * 24 * 60 * 60 * 1000;
-    return recurringEntries.filter((item) => item.nextDueAt <= soon).length;
-  }, [recurringEntries]);
+  const summary = recurringOverview?.summary;
 
   const handleSetDateRecurring = async (recurringId: string, daysFromNow: number) => {
     setBusyRecurringId(recurringId);
@@ -164,9 +119,9 @@ export default function FinanceRecurringScreen() {
         idempotencyKey: `finance.recurring.cancel:${recurringId}:${Date.now()}`,
         recurringId,
       });
-      toast.show({ variant: "success", label: "Recurring schedule canceled" });
+      toast.show({ variant: "success", label: "Payment schedule canceled" });
     } catch {
-      toast.show({ variant: "danger", label: "Failed to cancel recurring schedule" });
+      toast.show({ variant: "danger", label: "Failed to cancel payment schedule" });
     } finally {
       setBusyRecurringId(null);
     }
@@ -180,7 +135,7 @@ export default function FinanceRecurringScreen() {
         recurringId,
         envelopeId: envelopeId as Id<"envelopes"> | undefined,
       });
-      toast.show({ variant: "success", label: "Recurring envelope updated" });
+      toast.show({ variant: "success", label: "Schedule envelope updated" });
     } catch {
       toast.show({ variant: "danger", label: "Failed to update envelope" });
     } finally {
@@ -191,9 +146,9 @@ export default function FinanceRecurringScreen() {
   return (
     <ScrollView className="flex-1 bg-background" contentContainerClassName="p-6 pb-24 gap-6">
       <View className="mb-2">
-        <Text className="text-3xl font-serif text-foreground tracking-tight">Recurring</Text>
+        <Text className="text-3xl font-serif text-foreground tracking-tight">Recurring & Subscriptions</Text>
         <Text className="text-sm text-muted-foreground mt-1">
-          Manage active schedules and update timing fast.
+          One place to manage all scheduled payments.
         </Text>
       </View>
 
@@ -205,7 +160,7 @@ export default function FinanceRecurringScreen() {
         <>
           <View className="gap-3">
             <Button
-              label="Add Recurring"
+              label="Add Schedule"
               onPress={() => router.push("/(tabs)/finance/recurring/add" as any)}
             />
           </View>
@@ -215,38 +170,55 @@ export default function FinanceRecurringScreen() {
             <View className="flex-row gap-2">
               <View className="flex-1 bg-surface rounded-2xl border border-border p-4 gap-1 shadow-sm">
                 <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Active</Text>
-                <Text className="text-xl font-medium text-foreground">{recurringEntries.length}</Text>
+                <Text className="text-xl font-medium text-foreground">{summary?.activeCount || 0}</Text>
               </View>
               <View className="flex-1 bg-surface rounded-2xl border border-border p-4 gap-1 shadow-sm">
-                <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Due Soon</Text>
-                <Text className="text-xl font-medium text-foreground">{dueSoonCount}</Text>
+                <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Subscriptions</Text>
+                <Text className="text-xl font-medium text-foreground">{summary?.subscriptionCount || 0}</Text>
               </View>
               <View className="flex-1 bg-surface rounded-2xl border border-border p-4 gap-1 shadow-sm">
                 <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Monthly Eq.</Text>
-                <Text className="text-xl font-medium text-foreground">{formatGhs(monthlyEquivalent)}</Text>
+                <Text className="text-xl font-medium text-foreground">{formatGhs(summary?.monthlyEquivalentTotal || 0)}</Text>
               </View>
             </View>
           </View>
 
           <View className="gap-3">
-            <SectionLabel>Active Schedules</SectionLabel>
-            {recurringEntries.length === 0 ? (
+            <View className="flex-row flex-wrap gap-2">
+              {[
+                { key: "all", label: "All" },
+                { key: "subscription", label: "Subscriptions" },
+                { key: "regular", label: "Regular" },
+              ].map((item) => (
+                <Pressable
+                  key={item.key}
+                  className={`rounded-full px-3 py-1.5 border ${filter === item.key ? "bg-warning/10 border-warning/30" : "bg-background border-border"}`}
+                  onPress={() => setFilter(item.key as RecurringFilter)}
+                >
+                  <Text className={`text-xs font-medium ${filter === item.key ? "text-warning" : "text-foreground"}`}>
+                    {item.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+            <SectionLabel>Schedules</SectionLabel>
+            {filteredEntries.length === 0 ? (
               <View className="bg-surface rounded-2xl border border-border p-6 items-center justify-center gap-2 shadow-sm">
-                <Text className="text-base font-medium text-foreground">No recurring schedules yet</Text>
+                <Text className="text-base font-medium text-foreground">No schedules in this view</Text>
                 <Text className="text-sm text-muted-foreground text-center">
-                  Create one to automate regular expenses and planning.
+                  Add or reclassify a schedule to populate this filter.
                 </Text>
               </View>
             ) : (
               <View className="gap-3">
-                {recurringEntries.map((item) => {
+                {filteredEntries.map((item) => {
                   const isBusy = busyRecurringId === item.recurringId;
                   const now = Date.now();
                   const dueSoon = item.nextDueAt <= now + 7 * 24 * 60 * 60 * 1000;
 
                   return (
                     <View
-                      key={item.renderKey}
+                      key={item.recurringId}
                       className="bg-surface rounded-2xl border border-border p-4 gap-4 shadow-sm"
                     >
                       <Pressable
@@ -258,7 +230,7 @@ export default function FinanceRecurringScreen() {
                           <View className="flex-1">
                             <View className="flex-row items-center gap-2">
                               <Text className="text-base font-medium text-foreground">
-                                {item.merchantHint || item.note || "Recurring expense"}
+                                {item.merchantHint || item.note || "Scheduled expense"}
                               </Text>
                               <View
                                 className={`rounded-full px-2 py-0.5 ${
@@ -320,7 +292,7 @@ export default function FinanceRecurringScreen() {
                             </Pressable>
                             {(envelopes || []).map((envelope, envelopeIndex) => (
                               <Pressable
-                                key={`${item.renderKey}:envelope:${envelope.envelopeId}:${envelopeIndex}`}
+                                key={`${item.recurringId}:envelope:${envelope.envelopeId}:${envelopeIndex}`}
                                 className={`rounded-full px-3 py-1.5 border ${
                                   item.envelopeId === envelope.envelopeId
                                     ? "bg-warning/10 border-warning/30"
@@ -354,7 +326,7 @@ export default function FinanceRecurringScreen() {
                         <View className="flex-row flex-wrap gap-2">
                           {TIMING_OPTIONS.map((opt, optIndex) => (
                             <Pressable
-                              key={`${item.renderKey}:timing:${opt.days}:${optIndex}`}
+                              key={`${item.recurringId}:timing:${opt.days}:${optIndex}`}
                               className={`bg-background border border-border rounded-full px-3 py-1.5 active:bg-muted ${
                                 isBusy ? "opacity-50" : ""
                               }`}

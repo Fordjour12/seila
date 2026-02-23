@@ -31,6 +31,34 @@ export const recurringTransactionsRef = makeFunctionReference<
   }>
 >("queries/recurringTransactions:recurringTransactions");
 
+export const recurringOverviewRef = makeFunctionReference<
+  "query",
+  { limit?: number },
+  {
+    items: Array<{
+      recurringId: string;
+      amount: number;
+      cadence: "weekly" | "biweekly" | "monthly";
+      nextDueAt: number;
+      kind: "regular" | "subscription";
+      category?: string;
+      envelopeId?: string;
+      merchantHint?: string;
+      note?: string;
+      createdAt: number;
+    }>;
+    summary: {
+      activeCount: number;
+      dueSoonCount: number;
+      monthlyEquivalentTotal: number;
+      subscriptionCount: number;
+      subscriptionMonthlyEquivalent: number;
+      regularCount: number;
+      regularMonthlyEquivalent: number;
+    };
+  }
+>("queries/recurringOverview:recurringOverview");
+
 export const scheduleRecurringTransactionRef = makeFunctionReference<
   "mutation",
   {
@@ -45,7 +73,7 @@ export const scheduleRecurringTransactionRef = makeFunctionReference<
     category?: string;
   },
   { recurringId?: string; deduplicated: boolean }
->("commands/scheduleRecurringTransaction:scheduleRecurringTransaction");
+>("commands/recurring/scheduleRecurringTransaction:scheduleRecurringTransaction");
 
 export const updateRecurringTransactionRef = makeFunctionReference<
   "mutation",
@@ -64,13 +92,13 @@ export const updateRecurringTransactionRef = makeFunctionReference<
     clearCategory?: boolean;
   },
   { recurringId?: string; deduplicated: boolean }
->("commands/updateRecurringTransaction:updateRecurringTransaction");
+>("commands/recurring/updateRecurringTransaction:updateRecurringTransaction");
 
 export const cancelRecurringTransactionRef = makeFunctionReference<
   "mutation",
   { idempotencyKey: string; recurringId: string },
   { recurringId?: string; deduplicated: boolean }
->("commands/cancelRecurringTransaction:cancelRecurringTransaction");
+>("commands/recurring/cancelRecurringTransaction:cancelRecurringTransaction");
 
 export const setAccountRef = makeFunctionReference<
   "mutation",

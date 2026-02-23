@@ -8,7 +8,7 @@ import {
   accountSummaryRef,
   debtStrategyRef,
   monthlyCloseSummaryRef,
-  recurringTransactionsRef,
+  recurringOverviewRef,
 } from "@/lib/finance-refs";
 import { formatGhs } from "@/lib/ghs";
 import { EnvelopesList } from "@/components/finance/FinanceComponents";
@@ -25,9 +25,7 @@ export default function FinanceScreen() {
     weeks: 6,
   });
   const monthlyClose = useQuery(monthlyCloseSummaryRef, {});
-  const recurringTransactions = useQuery(recurringTransactionsRef, {
-    limit: 8,
-  });
+  const recurringOverview = useQuery(recurringOverviewRef, { limit: 50 });
   const accountSummary = useQuery(accountSummaryRef, {});
   const debtOverview = useQuery(debtStrategyRef, {});
 
@@ -36,7 +34,7 @@ export default function FinanceScreen() {
     spendingTrend === undefined ||
     monthlyClose === undefined ||
     transactions === undefined ||
-    recurringTransactions === undefined ||
+    recurringOverview === undefined ||
     accountSummary === undefined ||
     debtOverview === undefined;
 
@@ -207,7 +205,7 @@ export default function FinanceScreen() {
                   }
                 >
                   <Text className="text-base font-medium text-foreground">
-                    Add Recurring
+                    Add Schedule
                   </Text>
                   <Text className="text-xs text-muted-foreground">
                     Payment schedule
@@ -275,8 +273,8 @@ export default function FinanceScreen() {
                 {
                   key: "recurring",
                   badge: "RC",
-                  label: "Recurring",
-                  meta: `Active schedules: ${(recurringTransactions || []).length}`,
+                  label: "Schedules",
+                  meta: `Active: ${recurringOverview?.summary.activeCount || 0} · Subscriptions: ${recurringOverview?.summary.subscriptionCount || 0}`,
                   route: "/(tabs)/finance/recurring",
                 },
                 {

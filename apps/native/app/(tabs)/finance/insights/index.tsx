@@ -14,7 +14,7 @@ import {
   monthlyCloseExportRef,
   monthlyCloseSummaryRef,
   netWorthViewRef,
-  recurringTransactionsRef,
+  recurringOverviewRef,
   setFinanceSecuritySettingsRef,
   sharedBudgetSummaryRef,
   spendingAnomaliesRef,
@@ -36,7 +36,7 @@ export default function FinanceInsightsScreen() {
   const monthlyCloseExport = useQuery(monthlyCloseExportRef, {});
   const billReminders = useQuery(billRemindersRef, {});
   const netWorthView = useQuery(netWorthViewRef, {});
-  const recurringTransactions = useQuery(recurringTransactionsRef, { limit: 100 });
+  const recurringOverview = useQuery(recurringOverviewRef, { limit: 200 });
   const debtOverview = useQuery(debtStrategyRef, { strategy: "avalanche" });
   const investmentOverview = useQuery(investmentSummaryRef, {});
   const taxOverview = useQuery(taxEstimateRef, {});
@@ -49,14 +49,10 @@ export default function FinanceInsightsScreen() {
   const [isStartingReset, setIsStartingReset] = React.useState(false);
   const [isSavingWeeklyCheckin, setIsSavingWeeklyCheckin] = React.useState(false);
 
-  const subscriptionCount = (recurringTransactions || []).filter((t) => t.kind === "subscription").length;
-  const subscriptionMonthly = (recurringTransactions || [])
-    .filter((t) => t.kind === "subscription")
-    .reduce((sum, t) => {
-      if (t.cadence === "weekly") return sum + t.amount * 4.345;
-      if (t.cadence === "biweekly") return sum + t.amount * 2.1725;
-      return sum + t.amount;
-    }, 0);
+  const subscriptionCount = recurringOverview?.summary.subscriptionCount || 0;
+  const regularCount = recurringOverview?.summary.regularCount || 0;
+  const subscriptionMonthly = recurringOverview?.summary.subscriptionMonthlyEquivalent || 0;
+  const recurringMonthlyTotal = recurringOverview?.summary.monthlyEquivalentTotal || 0;
 
   const isLoading =
     monthlyClose === undefined ||
@@ -67,7 +63,7 @@ export default function FinanceInsightsScreen() {
     monthlyCloseExport === undefined ||
     billReminders === undefined ||
     netWorthView === undefined ||
-    recurringTransactions === undefined ||
+    recurringOverview === undefined ||
     debtOverview === undefined ||
     investmentOverview === undefined ||
     taxOverview === undefined ||
@@ -257,7 +253,7 @@ export default function FinanceInsightsScreen() {
             <View className="bg-surface rounded-2xl border border-border p-5 gap-4 shadow-sm">
               <View className="gap-3">
                 {[
-                  { label: "Subscriptions", value: `${subscriptionCount} active`, meta: formatGhs(subscriptionMonthly) + " / mo" },
+                  { label: "Recurring Mix", value: `${subscriptionCount} sub / ${regularCount} regular`, meta: formatGhs(recurringMonthlyTotal) + " / mo total (" + formatGhs(subscriptionMonthly) + " sub)" },
                   { label: "Debt Strategy", value: debtOverview?.nextFocus?.name || "None", meta: formatGhs(debtOverview?.totalBalance || 0) + " total" },
                   { label: "Investments", value: formatGhs(investmentOverview?.totalValue || 0), meta: "PnL: " + formatGhs(investmentOverview?.unrealizedPnl || 0) },
                   { label: "Tax Estimate", value: formatGhs(taxOverview?.estimatedTax || 0), meta: "On income: " + formatGhs(taxOverview?.ytdIncome || 0) },
@@ -276,7 +272,7 @@ export default function FinanceInsightsScreen() {
               <View className="gap-2">
                 <Button
                   variant="ghost"
-                  label="Manage Recurring"
+                  label="Manage Schedules"
                   onPress={() => router.push("/(tabs)/finance/recurring" as any)}
                 />
                 <Button
