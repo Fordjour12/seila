@@ -1,4 +1,6 @@
 import { useThemeColor } from "heroui-native";
+import { useAppTheme } from "@/contexts/app-theme-context";
+import { useMemo } from "react";
 
 export interface ThemeColors {
   background: string;
@@ -66,6 +68,51 @@ export function useSemanticColors() {
     border,
     link,
   };
+}
+
+export function useResolvedThemeColors() {
+  const semantic = useSemanticColors();
+  const { currentTheme } = useAppTheme();
+  const mode = currentTheme === "dark" ? Colors.dark : Colors.light;
+
+  return {
+    background: semantic.background || mode.background,
+    foreground: semantic.foreground || mode.foreground,
+    surface: semantic.surface || mode.surface,
+    surfaceForeground: mode.surfaceForeground,
+    overlay: semantic.overlay || mode.overlay,
+    overlayForeground: mode.overlayForeground,
+    muted: semantic.muted || mode.muted,
+    mutedForeground: mode.mutedForeground,
+    accent: semantic.accent || mode.accent,
+    accentForeground: mode.accentForeground,
+    default: mode.default,
+    defaultForeground: mode.defaultForeground,
+    success: semantic.success || mode.success,
+    successForeground: mode.successForeground,
+    warning: semantic.warning || mode.warning,
+    warningForeground: mode.warningForeground,
+    danger: semantic.danger || mode.danger,
+    dangerForeground: mode.dangerForeground,
+    segment: mode.segment,
+    segmentForeground: mode.segmentForeground,
+    fieldBackground: semantic.fieldBackground || mode.fieldBackground,
+    fieldForeground: semantic.fieldForeground || mode.fieldForeground,
+    fieldBorder: semantic.fieldBorder || mode.fieldBorder,
+    fieldPlaceholder: mode.fieldPlaceholder,
+    border: semantic.border || mode.border,
+    divider: mode.divider,
+    link: semantic.link || mode.link,
+    transparent: mode.transparent,
+  };
+}
+
+export function useModeThemeColors() {
+  const { currentTheme } = useAppTheme();
+  return useMemo(
+    () => (currentTheme === "dark" ? Colors.dark : Colors.light),
+    [currentTheme],
+  );
 }
 
 export const Colors: ThemeColors = {

@@ -11,9 +11,9 @@ import {
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { KeyboardAvoidingView } from "react-native-keyboard-controller"
 
-import { Colors, useSemanticColors } from "./theme";
+import { useModeThemeColors } from "./theme";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 
 type IconName = React.ComponentProps<typeof Ionicons>["name"];
 const TAB_CONFIG: Record<string, { label: string; icon: IconName }> = {
@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
 
 export function TabBar({ state, navigation }: BottomTabBarProps) {
    const insets = useSafeAreaInsets();
-   const colors = useSemanticColors();
+   const colors = useModeThemeColors();
    const [searchQuery, setSearchQuery] = useState("");
 
    const scaleAnims = useRef(
@@ -105,7 +105,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
       return (
          <TouchableOpacity
             key={route.key}
-            className="flex-1 items-center justify-center py-1.5 min-h-[50px] px-0.5"
+            className="flex-1 items-center justify-center py-1.5 min-h-12.5 px-0.5"
             onPress={() => handlePress(route.name, route.key, globalIdx)}
             activeOpacity={0.7}
             accessibilityRole="button"
@@ -120,7 +120,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
                <Ionicons
                   name={getTabIconName(icon, isActive)}
                   size={20}
-                  color={isActive ? Colors.foreground : Colors.muted}
+                  color={isActive ? colors.foreground : colors.muted}
                />
                {label ? (
                   <Text
@@ -140,15 +140,17 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
 
    return (
       <KeyboardAvoidingView
+         pointerEvents="box-none"
          behavior="padding"
       >
+
          <View
             className="bg-background border-t border-border px-3.5 pt-1"
             style={[
                styles.wrapperShadow,
                {
                   paddingBottom: insets.bottom + 6,
-                  backgroundColor: Colors.background,
+                  backgroundColor: colors.background,
 
                },
             ]}
@@ -161,7 +163,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
                         height: 11,
                         borderRadius: 6,
                         borderWidth: 1.5,
-                        borderColor: Colors.foreground,
+                        borderColor: colors.foreground,
                      }}
                   />
                   <View
@@ -169,7 +171,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
                         position: "absolute",
                         width: 1.5,
                         height: 5,
-                        backgroundColor: Colors.foreground,
+                        backgroundColor: colors.foreground,
                         borderRadius: 1,
                         transform: [{ rotate: "45deg" }],
                         top: 10,
@@ -180,7 +182,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
                <TextInput
                   className="text-sm  text-muted-foreground flex-1"
                   placeholder="Search for actions, people, instruments"
-                  placeholderTextColor={Colors.muted}
+                  placeholderTextColor={colors.muted}
                   value={searchQuery}
                   onChangeText={setSearchQuery}
                />
@@ -193,6 +195,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
             </View>
          </View>
       </KeyboardAvoidingView>
-   );
-}
 
+   );
+
+}
