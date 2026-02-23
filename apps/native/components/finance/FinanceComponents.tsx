@@ -96,19 +96,22 @@ export function AccountsList({ accounts }: { accounts: Account[] }) {
 export function EnvelopeCard({
   envelope,
   onPress,
+  onLongPress,
 }: {
   envelope: EnvelopeSummary;
   onPress?: () => void;
+  onLongPress?: () => void;
 }) {
   const hasCeiling = envelope.softCeiling && envelope.softCeiling > 0;
   const progressPercent = hasCeiling ? Math.min(envelope.utilization * 100, 100) : 0;
   const isOverBudget = hasCeiling && envelope.utilization > 1;
 
-  const CardWrapper = onPress ? Pressable : View;
+  const CardWrapper = onPress || onLongPress ? Pressable : View;
 
   return (
     <CardWrapper
       onPress={onPress}
+      onLongPress={onLongPress}
       className="bg-surface rounded-2xl border border-border p-4 gap-3 shadow-sm active:bg-muted"
     >
       <View className="flex-row justify-between items-center">
@@ -145,9 +148,11 @@ export function EnvelopeCard({
 export function EnvelopesList({
   envelopes,
   onEnvelopePress,
+  onEnvelopeLongPress,
 }: {
   envelopes: EnvelopeSummary[];
   onEnvelopePress?: (envelopeId: string) => void;
+  onEnvelopeLongPress?: (envelope: EnvelopeSummary) => void;
 }) {
   if (envelopes.length === 0) {
     return <EmptyState title="No envelopes yet" body="Create envelopes to budget your spending" />;
@@ -160,6 +165,7 @@ export function EnvelopesList({
           key={envelope.envelopeId}
           envelope={envelope}
           onPress={onEnvelopePress ? () => onEnvelopePress(envelope.envelopeId) : undefined}
+          onLongPress={onEnvelopeLongPress ? () => onEnvelopeLongPress(envelope) : undefined}
         />
       ))}
     </View>

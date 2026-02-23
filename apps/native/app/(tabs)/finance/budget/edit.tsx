@@ -12,7 +12,7 @@ export default function EditEnvelopeRoute() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { toast } = useToast();
-  const setEnvelope = useMutation(api.commands.setEnvelope.setEnvelope);
+  const setEnvelope = useMutation(api.commands.accounts.setEnvelope.setEnvelope);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const envelopes = useQuery(api.queries.envelopeSummary.envelopeSummary);
@@ -63,7 +63,7 @@ export default function EditEnvelopeRoute() {
         onAdd={handleEditEnvelope}
         onClose={() => router.back()}
         initialEnvelope={{
-          envelopeId: id,
+          envelopeId: id!,
           name: envelope.name,
           softCeiling: envelope.softCeiling,
           emoji: envelope.emoji,

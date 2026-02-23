@@ -12,7 +12,7 @@ export default function AddTransactionRoute() {
   const router = useRouter();
   const { toast } = useToast();
   const envelopes = useQuery(api.queries.envelopeSummary.envelopeSummary);
-  const logTransaction = useMutation(api.commands.logTransaction.logTransaction);
+  const logTransaction = useMutation(api.commands.transactions.logTransaction.logTransaction);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const handleAddTransaction = async (amount: number, envelopeId?: string, note?: string) => {

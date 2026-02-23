@@ -10,7 +10,7 @@ import { AddEnvelopeSheet } from "../../../../components/finance/FinanceComponen
 export default function AddEnvelopeRoute() {
   const router = useRouter();
   const { toast } = useToast();
-  const setEnvelope = useMutation(api.commands.setEnvelope.setEnvelope);
+  const setEnvelope = useMutation(api.commands.accounts.setEnvelope.setEnvelope);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const handleAddEnvelope = async (name: string, softCeiling?: number, emoji?: string) => {

@@ -105,9 +105,9 @@ export default function AddRecurringRoute() {
           <View className="gap-4">
             <Text className="text-sm font-medium text-foreground">Amount Presets</Text>
             <View className="flex-row flex-wrap gap-2">
-              {amountPresets.map((amountPreset) => (
+              {amountPresets.map((amountPreset, amountIndex) => (
                 <Pressable
-                  key={amountPreset}
+                  key={`amount:${amountPreset}:${amountIndex}`}
                   className={`px-3 py-2 rounded-lg border ${
                     !customAmount && selectedAmount === amountPreset
                       ? "bg-warning/10 border-warning/20"
@@ -147,9 +147,9 @@ export default function AddRecurringRoute() {
           <View className="gap-4">
             <Text className="text-sm font-medium text-foreground">Merchant Presets</Text>
             <View className="flex-row flex-wrap gap-2">
-              {(recentMerchants.length ? recentMerchants : ["General expense"]).map((merchant) => (
+              {(recentMerchants.length ? recentMerchants : ["General expense"]).map((merchant, merchantIndex) => (
                 <Pressable
-                  key={merchant}
+                  key={`merchant:${merchant}:${merchantIndex}`}
                   className={`px-3 py-2 rounded-lg border ${
                     !merchantInput.trim() && selectedMerchant === merchant
                       ? "bg-warning/10 border-warning/20"
@@ -188,9 +188,9 @@ export default function AddRecurringRoute() {
           <View className="gap-4">
             <Text className="text-sm font-medium text-foreground">Cadence</Text>
             <View className="flex-row flex-wrap gap-2">
-              {(["weekly", "biweekly", "monthly"] as const).map((cadenceOption) => (
+              {(["weekly", "biweekly", "monthly"] as const).map((cadenceOption, cadenceIndex) => (
                 <Pressable
-                  key={cadenceOption}
+                  key={`cadence:${cadenceOption}:${cadenceIndex}`}
                   className={`px-3 py-2 rounded-lg border ${
                     cadence === cadenceOption
                       ? "bg-warning/10 border-warning/20"
@@ -228,9 +228,9 @@ export default function AddRecurringRoute() {
                     Unassigned
                   </Text>
                 </Pressable>
-                {(envelopes || []).map((envelope) => (
+                {(envelopes || []).map((envelope, envelopeIndex) => (
                   <Pressable
-                    key={envelope.envelopeId}
+                    key={`envelope:${envelope.envelopeId}:${envelopeIndex}`}
                     className={`px-3 py-2 rounded-lg border ${
                       selectedEnvelopeId === envelope.envelopeId
                         ? "bg-warning/10 border-warning/20"
@@ -255,9 +255,9 @@ export default function AddRecurringRoute() {
           <View className="gap-4">
             <Text className="text-sm font-medium text-foreground">Start Date</Text>
             <View className="flex-row flex-wrap gap-2">
-              {DATE_OFFSETS.map((offset) => (
+              {DATE_OFFSETS.map((offset, offsetIndex) => (
                 <Pressable
-                  key={offset.days}
+                  key={`date-offset:${offset.days}:${offsetIndex}`}
                   className={`px-3 py-2 rounded-lg border ${
                     nextDueAt === Date.now() + offset.days * 24 * 60 * 60 * 1000
                       ? "bg-warning/10 border-warning/20"

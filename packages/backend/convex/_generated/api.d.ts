@@ -28,7 +28,6 @@ import type * as commands_accounts_setFxRate from "../commands/accounts/setFxRat
 import type * as commands_accounts_setInvestment from "../commands/accounts/setInvestment.js";
 import type * as commands_accounts_setSavingsGoal from "../commands/accounts/setSavingsGoal.js";
 import type * as commands_accounts_setSharedBudget from "../commands/accounts/setSharedBudget.js";
-import type * as commands_accounts_setSubscription from "../commands/accounts/setSubscription.js";
 import type * as commands_ai_aiContext from "../commands/ai/aiContext.js";
 import type * as commands_ai_captureScratchpad from "../commands/ai/captureScratchpad.js";
 import type * as commands_ai_clearAiContext from "../commands/ai/clearAiContext.js";
@@ -136,7 +135,6 @@ import type * as queries_scratchpad from "../queries/scratchpad.js";
 import type * as queries_sharedBudgetSummary from "../queries/sharedBudgetSummary.js";
 import type * as queries_spendingAnomalies from "../queries/spendingAnomalies.js";
 import type * as queries_spendingTrend from "../queries/spendingTrend.js";
-import type * as queries_subscriptionsOverview from "../queries/subscriptionsOverview.js";
 import type * as queries_taskQueries from "../queries/taskQueries.js";
 import type * as queries_taxEstimate from "../queries/taxEstimate.js";
 import type * as queries_todayHabits from "../queries/todayHabits.js";
@@ -173,7 +171,6 @@ declare const fullApi: ApiFromModules<{
   "commands/accounts/setInvestment": typeof commands_accounts_setInvestment;
   "commands/accounts/setSavingsGoal": typeof commands_accounts_setSavingsGoal;
   "commands/accounts/setSharedBudget": typeof commands_accounts_setSharedBudget;
-  "commands/accounts/setSubscription": typeof commands_accounts_setSubscription;
   "commands/ai/aiContext": typeof commands_ai_aiContext;
   "commands/ai/captureScratchpad": typeof commands_ai_captureScratchpad;
   "commands/ai/clearAiContext": typeof commands_ai_clearAiContext;
@@ -281,7 +278,6 @@ declare const fullApi: ApiFromModules<{
   "queries/sharedBudgetSummary": typeof queries_sharedBudgetSummary;
   "queries/spendingAnomalies": typeof queries_spendingAnomalies;
   "queries/spendingTrend": typeof queries_spendingTrend;
-  "queries/subscriptionsOverview": typeof queries_subscriptionsOverview;
   "queries/taskQueries": typeof queries_taskQueries;
   "queries/taxEstimate": typeof queries_taxEstimate;
   "queries/todayHabits": typeof queries_todayHabits;

@@ -1,6 +1,6 @@
 import { ConvexError, v } from "convex/values";
 
-import { mutation } from "../../_generated/server";
+import { internalMutation, mutation } from "../../_generated/server";
 
 export const setSharedBudget = mutation({
   args: {
@@ -51,5 +51,31 @@ export const setSharedBudget = mutation({
       updatedAt: now,
     });
     return { sharedBudgetId, deduplicated: false };
+  },
+});
+
+export const deleteSharedBudget = mutation({
+  args: {
+    sharedBudgetId: v.id("sharedBudgets"),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db.get(args.sharedBudgetId);
+    if (!existing) {
+      throw new ConvexError("Shared budget not found");
+    }
+
+    await ctx.db.delete(args.sharedBudgetId);
+
+    await ctx.db.insert("events", {
+      type: "finance.sharedBudgetDeleted",
+      occurredAt: Date.now(),
+      idempotencyKey: `delete-shared-budget:${args.sharedBudgetId}:${Date.now()}`,
+      payload: {
+        sharedBudgetId: args.sharedBudgetId,
+        name: existing.name,
+      },
+    });
+
+    return { deleted: true };
   },
 });

@@ -245,18 +245,6 @@ export default defineSchema({
   })
     .index("by_transaction", ["transactionId"])
     .index("by_created_at", ["createdAt"]),
-  subscriptions: defineTable({
-    name: v.string(),
-    amount: v.number(),
-    cadence: v.union(v.literal("monthly"), v.literal("yearly")),
-    nextDueAt: v.number(),
-    isActive: v.boolean(),
-    category: v.optional(v.string()),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index("by_active", ["isActive"])
-    .index("by_next_due", ["nextDueAt"]),
   debts: defineTable({
     name: v.string(),
     balance: v.number(),

@@ -1,8 +1,9 @@
 import React from "react";
-import { Platform, Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import type { Id } from "@seila/backend/convex/_generated/dataModel";
+import { api } from "@seila/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import { useToast } from "heroui-native";
 
@@ -12,14 +13,48 @@ import {
   updateRecurringTransactionRef,
 } from "../../../../lib/finance-refs";
 import { formatGhs } from "../../../../lib/ghs";
-import { Button, SectionLabel } from "../../../../components/ui";
 import { formatDueDate } from "../../../../components/finance/routeShared";
-import { api } from "@seila/backend/convex/_generated/api";
+import { Button, SectionLabel } from "../../../../components/ui";
 
-function cadenceMonthlyEquivalent(amount: number, cadence: "weekly" | "biweekly" | "monthly") {
+const TIMING_OPTIONS = [
+  { label: "Today", days: 0 },
+  { label: "+1d", days: 1 },
+  { label: "+7d", days: 7 },
+  { label: "+14d", days: 14 },
+] as const;
+
+type RecurringCadence = "weekly" | "biweekly" | "monthly";
+
+type RecurringEntry = {
+  amount: number;
+  cadence: RecurringCadence;
+  envelopeId?: string;
+  kind?: string;
+  merchantHint?: string;
+  nextDueAt: number;
+  note?: string;
+  recurringId: string;
+  renderKey: string;
+};
+
+function cadenceMonthlyEquivalent(amount: number, cadence: RecurringCadence) {
   if (cadence === "weekly") return Math.round(amount * 4.345);
   if (cadence === "biweekly") return Math.round(amount * 2.1725);
   return amount;
+}
+
+function buildRecurringRenderKey(item: {
+  recurringId?: string;
+  amount: number;
+  cadence: string;
+  merchantHint?: string;
+  note?: string;
+  nextDueAt: number;
+}) {
+  const recurringId = (item.recurringId || "").trim();
+  if (recurringId.length > 0) return `id:${recurringId}`;
+  const merchant = (item.merchantHint || item.note || "unknown").trim().toLowerCase();
+  return `sig:${merchant}:${item.amount}:${item.cadence}:${item.nextDueAt}`;
 }
 
 export default function FinanceRecurringScreen() {
@@ -33,35 +68,59 @@ export default function FinanceRecurringScreen() {
   const cancelRecurringTransaction = useMutation(cancelRecurringTransactionRef);
 
   const [busyRecurringId, setBusyRecurringId] = React.useState<string | null>(null);
-  const [showDatePicker, setShowDatePicker] = React.useState(false);
   const [selectedRecurringId, setSelectedRecurringId] = React.useState<string | null>(null);
+  const [showDatePicker, setShowDatePicker] = React.useState(false);
+
+  const recurringEntries = React.useMemo<RecurringEntry[]>(() => {
+    const source = recurringTransactions || [];
+    const seenRecurringIds = new Set<string>();
+    const keyCollisions = new Map<string, number>();
+    const entries: RecurringEntry[] = [];
+
+    for (const item of source) {
+      const recurringId = (item.recurringId || "").trim();
+      if (recurringId && seenRecurringIds.has(recurringId)) {
+        continue;
+      }
+      if (recurringId) {
+        seenRecurringIds.add(recurringId);
+      }
+
+      const baseKey = buildRecurringRenderKey(item);
+      const collisionCount = (keyCollisions.get(baseKey) || 0) + 1;
+      keyCollisions.set(baseKey, collisionCount);
+
+      entries.push({
+        amount: item.amount,
+        cadence: item.cadence,
+        envelopeId: item.envelopeId,
+        kind: item.kind,
+        merchantHint: item.merchantHint,
+        nextDueAt: item.nextDueAt,
+        note: item.note,
+        recurringId: item.recurringId,
+        renderKey: `${baseKey}:${collisionCount}`,
+      });
+    }
+
+    entries.sort((a, b) => a.nextDueAt - b.nextDueAt);
+    return entries;
+  }, [recurringTransactions]);
 
   const isLoading = recurringTransactions === undefined || envelopes === undefined;
 
-  const sortedRecurring = React.useMemo(
-    () => [...(recurringTransactions || [])].sort((a, b) => a.nextDueAt - b.nextDueAt),
-    [recurringTransactions],
-  );
-
   const monthlyEquivalent = React.useMemo(
-    () =>
-      sortedRecurring.reduce(
-        (sum, item) => sum + cadenceMonthlyEquivalent(item.amount, item.cadence),
-        0,
-      ),
-    [sortedRecurring],
+    () => recurringEntries.reduce((sum, item) => sum + cadenceMonthlyEquivalent(item.amount, item.cadence), 0),
+    [recurringEntries],
   );
 
   const dueSoonCount = React.useMemo(() => {
     const now = Date.now();
     const soon = now + 7 * 24 * 60 * 60 * 1000;
-    return sortedRecurring.filter((item) => item.nextDueAt <= soon).length;
-  }, [sortedRecurring]);
+    return recurringEntries.filter((item) => item.nextDueAt <= soon).length;
+  }, [recurringEntries]);
 
-  const handleSetDateRecurring = async (
-    recurringId: string,
-    daysFromNow: number,
-  ) => {
+  const handleSetDateRecurring = async (recurringId: string, daysFromNow: number) => {
     setBusyRecurringId(recurringId);
     try {
       const newDate = Date.now() + daysFromNow * 24 * 60 * 60 * 1000;
@@ -86,18 +145,15 @@ export default function FinanceRecurringScreen() {
     setShowDatePicker(true);
   };
 
-  const handleDatePickerChange = async (
-    event: { nativeEvent: { timestamp: number } },
-    date?: Date,
-  ) => {
+  const handleDatePickerChange = async (_event: { nativeEvent: { timestamp: number } }, date?: Date) => {
     setShowDatePicker(false);
-    const currentRecurring = sortedRecurring.find((r) => r.recurringId === selectedRecurringId);
-    if (date && currentRecurring) {
-      await handleSetDateRecurring(
-        selectedRecurringId!,
-        Math.round((date.getTime() - Date.now()) / (24 * 60 * 60 * 1000)),
-      );
+    if (!date || !selectedRecurringId) {
+      setSelectedRecurringId(null);
+      return;
     }
+
+    const daysFromNow = Math.round((date.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+    await handleSetDateRecurring(selectedRecurringId, daysFromNow);
     setSelectedRecurringId(null);
   };
 
@@ -136,7 +192,9 @@ export default function FinanceRecurringScreen() {
     <ScrollView className="flex-1 bg-background" contentContainerClassName="p-6 pb-24 gap-6">
       <View className="mb-2">
         <Text className="text-3xl font-serif text-foreground tracking-tight">Recurring</Text>
-        <Text className="text-sm text-muted-foreground mt-1">Manage active schedules and update timing fast.</Text>
+        <Text className="text-sm text-muted-foreground mt-1">
+          Manage active schedules and update timing fast.
+        </Text>
       </View>
 
       {isLoading ? (
@@ -157,7 +215,7 @@ export default function FinanceRecurringScreen() {
             <View className="flex-row gap-2">
               <View className="flex-1 bg-surface rounded-2xl border border-border p-4 gap-1 shadow-sm">
                 <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Active</Text>
-                <Text className="text-xl font-medium text-foreground">{sortedRecurring.length}</Text>
+                <Text className="text-xl font-medium text-foreground">{recurringEntries.length}</Text>
               </View>
               <View className="flex-1 bg-surface rounded-2xl border border-border p-4 gap-1 shadow-sm">
                 <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Due Soon</Text>
@@ -172,7 +230,7 @@ export default function FinanceRecurringScreen() {
 
           <View className="gap-3">
             <SectionLabel>Active Schedules</SectionLabel>
-            {sortedRecurring.length === 0 ? (
+            {recurringEntries.length === 0 ? (
               <View className="bg-surface rounded-2xl border border-border p-6 items-center justify-center gap-2 shadow-sm">
                 <Text className="text-base font-medium text-foreground">No recurring schedules yet</Text>
                 <Text className="text-sm text-muted-foreground text-center">
@@ -181,27 +239,50 @@ export default function FinanceRecurringScreen() {
               </View>
             ) : (
               <View className="gap-3">
-                {sortedRecurring.map((item) => {
+                {recurringEntries.map((item) => {
                   const isBusy = busyRecurringId === item.recurringId;
                   const now = Date.now();
                   const dueSoon = item.nextDueAt <= now + 7 * 24 * 60 * 60 * 1000;
 
                   return (
-                    <View key={item.recurringId} className="bg-surface rounded-2xl border border-border p-4 gap-4 shadow-sm">
+                    <View
+                      key={item.renderKey}
+                      className="bg-surface rounded-2xl border border-border p-4 gap-4 shadow-sm"
+                    >
                       <Pressable
                         onPress={() =>
-                          router.push(
-                            `/(tabs)/finance/recurring/edit?recurringId=${item.recurringId}` as any,
-                          )
+                          router.push(`/(tabs)/finance/recurring/edit?recurringId=${item.recurringId}` as any)
                         }
                       >
                         <View className="flex-row justify-between items-start">
                           <View className="flex-1">
-                            <Text className="text-base font-medium text-foreground">
-                              {item.merchantHint || item.note || "Recurring expense"}
-                            </Text>
+                            <View className="flex-row items-center gap-2">
+                              <Text className="text-base font-medium text-foreground">
+                                {item.merchantHint || item.note || "Recurring expense"}
+                              </Text>
+                              <View
+                                className={`rounded-full px-2 py-0.5 ${
+                                  item.kind === "subscription"
+                                    ? "bg-primary/10 border border-primary/30"
+                                    : "bg-muted/10 border border-muted/30"
+                                }`}
+                              >
+                                <Text
+                                  className={`text-[10px] font-medium uppercase tracking-tighter ${
+                                    item.kind === "subscription"
+                                      ? "text-primary"
+                                      : "text-muted-foreground"
+                                  }`}
+                                >
+                                  {item.kind || "expense"}
+                                </Text>
+                              </View>
+                            </View>
                             <Text className="text-xs text-muted-foreground mt-1">
-                              {formatGhs(item.amount)} · <Text className="capitalize">{item.cadence}</Text> · <Text className={dueSoon ? "text-warning font-medium" : ""}>due {formatDueDate(item.nextDueAt)}</Text>
+                              {formatGhs(item.amount)} · <Text className="capitalize">{item.cadence}</Text> ·{" "}
+                              <Text className={dueSoon ? "text-warning font-medium" : ""}>
+                                due {formatDueDate(item.nextDueAt)}
+                              </Text>
                             </Text>
                           </View>
                           {dueSoon && (
@@ -215,30 +296,46 @@ export default function FinanceRecurringScreen() {
                       <View className="h-px bg-border" />
 
                       <View className="gap-2">
-                        <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Assigned Envelope</Text>
-                        <ScrollView
-                          horizontal
-                          showsHorizontalScrollIndicator={false}
-                          className="flex-row"
-                        >
+                        <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
+                          Assigned Envelope
+                        </Text>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
                           <View className="flex-row gap-2">
                             <Pressable
-                              className={`rounded-full px-3 py-1.5 border ${!item.envelopeId ? "bg-warning/10 border-warning/30" : "bg-background border-border"} ${isBusy ? "opacity-50" : ""}`}
+                              className={`rounded-full px-3 py-1.5 border ${
+                                !item.envelopeId
+                                  ? "bg-warning/10 border-warning/30"
+                                  : "bg-background border-border"
+                              } ${isBusy ? "opacity-50" : ""}`}
                               onPress={() => handleAssignEnvelope(item.recurringId, undefined)}
                               disabled={isBusy}
                             >
-                              <Text className={`text-xs font-medium ${!item.envelopeId ? "text-warning" : "text-foreground"}`}>Unassigned</Text>
+                              <Text
+                                className={`text-xs font-medium ${
+                                  !item.envelopeId ? "text-warning" : "text-foreground"
+                                }`}
+                              >
+                                Unassigned
+                              </Text>
                             </Pressable>
-                            {(envelopes || []).map((envelope) => (
+                            {(envelopes || []).map((envelope, envelopeIndex) => (
                               <Pressable
-                                key={`${item.recurringId}:${envelope.envelopeId}`}
-                                className={`rounded-full px-3 py-1.5 border ${item.envelopeId === envelope.envelopeId ? "bg-warning/10 border-warning/30" : "bg-background border-border"} ${isBusy ? "opacity-50" : ""}`}
-                                onPress={() =>
-                                  handleAssignEnvelope(item.recurringId, envelope.envelopeId)
-                                }
+                                key={`${item.renderKey}:envelope:${envelope.envelopeId}:${envelopeIndex}`}
+                                className={`rounded-full px-3 py-1.5 border ${
+                                  item.envelopeId === envelope.envelopeId
+                                    ? "bg-warning/10 border-warning/30"
+                                    : "bg-background border-border"
+                                } ${isBusy ? "opacity-50" : ""}`}
+                                onPress={() => handleAssignEnvelope(item.recurringId, envelope.envelopeId)}
                                 disabled={isBusy}
                               >
-                                <Text className={`text-xs font-medium ${item.envelopeId === envelope.envelopeId ? "text-warning" : "text-foreground"}`}>
+                                <Text
+                                  className={`text-xs font-medium ${
+                                    item.envelopeId === envelope.envelopeId
+                                      ? "text-warning"
+                                      : "text-foreground"
+                                  }`}
+                                >
                                   {envelope.emoji ? `${envelope.emoji} ` : ""}
                                   {envelope.name}
                                 </Text>
@@ -251,17 +348,16 @@ export default function FinanceRecurringScreen() {
                       <View className="h-px bg-border" />
 
                       <View className="gap-2">
-                        <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Update Timing</Text>
+                        <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
+                          Update Timing
+                        </Text>
                         <View className="flex-row flex-wrap gap-2">
-                          {[
-                            { label: "Today", days: 0 },
-                            { label: "+1d", days: 1 },
-                            { label: "+7d", days: 7 },
-                            { label: "+14d", days: 14 },
-                          ].map((opt) => (
+                          {TIMING_OPTIONS.map((opt, optIndex) => (
                             <Pressable
-                              key={opt.label}
-                              className={`bg-background border border-border rounded-full px-3 py-1.5 active:bg-muted ${isBusy ? "opacity-50" : ""}`}
+                              key={`${item.renderKey}:timing:${opt.days}:${optIndex}`}
+                              className={`bg-background border border-border rounded-full px-3 py-1.5 active:bg-muted ${
+                                isBusy ? "opacity-50" : ""
+                              }`}
                               onPress={() => handleSetDateRecurring(item.recurringId, opt.days)}
                               disabled={isBusy}
                             >
@@ -269,7 +365,9 @@ export default function FinanceRecurringScreen() {
                             </Pressable>
                           ))}
                           <Pressable
-                            className={`bg-background border border-border rounded-full px-3 py-1.5 active:bg-muted ${isBusy ? "opacity-50" : ""}`}
+                            className={`bg-background border border-border rounded-full px-3 py-1.5 active:bg-muted ${
+                              isBusy ? "opacity-50" : ""
+                            }`}
                             onPress={() => handleCustomDateRecurring(item.recurringId)}
                             disabled={isBusy}
                           >
@@ -277,7 +375,9 @@ export default function FinanceRecurringScreen() {
                           </Pressable>
                           <View className="flex-1" />
                           <Pressable
-                            className={`bg-danger/10 border border-danger/20 rounded-full px-3 py-1.5 active:bg-danger/20 ${isBusy ? "opacity-50" : ""}`}
+                            className={`bg-danger/10 border border-danger/20 rounded-full px-3 py-1.5 active:bg-danger/20 ${
+                              isBusy ? "opacity-50" : ""
+                            }`}
                             onPress={() => handleCancelRecurring(item.recurringId)}
                             disabled={isBusy}
                           >
@@ -293,13 +393,9 @@ export default function FinanceRecurringScreen() {
           </View>
         </>
       )}
+
       {showDatePicker && selectedRecurringId && (
-        <DateTimePicker
-          value={new Date()}
-          mode="date"
-          display="default"
-          onChange={handleDatePickerChange}
-        />
+        <DateTimePicker value={new Date()} mode="date" display="default" onChange={handleDatePickerChange} />
       )}
     </ScrollView>
   );

@@ -242,23 +242,6 @@ export const attachReceiptRef = makeFunctionReference<
   { receiptId?: Id<"receiptAttachments">; deduplicated: boolean }
 >("commands/attachReceipt:attachReceipt");
 
-export const subscriptionsOverviewRef = makeFunctionReference<
-  "query",
-  {},
-  {
-    count: number;
-    dueSoonCount: number;
-    monthlyEquivalent: number;
-    items: Array<{
-      subscriptionId: string;
-      name: string;
-      amount: number;
-      cadence: "monthly" | "yearly";
-      nextDueAt: number;
-    }>;
-  }
->("queries/subscriptionsOverview:subscriptionsOverview");
-
 export const debtStrategyRef = makeFunctionReference<
   "query",
   { strategy?: "snowball" | "avalanche" },
@@ -355,21 +338,6 @@ export const setInvestmentRef = makeFunctionReference<
   },
   { investmentId?: Id<"investments">; deduplicated: boolean }
 >("commands/setInvestment:setInvestment");
-
-export const setSubscriptionRef = makeFunctionReference<
-  "mutation",
-  {
-    idempotencyKey: string;
-    subscriptionId?: Id<"subscriptions">;
-    name: string;
-    amount: number;
-    cadence: "monthly" | "yearly";
-    nextDueAt: number;
-    category?: string;
-    isActive?: boolean;
-  },
-  { subscriptionId?: Id<"subscriptions">; deduplicated: boolean }
->("commands/setSubscription:setSubscription");
 
 export const setSharedBudgetRef = makeFunctionReference<
   "mutation",

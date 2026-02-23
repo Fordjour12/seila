@@ -34,18 +34,6 @@ export default function PlanningLayout() {
         }}
       />
       <Stack.Screen
-        name="subscriptions"
-        options={{
-          headerShown: true,
-          title: "Subscriptions",
-          headerBackVisible: true,
-          headerStyle: { backgroundColor: Colors.bgRaised },
-          headerTintColor: Colors.textPrimary,
-          headerShadowVisible: false,
-          contentStyle: { backgroundColor: Colors.bg },
-        }}
-      />
-      <Stack.Screen
         name="shared-budgets"
         options={{
           headerShown: true,

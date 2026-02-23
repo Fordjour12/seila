@@ -294,9 +294,9 @@ export default function FinanceAccountsScreen() {
                   route: "/(tabs)/finance/planning/investments",
                 },
                 {
-                  label: "Subscriptions",
-                  meta: "Recurring services",
-                  route: "/(tabs)/finance/planning/subscriptions",
+                  label: "Recurring",
+                  meta: "All recurring payments",
+                  route: "/(tabs)/finance/recurring",
                 },
                 {
                   label: "Shared Budgets",

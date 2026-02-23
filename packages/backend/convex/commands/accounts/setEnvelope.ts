@@ -1,6 +1,6 @@
 import { ConvexError, v } from "convex/values";
 
-import { mutation } from "../../_generated/server";
+import { internalMutation, mutation } from "../../_generated/server";
 
 export const setEnvelope = mutation({
   args: {
@@ -86,5 +86,31 @@ export const setEnvelope = mutation({
       envelopeId,
       deduplicated: false,
     };
+  },
+});
+
+export const deleteEnvelope = mutation({
+  args: {
+    envelopeId: v.id("envelopes"),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db.get(args.envelopeId);
+    if (!existing) {
+      throw new ConvexError("Envelope not found");
+    }
+
+    await ctx.db.delete(args.envelopeId);
+
+    await ctx.db.insert("events", {
+      type: "finance.envelopeDeleted",
+      occurredAt: Date.now(),
+      idempotencyKey: `delete-envelope:${args.envelopeId}:${Date.now()}`,
+      payload: {
+        envelopeId: args.envelopeId,
+        name: existing.name,
+      },
+    });
+
+    return { deleted: true };
   },
 });

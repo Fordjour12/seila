@@ -41,9 +41,9 @@ export default function FinanceTransactionsScreen() {
   });
 
   const confirmImportedTransaction = useMutation(
-    api.commands.confirmImportedTransaction.confirmImportedTransaction,
+    api.commands.transactions.confirmImportedTransaction.confirmImportedTransaction,
   );
-  const voidTransaction = useMutation(api.commands.voidTransaction.voidTransaction);
+  const voidTransaction = useMutation(api.commands.transactions.voidTransaction.voidTransaction);
   const bulkUpdateTransactions = useMutation(bulkUpdateTransactionsRef);
   const attachReceipt = useMutation(attachReceiptRef);
   const setTransactionTags = useMutation(setTransactionTagsRef);

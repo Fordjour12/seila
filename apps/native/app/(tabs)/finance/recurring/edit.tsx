@@ -31,7 +31,7 @@ export default function EditRecurringRoute() {
   const recurringTransactions = useQuery(recurringTransactionsRef, { limit: 50 });
   const envelopes = useQuery(api.queries.envelopeSummary.envelopeSummary);
   const updateRecurringTransaction = useMutation(updateRecurringTransactionRef);
-  const setEnvelope = useMutation(api.commands.setEnvelope.setEnvelope);
+  const setEnvelope = useMutation(api.commands.accounts.setEnvelope.setEnvelope);
 
   const existingRecurring = React.useMemo(
     () => recurringTransactions?.find((r) => r.recurringId === recurringId),
@@ -167,9 +167,9 @@ export default function EditRecurringRoute() {
           <View style={styles.recurringForm}>
             <Text style={styles.recurringSectionTitle}>Amount Presets</Text>
             <View style={styles.chipRow}>
-              {amountPresets.map((amountPreset) => (
+              {amountPresets.map((amountPreset, amountIndex) => (
                 <Pressable
-                  key={amountPreset}
+                  key={`amount:${amountPreset}:${amountIndex}`}
                   style={[
                     styles.cadenceChip,
                     !customAmount && selectedAmount === amountPreset && styles.cadenceChipSelected,
@@ -196,9 +196,9 @@ export default function EditRecurringRoute() {
 
             <Text style={styles.recurringSectionTitle}>Merchant Presets</Text>
             <View style={styles.chipRow}>
-              {(recentMerchants.length ? recentMerchants : ["General expense"]).map((merchant) => (
+              {(recentMerchants.length ? recentMerchants : ["General expense"]).map((merchant, merchantIndex) => (
                 <Pressable
-                  key={merchant}
+                  key={`merchant:${merchant}:${merchantIndex}`}
                   style={[
                     styles.cadenceChip,
                     !merchantInput.trim() &&
@@ -226,9 +226,9 @@ export default function EditRecurringRoute() {
 
             <Text style={styles.recurringSectionTitle}>Cadence</Text>
             <View style={styles.cadenceRow}>
-              {(["weekly", "biweekly", "monthly"] as const).map((cadenceOption) => (
+              {(["weekly", "biweekly", "monthly"] as const).map((cadenceOption, cadenceIndex) => (
                 <Pressable
-                  key={cadenceOption}
+                  key={`cadence:${cadenceOption}:${cadenceIndex}`}
                   style={[
                     styles.cadenceChip,
                     cadence === cadenceOption && styles.cadenceChipSelected,
@@ -252,9 +252,9 @@ export default function EditRecurringRoute() {
                 >
                   <Text style={styles.pendingEnvelopeChipText}>Unassigned</Text>
                 </Pressable>
-                {(envelopes || []).map((envelope) => (
+                {(envelopes || []).map((envelope, envelopeIndex) => (
                   <Pressable
-                    key={envelope.envelopeId}
+                    key={`envelope:${envelope.envelopeId}:${envelopeIndex}`}
                     style={[
                       styles.pendingEnvelopeChip,
                       selectedEnvelopeId === envelope.envelopeId &&
@@ -282,9 +282,9 @@ export default function EditRecurringRoute() {
               Current: {format(selectedDueDate, "MMM d, yyyy")}
             </Text>
             <View style={styles.cadenceRow}>
-              {DATE_OFFSETS.map((offset) => (
+              {DATE_OFFSETS.map((offset, offsetIndex) => (
                 <Pressable
-                  key={offset.days}
+                  key={`date-offset:${offset.days}:${offsetIndex}`}
                   style={[
                     styles.cadenceChip,
                     selectedDueDate === Date.now() + offset.days * 24 * 60 * 60 * 1000 &&
