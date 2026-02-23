@@ -1,17 +1,6 @@
 import { makeFunctionReference } from "convex/server";
 import type { Id } from "@seila/backend/convex/_generated/dataModel";
 
-export const merchantEnvelopeHintsRef = makeFunctionReference<
-  "query",
-  { merchantHints?: string[] },
-  Array<{
-    merchantKey: string;
-    envelopeId: string;
-    occurredAt: number;
-    source: string;
-  }>
->("queries/merchantEnvelopeHints:merchantEnvelopeHints");
-
 export const monthlyCloseSummaryRef = makeFunctionReference<
   "query",
   {},
@@ -41,18 +30,6 @@ export const recurringTransactionsRef = makeFunctionReference<
     createdAt: number;
   }>
 >("queries/recurringTransactions:recurringTransactions");
-
-export const merchantHintReviewRef = makeFunctionReference<
-  "query",
-  { limit?: number },
-  Array<{
-    merchantKey: string;
-    envelopeId: string;
-    confidence: number;
-    sampleSize: number;
-    lastUpdatedAt: number;
-  }>
->("queries/merchantHintReview:merchantHintReview");
 
 export const scheduleRecurringTransactionRef = makeFunctionReference<
   "mutation",
@@ -94,12 +71,6 @@ export const cancelRecurringTransactionRef = makeFunctionReference<
   { idempotencyKey: string; recurringId: string },
   { recurringId?: string; deduplicated: boolean }
 >("commands/cancelRecurringTransaction:cancelRecurringTransaction");
-
-export const setMerchantEnvelopeHintRef = makeFunctionReference<
-  "mutation",
-  { idempotencyKey: string; merchantHint: string; envelopeId: Id<"envelopes"> },
-  { merchantKey?: string; envelopeId?: Id<"envelopes">; deduplicated: boolean }
->("commands/setMerchantEnvelopeHint:setMerchantEnvelopeHint");
 
 export const setAccountRef = makeFunctionReference<
   "mutation",

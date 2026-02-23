@@ -12,7 +12,6 @@ export default function RecurringLayout() {
       <Stack.Screen
         name="index"
         options={{
-          headerShown: false,
           title: "Recurring",
           headerBackVisible: true,
           headerStyle: { backgroundColor: Colors.bgRaised },
@@ -24,7 +23,6 @@ export default function RecurringLayout() {
       <Stack.Screen
         name="add"
         options={{
-          headerShown: true,
           title: "Add Recurring",
           headerBackVisible: true,
           headerStyle: { backgroundColor: Colors.bgRaised },
@@ -37,7 +35,6 @@ export default function RecurringLayout() {
         name="edit"
         options={{
           presentation: "modal",
-          headerShown: true,
           title: "Edit Recurring",
           headerBackVisible: true,
           headerStyle: { backgroundColor: Colors.bgRaised },

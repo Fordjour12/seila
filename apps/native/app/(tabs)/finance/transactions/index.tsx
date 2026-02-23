@@ -9,7 +9,6 @@ import { useToast } from "heroui-native";
 import {
   attachReceiptRef,
   bulkUpdateTransactionsRef,
-  merchantEnvelopeHintsRef,
   setTransactionTagsRef,
   transactionSearchRef,
 } from "../../../../lib/finance-refs";
@@ -34,11 +33,6 @@ export default function FinanceTransactionsScreen() {
     includeVoided: false,
     limit: 50,
   });
-  const pendingMerchantHints = useQuery(merchantEnvelopeHintsRef, {
-    merchantHints: (pendingTransactions || [])
-      .map((transaction) => normalizeMerchant(transaction.merchantHint || transaction.note))
-      .filter(Boolean),
-  });
 
   const confirmImportedTransaction = useMutation(
     api.commands.transactions.confirmImportedTransaction.confirmImportedTransaction,
@@ -61,8 +55,7 @@ export default function FinanceTransactionsScreen() {
     envelopes === undefined ||
     transactions === undefined ||
     pendingTransactions === undefined ||
-    transactionSearch === undefined ||
-    pendingMerchantHints === undefined;
+    transactionSearch === undefined;
 
   const fallbackSuggestionsFromRecent = React.useMemo(() => {
     const suggestions = new Map<string, Id<"envelopes">>();
@@ -77,20 +70,8 @@ export default function FinanceTransactionsScreen() {
   }, [transactions]);
 
   const suggestedEnvelopeByMerchant = React.useMemo(() => {
-    const suggestions = new Map<string, Id<"envelopes">>();
-
-    for (const hint of pendingMerchantHints || []) {
-      suggestions.set(hint.merchantKey, hint.envelopeId as Id<"envelopes">);
-    }
-
-    for (const [merchantKey, envelopeId] of fallbackSuggestionsFromRecent.entries()) {
-      if (!suggestions.has(merchantKey)) {
-        suggestions.set(merchantKey, envelopeId);
-      }
-    }
-
-    return suggestions;
-  }, [pendingMerchantHints, fallbackSuggestionsFromRecent]);
+    return fallbackSuggestionsFromRecent;
+  }, [fallbackSuggestionsFromRecent]);
 
   const getEffectiveEnvelopeId = (transaction: {
     _id: Id<"transactions">;

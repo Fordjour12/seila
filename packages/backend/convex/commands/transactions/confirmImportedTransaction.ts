@@ -2,10 +2,6 @@ import { ConvexError, v } from "convex/values";
 
 import { mutation } from "../../_generated/server";
 
-function normalizeMerchant(value?: string) {
-  return value?.trim().toLowerCase();
-}
-
 export const confirmImportedTransaction = mutation({
   args: {
     idempotencyKey: v.string(),
@@ -55,20 +51,6 @@ export const confirmImportedTransaction = mutation({
         ...(args.envelopeId ? { envelopeId: args.envelopeId } : {}),
       },
     });
-
-    const merchantKey = normalizeMerchant(transaction.merchantHint || transaction.note);
-    if (args.envelopeId && merchantKey) {
-      await ctx.db.insert("events", {
-        type: "finance.merchantEnvelopeHintSet",
-        occurredAt: Date.now(),
-        idempotencyKey: `${args.idempotencyKey}:merchant-hint`,
-        payload: {
-          merchantKey,
-          envelopeId: args.envelopeId,
-          source: "confirm_imported_transaction",
-        },
-      });
-    }
 
     return {
       transactionId: args.transactionId,

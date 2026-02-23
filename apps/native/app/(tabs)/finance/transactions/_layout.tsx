@@ -24,7 +24,7 @@ export default function TransactionsLayout() {
       <Stack.Screen
         name="add"
         options={{
-          headerShown: true,
+          headerShown: false,
           title: "Log Transaction",
           headerBackVisible: true,
           headerStyle: { backgroundColor: Colors.bgRaised },

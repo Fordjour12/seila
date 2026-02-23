@@ -15,7 +15,6 @@ This document analyzes the coverage between `@apps/native/app/(tabs)/finance/` (
 | Accounts | `accounts.tsx`, `add-account.tsx` | `setAccount`, `accountSummary`, `hideAccount`, `logIncome` |
 | Recurring | `recurring.tsx`, `add-recurring.tsx`, `edit-recurring.tsx` | `scheduleRecurringTransaction`, `updateRecurringTransaction`, `cancelRecurringTransaction`, `recurringTransactions` |
 | Savings Goals | `savings/index.tsx`, `savings/add.tsx`, `savings/edit.tsx` | `setSavingsGoal`, `contributeSavingsGoal`, `deleteSavingsGoal`, `savingsGoals` |
-| Merchant Hints | `merchant-hints.tsx` | `merchantEnvelopeHints`, `merchantHintReview`, `setMerchantEnvelopeHint` |
 | Insights | `insights.tsx` | `spendingAnomalies`, `budgetDepth`, `debtStrategy`, `investmentSummary`, `taxEstimate`, `netWorthView`, `subscriptionsOverview` |
 | Cashflow | `accounts.tsx` | `cashflowSummary`, `cashflowForecast` |
 | Receipts | `transactions.tsx` | `attachReceipt`, `receiptsByTransaction` |
@@ -134,7 +133,7 @@ These are the minimum required features for a functional finance app:
 
 | Category | Count |
 |----------|-------|
-| Fully Covered Features | 14 |
+| Fully Covered Features | 13 |
 | Missing Features (needs work) | 8 |
 | Removable Backend Items | 8 |
 | Core Essential Features | 8 |
