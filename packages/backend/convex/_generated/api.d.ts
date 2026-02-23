@@ -21,6 +21,7 @@ import type * as agents_plannerAgent from "../agents/plannerAgent.js";
 import type * as agents_summaryAgent from "../agents/summaryAgent.js";
 import type * as aiContext_validators from "../aiContext/validators.js";
 import type * as auth from "../auth.js";
+import type * as commands_accounts_recordDebtPayment from "../commands/accounts/recordDebtPayment.js";
 import type * as commands_accounts_setAccount from "../commands/accounts/setAccount.js";
 import type * as commands_accounts_setDebt from "../commands/accounts/setDebt.js";
 import type * as commands_accounts_setEnvelope from "../commands/accounts/setEnvelope.js";
@@ -162,6 +163,7 @@ declare const fullApi: ApiFromModules<{
   "agents/summaryAgent": typeof agents_summaryAgent;
   "aiContext/validators": typeof aiContext_validators;
   auth: typeof auth;
+  "commands/accounts/recordDebtPayment": typeof commands_accounts_recordDebtPayment;
   "commands/accounts/setAccount": typeof commands_accounts_setAccount;
   "commands/accounts/setDebt": typeof commands_accounts_setDebt;
   "commands/accounts/setEnvelope": typeof commands_accounts_setEnvelope;

@@ -57,6 +57,10 @@ export default function FinanceScreen() {
     1,
   );
   const debtDueThisMonth = debtOverview?.totalMinPayment || 0;
+  const totalDebtBalance = debtOverview?.totalBalance || 0;
+  const nextDebtFocus = debtOverview?.nextFocus?.name || "None";
+  const hasUnconfiguredDebtMinimums =
+    totalDebtBalance > 0 && debtDueThisMonth === 0;
   const payoffProgressPercent =
     (debtOverview?.totalBalance || 0) <= 0
       ? 100
@@ -113,12 +117,21 @@ export default function FinanceScreen() {
                 <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
                   Debt Snapshot
                 </Text>
+                <View className="gap-1">
+                  <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
+                    Total Debt
+                  </Text>
+                  <Text className="text-3xl font-semibold text-danger">
+                    {formatGhs(totalDebtBalance)}
+                  </Text>
+                </View>
+                <View className="h-px bg-border" />
                 <View className="flex-row justify-between items-end">
                   <View className="gap-1">
                     <Text className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
-                      Debt Due
+                      Monthly Debt Due
                     </Text>
-                    <Text className="text-xl font-medium text-danger">
+                    <Text className="text-lg font-medium text-foreground">
                       {formatGhs(debtDueThisMonth)}
                     </Text>
                   </View>
@@ -131,6 +144,14 @@ export default function FinanceScreen() {
                     </Text>
                   </View>
                 </View>
+                <Text className="text-xs text-muted-foreground">
+                  Focus: {nextDebtFocus}
+                </Text>
+                {hasUnconfiguredDebtMinimums ? (
+                  <Text className="text-xs text-warning">
+                    Minimum payments not set. Update debts to see monthly due amount.
+                  </Text>
+                ) : null}
               </View>
             </View>
 

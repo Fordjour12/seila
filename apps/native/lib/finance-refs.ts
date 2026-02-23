@@ -323,7 +323,13 @@ export const setDebtRef = makeFunctionReference<
     isActive?: boolean;
   },
   { debtId?: Id<"debts">; deduplicated: boolean }
->("commands/setDebt:setDebt");
+>("commands/accounts/setDebt:setDebt");
+
+export const recordDebtPaymentRef = makeFunctionReference<
+  "mutation",
+  { debtId: Id<"debts">; amount: number },
+  { debtId: Id<"debts">; balance: number; archived: boolean }
+>("commands/accounts/recordDebtPayment:recordDebtPayment");
 
 export const setInvestmentRef = makeFunctionReference<
   "mutation",
@@ -336,7 +342,7 @@ export const setInvestmentRef = makeFunctionReference<
     costBasis: number;
   },
   { investmentId?: Id<"investments">; deduplicated: boolean }
->("commands/setInvestment:setInvestment");
+>("commands/accounts/setInvestment:setInvestment");
 
 export const setSharedBudgetRef = makeFunctionReference<
   "mutation",

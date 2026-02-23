@@ -12,8 +12,7 @@ export default function PlanningLayout() {
       <Stack.Screen
         name="debt"
         options={{
-          headerShown: true,
-          title: "Debt",
+          headerShown: false,
           headerBackVisible: true,
           headerStyle: { backgroundColor: Colors.bgRaised },
           headerTintColor: Colors.textPrimary,
@@ -24,8 +23,7 @@ export default function PlanningLayout() {
       <Stack.Screen
         name="investments"
         options={{
-          headerShown: true,
-          title: "Investments",
+          headerShown: false,
           headerBackVisible: true,
           headerStyle: { backgroundColor: Colors.bgRaised },
           headerTintColor: Colors.textPrimary,
