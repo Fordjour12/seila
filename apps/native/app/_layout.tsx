@@ -31,7 +31,7 @@ const config: HeroUINativeConfig = {
   toast: {
     defaultProps: {
       variant: "default",
-      placement: "top",
+      placement: "bottom",
     },
     insets: {
       top: 20,
