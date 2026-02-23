@@ -174,23 +174,21 @@ function CaptureBar({ onAdd }: { onAdd: (text: string) => void }) {
   };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <View className="flex-row gap-2 bg-background pt-4 pb-6 px-6 border-t border-border">
-        <TextInput
-          className="flex-1 bg-surface border border-border rounded-lg px-4 py-3 text-base text-foreground"
-          placeholder="Capture a task…"
-          placeholderTextColor="#6b7280"
-          value={text}
-          onChangeText={setText}
-          onSubmitEditing={submit}
-          returnKeyType="done"
-          blurOnSubmit={false}
-        />
-        <Pressable onPress={submit} className="bg-amber-500 rounded-lg px-4 items-center justify-center" disabled={!text.trim()}>
-          <Text className="text-base font-medium text-background">Add</Text>
-        </Pressable>
-      </View>
-    </KeyboardAvoidingView>
+    <View className="flex-row gap-2 bg-background pt-4 pb-6 px-6 border-t border-border">
+      <TextInput
+        className="flex-1 bg-surface border border-border rounded-lg px-4 py-3 text-base text-foreground"
+        placeholder="Capture a task…"
+        placeholderTextColor="#6b7280"
+        value={text}
+        onChangeText={setText}
+        onSubmitEditing={submit}
+        returnKeyType="done"
+        blurOnSubmit={false}
+      />
+      <Pressable onPress={submit} className="bg-amber-500 rounded-lg px-4 items-center justify-center" disabled={!text.trim()}>
+        <Text className="text-base font-medium text-background">Add</Text>
+      </Pressable>
+    </View>
   );
 }
 
@@ -221,12 +219,16 @@ export default function TasksScreen() {
   const focusSlots = Array.from({ length: 3 }, (_, i) => focusTasks[i] ?? null);
 
   return (
-    <ScrollView
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
       className="flex-1 bg-background"
-      contentContainerClassName="p-6 pb-24 gap-6"
-      showsVerticalScrollIndicator={false}
-      keyboardShouldPersistTaps="handled"
     >
+      <ScrollView
+        className="flex-1 bg-background"
+        contentContainerClassName="p-6 pb-24 gap-6"
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
       <View className="mb-4">
         <Text className="text-xs text-muted-foreground uppercase tracking-widest font-bold mb-2">Tasks</Text>
         <Text className="text-3xl font-serif text-foreground tracking-tight">Focus on{"\n"}what matters.</Text>
@@ -290,5 +292,7 @@ export default function TasksScreen() {
 
       <View className="h-20" />
     </ScrollView>
+    <CaptureBar onAdd={addTask} />
+    </KeyboardAvoidingView>
   );
 }
