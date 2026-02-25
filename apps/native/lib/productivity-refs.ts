@@ -16,9 +16,12 @@ export const todayHabitsRef = makeFunctionReference<
     anchor?: HabitAnchor;
     difficulty?: HabitDifficulty;
     kind?: HabitKind;
+    targetValue?: number;
+    targetUnit?: string;
+    timezone?: string;
     startDayKey?: string;
     endDayKey?: string;
-    todayStatus?: "completed" | "skipped" | "snoozed";
+    todayStatus?: "completed" | "skipped" | "snoozed" | "missed" | "relapsed";
     todayOccurredAt?: number;
     snoozedUntil?: number;
   }>
@@ -33,6 +36,9 @@ export const createHabitRef = makeFunctionReference<
     anchor?: HabitAnchor;
     difficulty?: HabitDifficulty;
     kind?: HabitKind;
+    targetValue?: number;
+    targetUnit?: string;
+    timezone?: string;
     startDayKey?: string;
     endDayKey?: string;
   },
@@ -49,6 +55,9 @@ export const updateHabitRef = makeFunctionReference<
     anchor?: HabitAnchor;
     difficulty?: HabitDifficulty;
     kind?: HabitKind;
+    targetValue?: number;
+    targetUnit?: string;
+    timezone?: string;
     startDayKey?: string;
     endDayKey?: string;
   },
@@ -72,6 +81,18 @@ export const snoozeHabitRef = makeFunctionReference<
   { idempotencyKey: string; habitId: Id<"habits">; dayKey: string; snoozedUntil: number },
   { habitId?: Id<"habits">; deduplicated: boolean }
 >("commands/habits/snoozeHabit:snoozeHabit");
+
+export const relapseHabitRef = makeFunctionReference<
+  "mutation",
+  { idempotencyKey: string; habitId: Id<"habits">; dayKey: string },
+  { habitId?: Id<"habits">; deduplicated: boolean }
+>("commands/habits/relapseHabit:relapseHabit");
+
+export const resolveMissedHabitsRef = makeFunctionReference<
+  "mutation",
+  { dayKey: string; lookbackDays?: number },
+  { marked: number }
+>("commands/habits/resolveMissedHabits:resolveMissedHabits");
 
 export const clearHabitTodayStatusRef = makeFunctionReference<
   "mutation",
@@ -100,6 +121,101 @@ export const respondStaleHabitPromptRef = makeFunctionReference<
   },
   { habitId?: Id<"habits">; deduplicated: boolean }
 >("commands/habits/respondStaleHabitPrompt:respondStaleHabitPrompt");
+
+export const habitsConsistencyRef = makeFunctionReference<
+  "query",
+  { dayKey: string; windowDays?: number; trendDays?: number },
+  {
+    windowDays: number;
+    consistencyPct: number;
+    completedScheduledDays: number;
+    scheduledDays: number;
+    currentStreak: number;
+    bestStreak: number;
+    missedLast14: number;
+    activeHabits: number;
+    trend: Array<{
+      dayKey: string;
+      score: number;
+      scheduled: number;
+      completed: number;
+    }>;
+  }
+>("queries/consistencyQueries:habitsConsistency");
+
+export const habitConsistencyByIdRef = makeFunctionReference<
+  "query",
+  { habitId: Id<"habits">; dayKey: string; windowDays?: number },
+  {
+    habitId: Id<"habits">;
+    name: string;
+    cadence: HabitCadence;
+    anchor?: HabitAnchor;
+    difficulty?: HabitDifficulty;
+    kind?: HabitKind;
+    windowDays: number;
+    consistencyPct: number;
+    scheduledDays: number;
+    completedDays: number;
+    skippedDays: number;
+    snoozedDays: number;
+    missedDays: number;
+    relapsedDays: number;
+    currentStreak: number;
+    bestStreak: number;
+    trend: Array<{
+      dayKey: string;
+      scheduled: boolean;
+      status?: "completed" | "skipped" | "snoozed" | "missed" | "relapsed";
+      score: number;
+    }>;
+  } | null
+>("queries/consistencyQueries:habitConsistencyById");
+
+export const habitDayDetailsRef = makeFunctionReference<
+  "query",
+  { dayKey: string },
+  {
+    dayKey: string;
+    logs: Array<{
+      habitId: Id<"habits">;
+      name: string;
+      status: "completed" | "skipped" | "snoozed" | "missed" | "relapsed";
+      occurredAt: number;
+      anchor?: HabitAnchor;
+      difficulty?: HabitDifficulty;
+      kind?: HabitKind;
+    }>;
+    scheduledHabits: Array<{ habitId: Id<"habits">; name: string }>;
+  }
+>("queries/consistencyQueries:habitDayDetails");
+
+export const habitHistoryRef = makeFunctionReference<
+  "query",
+  { habitId: Id<"habits"> },
+  Array<{ type: string; occurredAt: number; payload: unknown }>
+>("queries/habitManagement:habitHistory");
+
+export const habitLifecycleRef = makeFunctionReference<
+  "query",
+  { dayKey: string },
+  {
+    paused: Array<{ habitId: Id<"habits">; name: string; pausedUntilDayKey?: string; kind?: HabitKind }>;
+    archived: Array<{ habitId: Id<"habits">; name: string; archivedAt?: number; kind?: HabitKind }>;
+  }
+>("queries/habitManagement:habitLifecycle");
+
+export const resumePausedHabitRef = makeFunctionReference<
+  "mutation",
+  { idempotencyKey: string; habitId: Id<"habits"> },
+  { habitId?: Id<"habits">; deduplicated: boolean }
+>("commands/habits/resumePausedHabit:resumePausedHabit");
+
+export const restoreArchivedHabitRef = makeFunctionReference<
+  "mutation",
+  { idempotencyKey: string; habitId: Id<"habits"> },
+  { restoredHabitId?: string; deduplicated: boolean }
+>("commands/habits/restoreArchivedHabit:restoreArchivedHabit");
 
 export const archiveHabitRef = makeFunctionReference<
   "mutation",
@@ -160,3 +276,50 @@ export const abandonTaskRef = makeFunctionReference<
   { idempotencyKey: string; taskId: Id<"tasks"> },
   { success: boolean }
 >("commands/tasks/abandonTask:abandonTask");
+
+export const tasksConsistencyRef = makeFunctionReference<
+  "query",
+  { dayKey: string; windowDays?: number; trendDays?: number },
+  {
+    windowDays: number;
+    completionRatePct: number;
+    createdInWindow: number;
+    completedInWindow: number;
+    currentStreak: number;
+    bestStreak: number;
+    trend: Array<{ dayKey: string; completed: number }>;
+  }
+>("queries/consistencyQueries:tasksConsistency");
+
+export const taskConsistencyByIdRef = makeFunctionReference<
+  "query",
+  { taskId: Id<"tasks">; dayKey: string; windowDays?: number },
+  {
+    taskId: Id<"tasks">;
+    title: string;
+    status: Doc<"tasks">["status"];
+    createdAt: number;
+    completedAt?: number;
+    focusedAt?: number;
+    deferredUntil?: number;
+    windowDays: number;
+    completionRatePct: number;
+    createdInWindow: number;
+    completedInWindow: number;
+    currentStreak: number;
+    bestStreak: number;
+    trend: Array<{ dayKey: string; completed: number }>;
+  } | null
+>("queries/consistencyQueries:taskConsistencyById");
+
+export const taskDayDetailsRef = makeFunctionReference<
+  "query",
+  { dayKey: string },
+  {
+    dayKey: string;
+    created: Array<{ taskId: Id<"tasks">; title: string; status: Doc<"tasks">["status"]; at: number }>;
+    completed: Array<{ taskId: Id<"tasks">; title: string; status: Doc<"tasks">["status"]; at: number }>;
+    focused: Array<{ taskId: Id<"tasks">; title: string; status: Doc<"tasks">["status"]; at: number }>;
+    deferred: Array<{ taskId: Id<"tasks">; title: string; status: Doc<"tasks">["status"]; at: number }>;
+  }
+>("queries/consistencyQueries:taskDayDetails");

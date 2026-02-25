@@ -4,6 +4,7 @@ export type HabitCadence = "daily" | "weekdays" | { customDays: number[] };
 export type HabitAnchor = "morning" | "afternoon" | "evening" | "anytime";
 export type HabitDifficulty = "low" | "medium" | "high";
 export type HabitKind = "build" | "break";
+export type HabitStatus = "completed" | "skipped" | "snoozed" | "missed" | "relapsed";
 
 export type CreateHabitCommand = Command<
   "createHabit",
@@ -13,6 +14,9 @@ export type CreateHabitCommand = Command<
     anchor?: HabitAnchor;
     difficulty?: HabitDifficulty;
     kind?: HabitKind;
+    targetValue?: number;
+    targetUnit?: string;
+    timezone?: string;
     startDayKey?: string;
     endDayKey?: string;
   }
@@ -37,6 +41,9 @@ export type UpdateHabitCommand = Command<
     anchor?: HabitAnchor;
     difficulty?: HabitDifficulty;
     kind?: HabitKind;
+    targetValue?: number;
+    targetUnit?: string;
+    timezone?: string;
     startDayKey?: string;
     endDayKey?: string;
   }
@@ -59,6 +66,9 @@ export type HabitCreatedEvent = LifeEvent<
     anchor?: HabitAnchor;
     difficulty?: HabitDifficulty;
     kind?: HabitKind;
+    targetValue?: number;
+    targetUnit?: string;
+    timezone?: string;
     startDayKey?: string;
     endDayKey?: string;
   }
@@ -83,6 +93,9 @@ export type HabitUpdatedEvent = LifeEvent<
     anchor?: HabitAnchor;
     difficulty?: HabitDifficulty;
     kind?: HabitKind;
+    targetValue?: number;
+    targetUnit?: string;
+    timezone?: string;
     startDayKey?: string;
     endDayKey?: string;
   }
@@ -103,12 +116,15 @@ export type ActiveHabit = {
   anchor?: HabitAnchor;
   difficulty?: HabitDifficulty;
   kind?: HabitKind;
+  targetValue?: number;
+  targetUnit?: string;
+  timezone?: string;
   startDayKey?: string;
   endDayKey?: string;
 };
 
 export type HabitTodayLogEntry = {
-  status: "completed" | "skipped" | "snoozed";
+  status: HabitStatus;
   occurredAt: number;
   snoozedUntil?: number;
 };
@@ -160,6 +176,9 @@ export function habitReducer(state: HabitState, event: HabitEvent): HabitState {
           anchor: event.payload.anchor,
           difficulty: event.payload.difficulty,
           kind: event.payload.kind,
+          targetValue: event.payload.targetValue,
+          targetUnit: event.payload.targetUnit,
+          timezone: event.payload.timezone,
           startDayKey: event.payload.startDayKey,
           endDayKey: event.payload.endDayKey,
         },
@@ -184,6 +203,9 @@ export function habitReducer(state: HabitState, event: HabitEvent): HabitState {
           anchor: event.payload.anchor,
           difficulty: event.payload.difficulty,
           kind: event.payload.kind,
+          targetValue: event.payload.targetValue,
+          targetUnit: event.payload.targetUnit,
+          timezone: event.payload.timezone,
           startDayKey: event.payload.startDayKey,
           endDayKey: event.payload.endDayKey,
         },

@@ -145,6 +145,9 @@ function eventFromDoc(doc: Doc<"events">): HabitEvent | null {
           "high",
         ]),
         kind: parseStringEnum<HabitKind>(doc.payload.kind, ["build", "break"]),
+        targetValue: typeof doc.payload.targetValue === "number" ? doc.payload.targetValue : undefined,
+        targetUnit: typeof doc.payload.targetUnit === "string" ? doc.payload.targetUnit : undefined,
+        timezone: typeof doc.payload.timezone === "string" ? doc.payload.timezone : undefined,
         startDayKey: parseOptionalDayKey(doc.payload.startDayKey),
         endDayKey: parseOptionalDayKey(doc.payload.endDayKey),
       },
@@ -180,6 +183,9 @@ function eventFromDoc(doc: Doc<"events">): HabitEvent | null {
           "high",
         ]),
         kind: parseStringEnum<HabitKind>(doc.payload.kind, ["build", "break"]),
+        targetValue: typeof doc.payload.targetValue === "number" ? doc.payload.targetValue : undefined,
+        targetUnit: typeof doc.payload.targetUnit === "string" ? doc.payload.targetUnit : undefined,
+        timezone: typeof doc.payload.timezone === "string" ? doc.payload.timezone : undefined,
         startDayKey: parseOptionalDayKey(doc.payload.startDayKey),
         endDayKey: parseOptionalDayKey(doc.payload.endDayKey),
       },
@@ -323,6 +329,15 @@ export function assertValidHabitWindow(args: { startDayKey?: string; endDayKey?:
   }
 }
 
+export function assertValidHabitTarget(args: { targetValue?: number; targetUnit?: string }) {
+  if (typeof args.targetValue === "number" && args.targetValue <= 0) {
+    throw new ConvexError("targetValue must be greater than zero");
+  }
+  if (typeof args.targetUnit === "string" && !args.targetUnit.trim()) {
+    throw new ConvexError("targetUnit cannot be empty");
+  }
+}
+
 export function isHabitActiveOnDay(args: {
   dayKey: string;
   startDayKey?: string;
@@ -347,7 +362,7 @@ export async function upsertHabitLog(
   args: {
     habitId: Id<"habits">;
     dayKey: string;
-    status: "completed" | "skipped" | "snoozed";
+    status: "completed" | "skipped" | "snoozed" | "missed" | "relapsed";
     occurredAt: number;
     snoozedUntil?: number;
   },
@@ -456,6 +471,9 @@ export async function syncHabitProjection(ctx: MutationCtx, habitId: Id<"habits"
     anchor: activeHabit.anchor,
     difficulty: activeHabit.difficulty,
     kind: activeHabit.kind,
+    targetValue: activeHabit.targetValue,
+    targetUnit: activeHabit.targetUnit,
+    timezone: activeHabit.timezone,
     startDayKey: activeHabit.startDayKey,
     endDayKey: activeHabit.endDayKey,
     updatedAt: Date.now(),

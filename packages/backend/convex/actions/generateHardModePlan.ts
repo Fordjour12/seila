@@ -51,7 +51,7 @@ type TodayHabit = {
   habitId: Id<"habits">;
   name: string;
   anchor?: "morning" | "afternoon" | "evening" | "anytime";
-  todayStatus?: "completed" | "skipped" | "snoozed";
+  todayStatus?: "completed" | "skipped" | "snoozed" | "missed" | "relapsed";
 };
 
 type InboxTask = {
@@ -146,7 +146,7 @@ function buildCandidates(input: {
     habitId: Id<"habits">;
     name: string;
     anchor?: "morning" | "afternoon" | "evening" | "anytime";
-    todayStatus?: "completed" | "skipped" | "snoozed";
+    todayStatus?: "completed" | "skipped" | "snoozed" | "missed" | "relapsed";
   }>;
   inboxTasks: Array<{ _id: Id<"tasks">; title: string }>;
   recoveryContext: {

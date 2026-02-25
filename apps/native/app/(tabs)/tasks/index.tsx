@@ -11,16 +11,19 @@ import {
   completeTaskRef,
   deferTaskRef,
   focusTaskRef,
+  tasksConsistencyRef,
   tasksDeferredRef,
   tasksFocusRef,
   tasksInboxRef,
 } from "../../../lib/productivity-refs";
 import { Button, SectionLabel } from "../../../components/ui";
+import { getLocalDayKey } from "../../../lib/date";
 
 function TaskCard({
   title,
   status,
   onEdit,
+  onStats,
   onFocus,
   onDefer,
   onComplete,
@@ -31,6 +34,7 @@ function TaskCard({
   title: string;
   status: string;
   onEdit: () => void;
+  onStats: () => void;
   onFocus: () => void;
   onDefer: () => void;
   onComplete: () => void;
@@ -79,6 +83,10 @@ function TaskCard({
           <Text className="text-xs font-medium text-warning">Edit</Text>
         </Pressable>
 
+        <Pressable className="bg-primary/10 border border-primary/20 rounded-lg px-3 py-2" onPress={onStats}>
+          <Text className="text-xs font-medium text-primary">Stats</Text>
+        </Pressable>
+
         <Pressable
           className="bg-danger/10 border border-danger/20 rounded-lg px-3 py-2"
           onPress={onAbandon}
@@ -91,13 +99,35 @@ function TaskCard({
   );
 }
 
+function HeatDots({ values }: { values: number[] }) {
+  const max = Math.max(...values, 0);
+  return (
+    <View className="flex-row gap-1">
+      {values.map((value, index) => {
+        const ratio = max > 0 ? value / max : 0;
+        const shade =
+          ratio >= 0.85
+            ? "bg-success"
+            : ratio >= 0.5
+              ? "bg-warning"
+              : ratio > 0
+                ? "bg-warning/40"
+                : "bg-muted";
+        return <View key={index} className={`h-2.5 flex-1 rounded-full ${shade}`} />;
+      })}
+    </View>
+  );
+}
+
 export default function TasksScreen() {
   const router = useRouter();
   const { toast } = useToast();
+  const dayKey = getLocalDayKey();
 
   const focusTasks = useQuery(tasksFocusRef, {}) || [];
   const inboxTasks = useQuery(tasksInboxRef, {}) || [];
   const deferredTasks = useQuery(tasksDeferredRef, {}) || [];
+  const consistency = useQuery(tasksConsistencyRef, { dayKey, windowDays: 30, trendDays: 14 });
 
   const captureTask = useMutation(captureTaskRef);
   const focusTask = useMutation(focusTaskRef);
@@ -185,6 +215,9 @@ export default function TasksScreen() {
       title={task.title}
       status={task.status}
       onEdit={() => router.push({ pathname: "/(tabs)/tasks/edit", params: { id: task._id } } as any)}
+      onStats={() =>
+        router.push({ pathname: "/(tabs)/tasks/task-consistency", params: { id: task._id } } as any)
+      }
       onFocus={() => doFocus(task._id)}
       onDefer={() => doDefer(task._id)}
       onComplete={() => doComplete(task._id)}
@@ -201,6 +234,25 @@ export default function TasksScreen() {
         <Text className="text-sm text-muted-foreground mt-1">
           Focus {focusTasks.length}/3 · Inbox {inboxTasks.length} · Later {deferredTasks.length}
         </Text>
+      </View>
+
+      <View className="bg-surface rounded-2xl border border-border p-4 gap-3 shadow-sm">
+        <SectionLabel>Consistency (30d)</SectionLabel>
+        <View className="flex-row items-end justify-between">
+          <Text className="text-4xl font-serif text-foreground">{consistency?.completionRatePct ?? 0}%</Text>
+          <Text className="text-xs text-muted-foreground">
+            {consistency?.completedInWindow ?? 0}/{consistency?.createdInWindow ?? 0} completed
+          </Text>
+        </View>
+        <Text className="text-xs text-muted-foreground">
+          Completion streak {consistency?.currentStreak ?? 0}d · Best {consistency?.bestStreak ?? 0}d
+        </Text>
+        <HeatDots values={(consistency?.trend || []).map((item) => item.completed)} />
+        <Button
+          label="View Details"
+          variant="ghost"
+          onPress={() => router.push("/(tabs)/tasks/consistency" as any)}
+        />
       </View>
 
       <View className="bg-surface rounded-2xl border border-border p-4 gap-3 shadow-sm">

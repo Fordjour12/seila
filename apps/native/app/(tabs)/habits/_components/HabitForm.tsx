@@ -21,6 +21,9 @@ type Props = {
   customDays: number[];
   startDayKey?: string;
   endDayKey?: string;
+  targetValue: string;
+  targetUnit: string;
+  timezone: string;
   validationError: string | null;
   isSubmitting: boolean;
   submitLabel: string;
@@ -32,6 +35,9 @@ type Props = {
   onCustomDaysChange: (days: number[]) => void;
   onStartDayKeyChange: (value?: string) => void;
   onEndDayKeyChange: (value?: string) => void;
+  onTargetValueChange: (value: string) => void;
+  onTargetUnitChange: (value: string) => void;
+  onTimezoneChange: (value: string) => void;
   onSubmit: () => void;
   onCancel?: () => void;
 };
@@ -80,6 +86,9 @@ export function HabitForm({
   customDays,
   startDayKey,
   endDayKey,
+  targetValue,
+  targetUnit,
+  timezone,
   validationError,
   isSubmitting,
   submitLabel,
@@ -91,6 +100,9 @@ export function HabitForm({
   onCustomDaysChange,
   onStartDayKeyChange,
   onEndDayKeyChange,
+  onTargetValueChange,
+  onTargetUnitChange,
+  onTimezoneChange,
   onSubmit,
   onCancel,
 }: Props) {
@@ -232,6 +244,38 @@ export function HabitForm({
             <Button label="Clear Starts" variant="ghost" onPress={() => onStartDayKeyChange(undefined)} />
             <Button label="Forever" variant="ghost" onPress={() => onEndDayKeyChange(undefined)} />
           </View>
+        </View>
+
+        <View className="gap-2">
+          <Text className="text-xs text-muted-foreground uppercase tracking-wider">Target</Text>
+          <View className="flex-row gap-2">
+            <TextInput
+              className="flex-1 bg-background border border-border rounded-xl px-3 py-2 text-sm text-foreground"
+              placeholder="Value (e.g. 1)"
+              placeholderTextColor="#6b7280"
+              keyboardType="decimal-pad"
+              value={targetValue}
+              onChangeText={onTargetValueChange}
+            />
+            <TextInput
+              className="flex-1 bg-background border border-border rounded-xl px-3 py-2 text-sm text-foreground"
+              placeholder="Unit (e.g. session)"
+              placeholderTextColor="#6b7280"
+              value={targetUnit}
+              onChangeText={onTargetUnitChange}
+            />
+          </View>
+        </View>
+
+        <View className="gap-2">
+          <Text className="text-xs text-muted-foreground uppercase tracking-wider">Timezone</Text>
+          <TextInput
+            className="bg-background border border-border rounded-xl px-3 py-2 text-sm text-foreground"
+            placeholder="Africa/Accra"
+            placeholderTextColor="#6b7280"
+            value={timezone}
+            onChangeText={onTimezoneChange}
+          />
         </View>
 
         {validationError ? (

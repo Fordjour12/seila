@@ -2,15 +2,13 @@ import { ConvexError, v } from "convex/values";
 
 import { mutation } from "../../_generated/server";
 import {
-  appendHabitEvent,
-  getDedupedEventByIdempotencyKey,
-  syncHabitProjection,
-  upsertHabitLog,
   dayKeyValidator,
+  getDedupedEventByIdempotencyKey,
   isHabitActiveOnDay,
+  upsertHabitLog,
 } from "../../habits/shared";
 
-export const skipHabit = mutation({
+export const relapseHabit = mutation({
   args: {
     idempotencyKey: v.string(),
     habitId: v.id("habits"),
@@ -19,15 +17,15 @@ export const skipHabit = mutation({
   handler: async (ctx, args) => {
     const existing = await getDedupedEventByIdempotencyKey(ctx, args.idempotencyKey);
     if (existing) {
-      return {
-        habitId: args.habitId,
-        deduplicated: true,
-      };
+      return { habitId: args.habitId, deduplicated: true };
     }
 
     const habit = await ctx.db.get(args.habitId);
     if (!habit || habit.archivedAt) {
       throw new ConvexError("Habit not found or archived");
+    }
+    if (habit.kind !== "break") {
+      throw new ConvexError("Relapse can only be logged for break habits");
     }
     if (
       !isHabitActiveOnDay({
@@ -41,30 +39,18 @@ export const skipHabit = mutation({
     }
 
     const occurredAt = Date.now();
-
-    await appendHabitEvent(ctx, {
-      type: "habit.skipped",
-      occurredAt,
-      idempotencyKey: args.idempotencyKey,
-      payload: {
-        habitId: args.habitId as unknown as string,
-      },
-      meta: {},
-    });
-
     await upsertHabitLog(ctx, {
       habitId: args.habitId,
       dayKey: args.dayKey,
-      status: "skipped",
+      status: "relapsed",
       occurredAt,
     });
 
     await ctx.db.patch(args.habitId, {
       lastEngagedAt: occurredAt,
       stalePromptSnoozedUntil: undefined,
+      updatedAt: occurredAt,
     });
-
-    await syncHabitProjection(ctx, args.habitId);
 
     return {
       habitId: args.habitId,
