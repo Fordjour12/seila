@@ -15,7 +15,7 @@ interface QuickCaptureProps {
 export function QuickCapture({ onCapture }: QuickCaptureProps) {
   const { isAuthenticated } = useConvexAuth();
   const { toast } = useToast();
-  const captureTask = useMutation(api.commands.captureTask.captureTask);
+  const captureTask = useMutation(api.commands.tasks.captureTask.captureTask);
 
   const [title, setTitle] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);

@@ -13,7 +13,7 @@ export function SuggestionStrip() {
   const suggestions = useQuery(api.queries.activeSuggestions.activeSuggestions) as
     | SuggestionItem[]
     | undefined;
-  const dismissSuggestion = useMutation(api.commands.dismissSuggestion.dismissSuggestion);
+  const dismissSuggestion = useMutation(api.commands.patterns.dismissSuggestion.dismissSuggestion);
 
   const onDismiss = (suggestionId: SuggestionItem["_id"]) => {
     void dismissSuggestion({

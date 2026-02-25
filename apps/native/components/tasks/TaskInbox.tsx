@@ -13,9 +13,9 @@ export function TaskInbox() {
   const { isAuthenticated } = useConvexAuth();
   const { toast } = useToast();
   const inboxTasks = useQuery(api.queries.taskQueries.inbox);
-  const focusTask = useMutation(api.commands.focusTask.focusTask);
-  const deferTask = useMutation(api.commands.deferTask.deferTask);
-  const abandonTask = useMutation(api.commands.abandonTask.abandonTask);
+  const focusTask = useMutation(api.commands.tasks.focusTask.focusTask);
+  const deferTask = useMutation(api.commands.tasks.deferTask.deferTask);
+  const abandonTask = useMutation(api.commands.tasks.abandonTask.abandonTask);
 
   const focusTasks = useQuery(api.queries.taskQueries.todayFocus);
   const isFocusFull = focusTasks ? focusTasks.length >= 3 : false;

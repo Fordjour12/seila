@@ -13,8 +13,8 @@ export function TodayFocus() {
   const { isAuthenticated } = useConvexAuth();
   const { toast } = useToast();
   const focusTasks = useQuery(api.queries.taskQueries.todayFocus);
-  const focusTask = useMutation(api.commands.focusTask.focusTask);
-  const completeTask = useMutation(api.commands.completeTask.completeTask);
+  const focusTask = useMutation(api.commands.tasks.focusTask.focusTask);
+  const completeTask = useMutation(api.commands.tasks.completeTask.completeTask);
 
   const isFull = focusTasks ? focusTasks.length >= 3 : false;
 

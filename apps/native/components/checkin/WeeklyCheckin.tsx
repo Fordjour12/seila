@@ -29,7 +29,7 @@ interface WeeklyCheckinProps {
 export function WeeklyCheckin({ onComplete }: WeeklyCheckinProps) {
   const { isAuthenticated } = useConvexAuth();
   const { toast } = useToast();
-  const submitCheckin = useMutation(api.commands.submitCheckin.submitCheckin);
+  const submitCheckin = useMutation(api.commands.checkins.submitCheckin.submitCheckin);
 
   const [mood, setMood] = useState<1 | 2 | 3 | 4 | 5>(3);
   const [energy, setEnergy] = useState<1 | 2 | 3 | 4 | 5>(3);

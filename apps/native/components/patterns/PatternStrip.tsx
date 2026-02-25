@@ -10,8 +10,8 @@ function idempotencyKey(prefix: string) {
 
 export function PatternStrip() {
   const patterns = useQuery(api.queries.activePatterns.activePatterns);
-  const dismissPattern = useMutation(api.commands.dismissPattern.dismissPattern);
-  const pinPattern = useMutation(api.commands.pinPattern.pinPattern);
+  const dismissPattern = useMutation(api.commands.patterns.dismissPattern.dismissPattern);
+  const pinPattern = useMutation(api.commands.patterns.pinPattern.pinPattern);
 
   const onDismiss = (patternId: PatternItem["_id"]) => {
     void dismissPattern({
