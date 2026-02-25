@@ -9,8 +9,9 @@ import {
   StyleSheet,
   Animated,
   Platform,
-  useWindowDimensions,
   BackHandler,
+  Modal,
+  Keyboard,
 } from "react-native";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
@@ -67,12 +68,13 @@ const styles = StyleSheet.create({
 
 export function TabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
-  const { height: windowHeight } = useWindowDimensions();
   const colors = useModeThemeColors();
   const router = useRouter();
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fullScreenOpenRef = useRef(false);
+  const compactInputRef = useRef<TextInput>(null);
+  const fullScreenInputRef = useRef<TextInput>(null);
   const searchRoutes = useMemo(
     () =>
       Object.entries(TAB_CONFIG).map(([name, config]) => ({
@@ -124,6 +126,15 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
     fullScreenOpenRef.current = isFullScreenOpen;
   }, [isFullScreenOpen]);
 
+  useEffect(() => {
+    const sub = Keyboard.addListener("keyboardDidHide", () => {
+      if (!fullScreenOpenRef.current) {
+        setIsSearchFocused(false);
+      }
+    });
+    return () => sub.remove();
+  }, [setIsSearchFocused]);
+
   const handlePress = (
     routeName: string,
     routeKey: string,
@@ -136,6 +147,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
     });
 
     if (state.index !== globalIdx && !event.defaultPrevented) {
+      disengageSearch(false);
       navigation.navigate(routeName);
     }
   };
@@ -275,8 +287,18 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
     handleSelectResult(result);
   };
 
-  const dismissFullScreenSearch = () => {
+  function disengageSearch(clearQuery = false) {
     setIsSearchFocused(false);
+    if (clearQuery) {
+      setSearchQuery("");
+    }
+    compactInputRef.current?.blur();
+    fullScreenInputRef.current?.blur();
+    Keyboard.dismiss();
+  }
+
+  const dismissFullScreenSearch = () => {
+    disengageSearch(false);
   };
 
   const groupedResults = useMemo(
@@ -373,6 +395,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
             />
           </View>
           <TextInput
+            ref={compactInputRef}
             className="text-sm  text-muted-foreground flex-1"
             placeholder="Search for actions, people, instruments"
             placeholderTextColor={colors.muted}
@@ -396,6 +419,11 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
                 setIsSearchFocused(false);
               }, 120);
             }}
+            onEndEditing={() => {
+              if (!fullScreenOpenRef.current) {
+                setIsSearchFocused(false);
+              }
+            }}
           />
         </View>
 
@@ -411,151 +439,152 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
           </View>
         ) : null}
 
-        {isFullScreenOpen ? (
-          <View
-            pointerEvents="box-none"
-            style={{
-              position: "absolute",
-              left: 0,
-              right: 0,
-              bottom: 0,
-              height: windowHeight,
-              zIndex: 50,
-            }}
-          >
+        <Modal
+          visible={isFullScreenOpen}
+          transparent
+          animationType="fade"
+          statusBarTranslucent
+          onRequestClose={dismissFullScreenSearch}
+        >
+          <View className="flex-1 px-3 py-3 justify-center">
             <Pressable
               className="absolute inset-0"
               style={{ backgroundColor: "rgba(12, 13, 15, 0.42)" }}
               onPress={dismissFullScreenSearch}
             />
-            <View className="absolute inset-0 px-2.5 pt-2.5 pb-2">
-              <View
-                className="flex-1 rounded-2xl border overflow-hidden"
-                style={{
-                  backgroundColor: colors.surface,
-                  borderColor: colors.border,
-                  shadowColor: "#000",
-                  shadowOpacity: 0.2,
-                  shadowRadius: 18,
-                  shadowOffset: { width: 0, height: 8 },
-                  elevation: 18,
-                }}
-              >
-                <View className="px-3 py-2.5 border-b" style={{ borderColor: colors.border }}>
-                  <View
-                    className="flex-row items-center border rounded-xl px-3 py-2 gap-2.5"
-                    style={{
-                      borderColor: colors.warning,
-                      backgroundColor: colors.background,
-                    }}
-                  >
-                    <Ionicons name="search-outline" size={18} color={colors.warning} />
-                    <TextInput
-                      className="text-sm flex-1"
-                      style={{ color: colors.foreground }}
-                      placeholder="Search..."
-                      placeholderTextColor={colors.muted}
-                      value={searchQuery}
-                      onChangeText={setSearchQuery}
-                      autoFocus
-                      returnKeyType="search"
-                      onSubmitEditing={() => {
-                        const firstResult = results[0];
-                        if (!firstResult) return;
-                        onPressResult(firstResult);
-                      }}
-                    />
-                    <TouchableOpacity
-                      onPress={dismissFullScreenSearch}
-                      className="size-5 rounded-full items-center justify-center"
-                      style={{ backgroundColor: colors.muted }}
-                    >
-                      <Ionicons name="close" size={12} color={colors.foreground} />
-                    </TouchableOpacity>
-                  </View>
-                  <View className="mt-2 flex-row items-center justify-between">
-                    <View className="flex-row items-center gap-2">
-                      <Text className="text-xs text-muted-foreground uppercase tracking-wide">Navigate</Text>
-                      <View
-                        className="rounded-md px-1.5 py-0.5"
-                        style={{ backgroundColor: colors.background, borderColor: colors.border, borderWidth: 1 }}
-                      >
-                        <Text className="text-[10px]" style={{ color: colors.muted }}>
-                          Tap
-                        </Text>
-                      </View>
-                    </View>
-                    <TouchableOpacity
-                      onPress={dismissFullScreenSearch}
-                      className="rounded-md px-2 py-1 border"
-                      style={{ borderColor: colors.border, backgroundColor: colors.background }}
-                    >
-                      <Text className="text-xs" style={{ color: colors.muted }}>
-                        Close
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-
-                <ScrollView
-                  className="flex-1 px-2.5 pt-2"
-                  contentContainerStyle={{ paddingBottom: insets.bottom + 18 }}
-                  keyboardShouldPersistTaps="handled"
+            <View
+              className="rounded-2xl border overflow-hidden"
+              style={{
+                height: "80%",
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+                shadowColor: "#000",
+                shadowOpacity: 0.2,
+                shadowRadius: 18,
+                shadowOffset: { width: 0, height: 8 },
+                elevation: 18,
+              }}
+            >
+              <View className="px-3 py-2.5 border-b" style={{ borderColor: colors.border }}>
+                <View
+                  className="flex-row items-center border rounded-xl px-3 py-2 gap-2.5"
+                  style={{
+                    borderColor: colors.warning,
+                    backgroundColor: colors.background,
+                  }}
                 >
-                  {groupedResults.map((group) => {
-                    if (group.items.length === 0) return null;
-                    const isExpanded = expandedGroups[group.key] ?? false;
-                    const visibleItems = isExpanded ? group.items : group.items.slice(0, 4);
-                    return (
-                      <View
-                        key={group.key}
-                        className="mb-3 rounded-xl overflow-hidden border"
-                        style={{ borderColor: colors.border, backgroundColor: colors.background }}
-                      >
-                        <View
-                          className="px-3.5 py-2 border-b"
-                          style={{ borderColor: colors.border, backgroundColor: colors.surface }}
-                        >
-                          <Text className="text-xs uppercase tracking-wide text-muted-foreground">
-                            {group.title}
-                            {"  "}
-                            <Text style={{ color: colors.warning }}>{group.items.length}</Text>
-                          </Text>
-                        </View>
-                        {visibleItems.map(renderResultRow)}
-                        {group.items.length > 4 ? (
-                          <TouchableOpacity
-                            className="px-3.5 py-3"
-                            style={{ backgroundColor: colors.surface }}
-                            onPress={() =>
-                              setExpandedGroups((prev) => ({
-                                ...prev,
-                                [group.key]: !isExpanded,
-                              }))
-                            }
-                          >
-                            <Text className="text-sm text-warning">
-                              {isExpanded ? "Show less" : "Show more"}
-                            </Text>
-                          </TouchableOpacity>
-                        ) : null}
-                      </View>
-                    );
-                  })}
+                  <Ionicons name="search-outline" size={18} color={colors.warning} />
+                  <TextInput
+                    ref={fullScreenInputRef}
+                    className="text-sm flex-1"
+                    style={{ color: colors.foreground }}
+                    placeholder="Search..."
+                    placeholderTextColor={colors.muted}
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    autoFocus
+                    returnKeyType="search"
+                    onSubmitEditing={() => {
+                      const firstResult = results[0];
+                      if (!firstResult) return;
+                      onPressResult(firstResult);
+                    }}
+                    onEndEditing={() => {
+                      if (!fullScreenOpenRef.current) {
+                        setIsSearchFocused(false);
+                      }
+                    }}
+                  />
                   <TouchableOpacity
-                    className="mb-2 rounded-xl border px-3.5 py-3 items-center"
-                    style={{ borderColor: colors.border, backgroundColor: colors.background }}
                     onPress={dismissFullScreenSearch}
+                    className="size-5 rounded-full items-center justify-center"
+                    style={{ backgroundColor: colors.muted }}
                   >
-                    <Text className="text-sm" style={{ color: colors.muted }}>
-                      Done
+                    <Ionicons name="close" size={12} color={colors.foreground} />
+                  </TouchableOpacity>
+                </View>
+                <View className="mt-2 flex-row items-center justify-between">
+                  <View className="flex-row items-center gap-2">
+                    <Text className="text-xs text-muted-foreground uppercase tracking-wide">Navigate</Text>
+                    <View
+                      className="rounded-md px-1.5 py-0.5"
+                      style={{ backgroundColor: colors.background, borderColor: colors.border, borderWidth: 1 }}
+                    >
+                      <Text className="text-[10px]" style={{ color: colors.muted }}>
+                        Tap
+                      </Text>
+                    </View>
+                  </View>
+                  <TouchableOpacity
+                    onPress={dismissFullScreenSearch}
+                    className="rounded-md px-2 py-1 border"
+                    style={{ borderColor: colors.border, backgroundColor: colors.background }}
+                  >
+                    <Text className="text-xs" style={{ color: colors.muted }}>
+                      Close
                     </Text>
                   </TouchableOpacity>
-                </ScrollView>
+                </View>
               </View>
+
+              <ScrollView
+                className="flex-1 px-2.5 pt-2"
+                contentContainerStyle={{ paddingBottom: insets.bottom + 18 }}
+                keyboardShouldPersistTaps="handled"
+              >
+                {groupedResults.map((group) => {
+                  if (group.items.length === 0) return null;
+                  const isExpanded = expandedGroups[group.key] ?? false;
+                  const visibleItems = isExpanded ? group.items : group.items.slice(0, 4);
+                  return (
+                    <View
+                      key={group.key}
+                      className="mb-3 rounded-xl overflow-hidden border"
+                      style={{ borderColor: colors.border, backgroundColor: colors.background }}
+                    >
+                      <View
+                        className="px-3.5 py-2 border-b"
+                        style={{ borderColor: colors.border, backgroundColor: colors.surface }}
+                      >
+                        <Text className="text-xs uppercase tracking-wide text-muted-foreground">
+                          {group.title}
+                          {"  "}
+                          <Text style={{ color: colors.warning }}>{group.items.length}</Text>
+                        </Text>
+                      </View>
+                      {visibleItems.map(renderResultRow)}
+                      {group.items.length > 4 ? (
+                        <TouchableOpacity
+                          className="px-3.5 py-3"
+                          style={{ backgroundColor: colors.surface }}
+                          onPress={() =>
+                            setExpandedGroups((prev) => ({
+                              ...prev,
+                              [group.key]: !isExpanded,
+                            }))
+                          }
+                        >
+                          <Text className="text-sm text-warning">
+                            {isExpanded ? "Show less" : "Show more"}
+                          </Text>
+                        </TouchableOpacity>
+                      ) : null}
+                    </View>
+                  );
+                })}
+                <TouchableOpacity
+                  className="mb-2 rounded-xl border px-3.5 py-3 items-center"
+                  style={{ borderColor: colors.border, backgroundColor: colors.background }}
+                  onPress={dismissFullScreenSearch}
+                >
+                  <Text className="text-sm" style={{ color: colors.muted }}>
+                    Done
+                  </Text>
+                </TouchableOpacity>
+              </ScrollView>
             </View>
           </View>
-        ) : null}
+        </Modal>
 
         <View className="flex-row items-center pb-0.5 mt-1.5">
           <View className="flex-1 flex-row justify-between">
