@@ -1,0 +1,38 @@
+
+# Custom job
+#
+# This workflow shows how to write custom jobs.
+# It contains a predefined workflow step and a shell command to print "Hello, World!".
+#
+# Key features:
+# - Triggers on pushes to the main branch.
+#    (Requires linked GitHub account: https://expo.dev/accounts/[account]/settings/github)
+# - Can be triggered manually with eas workflow:run custom.yml
+# - Runs eas/checkout then a custom "echo" command
+#
+# For detailed documentation on workflow syntax and available step types, visit:
+# https://docs.expo.dev/eas/workflows/syntax/#jobsjob_idstepsstepuses
+#
+# Created by EAS CLI v18.0.3
+#
+
+name: Preview Build workflow
+
+on:
+  push:
+    branches: ['main']
+
+jobs:
+  build_android_development:
+    name: Build Android Development
+    type: build
+    params:
+      platform: android
+      profile: development
+
+  build_android_production:
+    name: Build Android Production
+    type: build
+    params:
+      platform: android
+      profile: production

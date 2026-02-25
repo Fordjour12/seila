@@ -55,7 +55,12 @@ const config: ExpoConfig = {
       typedRoutes: true,
       reactCompiler: true,
    },
-
+   "updates": {
+      "url": "https://u.expo.dev/fd9bd7a0-f252-48ff-96f4-0022ccf4e58a"
+   },
+   "runtimeVersion": {
+      "policy": "appVersion"
+   }
 };
 
 export default config;

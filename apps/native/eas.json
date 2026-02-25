@@ -11,7 +11,8 @@
         "APP_ENV": "development",
         "EXPO_PUBLIC_CONVEX_URL": "https://marvelous-basilisk-286.convex.cloud",
         "EXPO_PUBLIC_CONVEX_SITE_URL": "https://marvelous-basilisk-286.convex.site"
-      }
+      },
+      "channel": "development"
     },
     "preview": {
       "distribution": "internal",
@@ -19,7 +20,8 @@
         "APP_ENV": "preview",
         "EXPO_PUBLIC_CONVEX_URL": "https://marvelous-basilisk-286.convex.cloud",
         "EXPO_PUBLIC_CONVEX_SITE_URL": "https://marvelous-basilisk-286.convex.site"
-      }
+      },
+      "channel": "preview"
     },
     "apk": {
       "distribution": "internal",
@@ -30,7 +32,8 @@
         "APP_ENV": "preview",
         "EXPO_PUBLIC_CONVEX_URL": "https://marvelous-basilisk-286.convex.cloud",
         "EXPO_PUBLIC_CONVEX_SITE_URL": "https://marvelous-basilisk-286.convex.site"
-      }
+      },
+      "channel": "apk"
     },
     "production": {
       "autoIncrement": true,
@@ -38,7 +41,8 @@
         "APP_ENV": "production",
         "EXPO_PUBLIC_CONVEX_URL": "https://marvelous-basilisk-286.convex.cloud",
         "EXPO_PUBLIC_CONVEX_SITE_URL": "https://marvelous-basilisk-286.convex.site"
-      }
+      },
+      "channel": "production"
     }
   },
   "submit": {

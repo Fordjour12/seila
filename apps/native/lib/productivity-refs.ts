@@ -473,3 +473,56 @@ export const taskDayDetailsRef = makeFunctionReference<
     deferred: Array<{ taskId: Id<"tasks">; title: string; status: Doc<"tasks">["status"]; at: number }>;
   }
 >("queries/consistencyQueries:taskDayDetails");
+
+export const currentReviewRef = makeFunctionReference<
+  "query",
+  {},
+  Doc<"reviews"> | null
+>("queries/reviewQueries:currentReview");
+
+export const startReviewRef = makeFunctionReference<
+  "mutation",
+  { idempotencyKey: string },
+  Id<"reviews">
+>("commands/misc/reviewCommands:startReview");
+
+export const submitReflectionRef = makeFunctionReference<
+  "mutation",
+  {
+    idempotencyKey: string;
+    reviewId: Id<"reviews">;
+    feltGood: string;
+    feltHard: string;
+    carryForward: string;
+    aiSuggested?: string;
+  },
+  { success: boolean; deduplicated: boolean }
+>("commands/misc/reviewCommands:submitReflection");
+
+export const setReviewIntentionsRef = makeFunctionReference<
+  "mutation",
+  {
+    idempotencyKey: string;
+    reviewId: Id<"reviews">;
+    intentions: string[];
+  },
+  { success: boolean; deduplicated: boolean }
+>("commands/misc/reviewCommands:setIntentions");
+
+export const closeReviewRef = makeFunctionReference<
+  "mutation",
+  {
+    idempotencyKey: string;
+    reviewId: Id<"reviews">;
+    summary?: string;
+    brightSpot?: string;
+    worthNoticing?: string;
+  },
+  { success: boolean; deduplicated: boolean }
+>("commands/misc/reviewCommands:closeReview");
+
+export const skipReviewRef = makeFunctionReference<
+  "mutation",
+  { idempotencyKey: string },
+  { success: boolean; deduplicated: boolean }
+>("commands/misc/reviewCommands:skipReview");

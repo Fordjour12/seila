@@ -2,6 +2,7 @@ import React from "react";
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { TabBar } from "../../lib/tabbar";
+import { isReviewWindowOpen } from "../../lib/review-window";
 
 type IconName = React.ComponentProps<typeof Ionicons>["name"];
 
@@ -31,13 +32,17 @@ function getTabIconName(icon: IconName, isFocused: boolean): IconName {
 }
 
 export default function TabLayout() {
+  const reviewWindowOpen = isReviewWindowOpen();
+
   return (
     <Tabs
       tabBar={(props) => <TabBar {...props} />}
       screenOptions={({ route }) => {
         const tab = TAB_MAP[route.name];
+        const shouldHideReviewTab = route.name === "review/index" && !reviewWindowOpen;
         return {
           headerShown: false,
+          href: shouldHideReviewTab ? null : undefined,
           tabBarLabel: tab?.label || route.name.replace(/\/index$/, ""),
           tabBarIcon: ({ focused, color, size }) => {
             if (!tab)

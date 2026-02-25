@@ -88,21 +88,25 @@ function TaskCard({
   focusDisabled: boolean;
   isSubmitting: boolean;
 }) {
+  const [showMoreActions, setShowMoreActions] = React.useState(false);
   const priorityClass =
     priority === "high"
       ? "bg-danger/10 border-danger/20 text-danger"
       : priority === "low"
         ? "bg-success/10 border-success/20 text-success"
-        : "bg-warning/10 border-warning/20 text-warning";
+        : "bg-primary/10 border-primary/20 text-primary";
   const now = Date.now();
   const isOverdue = typeof dueAt === "number" && dueAt < now && status !== "completed";
-  const dueClass = isOverdue ? "bg-danger/10 border-danger/20 text-danger" : "bg-primary/10 border-primary/20 text-primary";
+  const dueClass = isOverdue ? "bg-danger/10 border-danger/20 text-danger" : "bg-muted border-border text-foreground";
+  const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
 
   return (
     <View className={`border rounded-xl p-3 gap-3 bg-background ${isOverdue ? "border-danger/30" : "border-border"}`}>
-      <View className="flex-row items-center justify-between gap-3">
-        <Text className="text-base font-medium text-foreground flex-1">{title}</Text>
-        <Text className="text-xs uppercase text-muted-foreground">{status}</Text>
+      <View className="flex-row items-start justify-between gap-3">
+        <Text className="text-base font-semibold text-foreground flex-1">{title}</Text>
+        <View className="rounded-full border border-border bg-muted px-2.5 py-1">
+          <Text className="text-[11px] font-medium text-muted-foreground">{statusLabel}</Text>
+        </View>
       </View>
       <View className="flex-row flex-wrap gap-2">
         <View className={`rounded-full border px-2.5 py-1 ${priorityClass}`}>
@@ -132,21 +136,21 @@ function TaskCard({
         {status !== "completed" && status !== "abandoned" ? (
           <>
             <Pressable
-              className={`rounded-lg px-3 py-2 border ${focusDisabled ? "bg-muted border-border opacity-50" : "bg-warning/10 border-warning/20"}`}
+              className={`rounded-lg px-3 py-2 border ${focusDisabled ? "bg-muted border-border opacity-50" : "bg-primary border-primary"}`}
               onPress={onFocus}
               disabled={focusDisabled || isSubmitting}
             >
-              <Text className={`text-xs font-medium ${focusDisabled ? "text-muted-foreground" : "text-warning"}`}>
+              <Text className={`text-xs font-semibold ${focusDisabled ? "text-muted-foreground" : "text-primary-foreground"}`}>
                 Focus
               </Text>
             </Pressable>
 
             <Pressable
-              className="bg-primary/10 border border-primary/20 rounded-lg px-3 py-2"
+              className="bg-muted border border-border rounded-lg px-3 py-2"
               onPress={onDefer}
               disabled={isSubmitting}
             >
-              <Text className="text-xs font-medium text-primary">Later</Text>
+              <Text className="text-xs font-medium text-foreground">Later</Text>
             </Pressable>
           </>
         ) : null}
@@ -161,17 +165,6 @@ function TaskCard({
           </Pressable>
         ) : null}
 
-        <Pressable
-          className="bg-warning/10 border border-warning/20 rounded-lg px-3 py-2"
-          onPress={onEdit}
-        >
-          <Text className="text-xs font-medium text-warning">Edit</Text>
-        </Pressable>
-
-        <Pressable className="bg-primary/10 border border-primary/20 rounded-lg px-3 py-2" onPress={onStats}>
-          <Text className="text-xs font-medium text-primary">Stats</Text>
-        </Pressable>
-
         {(status === "completed" || status === "abandoned") ? (
           <Pressable
             className="bg-primary/10 border border-primary/20 rounded-lg px-3 py-2"
@@ -182,58 +175,80 @@ function TaskCard({
           </Pressable>
         ) : null}
 
-        {recurrence ? (
-          <>
-            <Pressable
-              className="bg-warning/10 border border-warning/20 rounded-lg px-3 py-2"
-              onPress={onSkipNextRecurrence}
-              disabled={isSubmitting}
-            >
-              <Text className="text-xs font-medium text-warning">
-                {skipNextRecurrence ? "Skip Armed" : "Skip Next"}
-              </Text>
-            </Pressable>
+        <Pressable
+          className="bg-muted border border-border rounded-lg px-3 py-2"
+          onPress={() => setShowMoreActions((prev) => !prev)}
+        >
+          <Text className="text-xs font-medium text-foreground">{showMoreActions ? "Hide" : "More"}</Text>
+        </Pressable>
+      </View>
+
+      {showMoreActions ? (
+        <View className="flex-row flex-wrap gap-2 pt-1">
+          <Pressable
+            className="bg-primary/10 border border-primary/20 rounded-lg px-3 py-2"
+            onPress={onEdit}
+          >
+            <Text className="text-xs font-medium text-primary">Edit</Text>
+          </Pressable>
+
+          <Pressable className="bg-primary/10 border border-primary/20 rounded-lg px-3 py-2" onPress={onStats}>
+            <Text className="text-xs font-medium text-primary">Stats</Text>
+          </Pressable>
+
+          {recurrence ? (
+            <>
+              <Pressable
+                className="bg-warning/10 border border-warning/20 rounded-lg px-3 py-2"
+                onPress={onSkipNextRecurrence}
+                disabled={isSubmitting}
+              >
+                <Text className="text-xs font-medium text-warning">
+                  {skipNextRecurrence ? "Skip Armed" : "Skip Next"}
+                </Text>
+              </Pressable>
+              <Pressable
+                className="bg-primary/10 border border-primary/20 rounded-lg px-3 py-2"
+                onPress={recurrenceEnabled === false ? onResumeRecurrence : onPauseRecurrence}
+                disabled={isSubmitting}
+              >
+                <Text className="text-xs font-medium text-primary">
+                  {recurrenceEnabled === false ? "Resume Series" : "Pause Series"}
+                </Text>
+              </Pressable>
+              <Pressable
+                className="bg-primary/10 border border-primary/20 rounded-lg px-3 py-2"
+                onPress={onUpdateFutureSeries}
+                disabled={isSubmitting}
+              >
+                <Text className="text-xs font-medium text-primary">Apply to Future</Text>
+              </Pressable>
+            </>
+          ) : null}
+
+          {remindersEnabled ? (
             <Pressable
               className="bg-primary/10 border border-primary/20 rounded-lg px-3 py-2"
-              onPress={recurrenceEnabled === false ? onResumeRecurrence : onPauseRecurrence}
+              onPress={onSnoozeReminder}
               disabled={isSubmitting}
             >
               <Text className="text-xs font-medium text-primary">
-                {recurrenceEnabled === false ? "Resume Series" : "Pause Series"}
+                Snooze Reminder {reminderOffsetMinutes ? `(${reminderOffsetMinutes}m)` : ""}
               </Text>
             </Pressable>
+          ) : null}
+
+          {status !== "abandoned" ? (
             <Pressable
-              className="bg-primary/10 border border-primary/20 rounded-lg px-3 py-2"
-              onPress={onUpdateFutureSeries}
+              className="bg-danger/10 border border-danger/20 rounded-lg px-3 py-2"
+              onPress={onAbandon}
               disabled={isSubmitting}
             >
-              <Text className="text-xs font-medium text-primary">Apply to Future</Text>
+              <Text className="text-xs font-medium text-danger">Abandon</Text>
             </Pressable>
-          </>
-        ) : null}
-
-        {remindersEnabled ? (
-          <Pressable
-            className="bg-primary/10 border border-primary/20 rounded-lg px-3 py-2"
-            onPress={onSnoozeReminder}
-            disabled={isSubmitting}
-          >
-            <Text className="text-xs font-medium text-primary">
-              Snooze Reminder {reminderOffsetMinutes ? `(${reminderOffsetMinutes}m)` : ""}
-            </Text>
-          </Pressable>
-        ) : null}
-
-        {status !== "abandoned" ? (
-          <Pressable
-            className="bg-danger/10 border border-danger/20 rounded-lg px-3 py-2"
-            onPress={onAbandon}
-            disabled={isSubmitting}
-          >
-            <Text className="text-xs font-medium text-danger">Abandon</Text>
-          </Pressable>
-        ) : null}
-      </View>
+          ) : null}
+        </View>
+      ) : null}
     </View>
   );
 }

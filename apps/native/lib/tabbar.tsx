@@ -19,6 +19,7 @@ import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
 
 import { useModeThemeColors } from "./theme";
+import { isReviewWindowOpen } from "./review-window";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { type SearchResult } from "../hooks/useSearch";
 import { useTabSearchController } from "../hooks/useTabSearchController";
@@ -69,18 +70,23 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
   const colors = useModeThemeColors();
+  const reviewWindowOpen = isReviewWindowOpen();
   const router = useRouter();
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fullScreenOpenRef = useRef(false);
+  const isTabVisible = (routeName: string) => routeName !== "review/index" || reviewWindowOpen;
+
   const searchRoutes = useMemo(
     () =>
-      Object.entries(TAB_CONFIG).map(([name, config]) => ({
-        name,
-        label: config.label,
-        icon: config.icon,
-      })),
-    [],
+      Object.entries(TAB_CONFIG)
+        .filter(([name]) => isTabVisible(name))
+        .map(([name, config]) => ({
+          name,
+          label: config.label,
+          icon: config.icon,
+        })),
+    [reviewWindowOpen],
   );
   const {
     query: searchQuery,
@@ -559,7 +565,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
 
         <View className="flex-row items-center pb-0.5 mt-1.5">
           <View className="flex-1 flex-row justify-between">
-            {state.routes.map(renderTab)}
+            {state.routes.filter((route) => isTabVisible(route.name)).map(renderTab)}
           </View>
         </View>
       </View>
