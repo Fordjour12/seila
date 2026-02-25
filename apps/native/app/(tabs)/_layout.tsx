@@ -9,11 +9,15 @@ const TABS = [
   { name: "index", label: "Today", icon: "home-outline" },
   { name: "habits/index", label: "Habits", icon: "leaf-outline" },
   { name: "checkin/index", label: "Check-in", icon: "pulse-outline" },
-  { name: "tasks/index", label: "Tasks", icon: "checkbox-outline" },
+  { name: "tasks", label: "Tasks", icon: "checkbox-outline" },
   { name: "finance", label: "Finance", icon: "wallet-outline" },
   { name: "patterns/index", label: "Patterns", icon: "analytics-outline" },
   { name: "review/index", label: "Review", icon: "document-text-outline" },
-] as const satisfies ReadonlyArray<{ name: string; label: string; icon: IconName }>;
+] as const satisfies ReadonlyArray<{
+  name: string;
+  label: string;
+  icon: IconName;
+}>;
 
 const TAB_MAP: Record<string, (typeof TABS)[number]> = Object.fromEntries(
   TABS.map((tab) => [tab.name, tab]),
@@ -36,7 +40,10 @@ export default function TabLayout() {
           headerShown: false,
           tabBarLabel: tab?.label || route.name.replace(/\/index$/, ""),
           tabBarIcon: ({ focused, color, size }) => {
-            if (!tab) return <Ionicons name="ellipse-outline" size={size} color={color} />;
+            if (!tab)
+              return (
+                <Ionicons name="ellipse-outline" size={size} color={color} />
+              );
             return (
               <Ionicons
                 name={getTabIconName(tab.icon, focused)}

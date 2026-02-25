@@ -15,9 +15,10 @@ import {
   syncHabitProjection,
 } from "../../habits/shared";
 
-export const createHabit = mutation({
+export const updateHabit = mutation({
   args: {
     idempotencyKey: v.string(),
+    habitId: v.id("habits"),
     name: v.string(),
     cadence: cadenceValidator,
     anchor: v.optional(anchorValidator),
@@ -29,16 +30,15 @@ export const createHabit = mutation({
   handler: async (ctx, args) => {
     const existing = await getDedupedEventByIdempotencyKey(ctx, args.idempotencyKey);
     if (existing) {
-      if (typeof existing.payload === "object" && existing.payload !== null) {
-        const habitId = (existing.payload as { habitId?: unknown }).habitId;
-        if (typeof habitId === "string") {
-          return {
-            habitId,
-            deduplicated: true,
-          };
-        }
-      }
-      throw new ConvexError("Duplicate idempotency key already used by another command");
+      return {
+        habitId: args.habitId,
+        deduplicated: true,
+      };
+    }
+
+    const habit = await ctx.db.get(args.habitId);
+    if (!habit || habit.archivedAt) {
+      throw new ConvexError("Habit not found or archived");
     }
 
     const name = args.name.trim();
@@ -52,26 +52,12 @@ export const createHabit = mutation({
       endDayKey: args.endDayKey,
     });
 
-    const now = Date.now();
-    const habitId = await ctx.db.insert("habits", {
-      name,
-      cadence: args.cadence,
-      anchor: args.anchor,
-      difficulty: args.difficulty,
-      kind: args.kind,
-      startDayKey: args.startDayKey,
-      endDayKey: args.endDayKey,
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    const habitIdString = habitId as unknown as string;
     await appendHabitEvent(ctx, {
-      type: "habit.created",
-      occurredAt: now,
+      type: "habit.updated",
+      occurredAt: Date.now(),
       idempotencyKey: args.idempotencyKey,
       payload: {
-        habitId: habitIdString,
+        habitId: args.habitId as unknown as string,
         name,
         cadence: args.cadence,
         anchor: args.anchor,
@@ -83,10 +69,10 @@ export const createHabit = mutation({
       meta: {},
     });
 
-    await syncHabitProjection(ctx, habitId);
+    await syncHabitProjection(ctx, args.habitId);
 
     return {
-      habitId: habitIdString,
+      habitId: args.habitId,
       deduplicated: false,
     };
   },

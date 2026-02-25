@@ -4,7 +4,7 @@ import { Agent, createTool, google, components, sharedTools, z } from "../agent"
 import { HARD_MODE_PLAN_SYSTEM } from "../lib/prompts/hardModePlan";
 import { makeFunctionReference } from "convex/server";
 
-const todayHabitsRef = makeFunctionReference<"query", {}, unknown>(
+const todayHabitsRef = makeFunctionReference<"query", { dayKey: string }, unknown>(
   "queries/todayHabits:internalTodayHabits",
 );
 const inboxRef = makeFunctionReference<"query", {}, unknown>("queries/taskQueries:internalInbox");
@@ -25,7 +25,9 @@ export const plannerAgent = new Agent(components.agent, {
       description: "Get all active habits for today",
       args: z.object({}),
       handler: async (ctx) => {
-        return ctx.runQuery(todayHabitsRef, {});
+        const now = new Date();
+        const dayKey = `${now.getFullYear()}-${`${now.getMonth() + 1}`.padStart(2, "0")}-${`${now.getDate()}`.padStart(2, "0")}`;
+        return ctx.runQuery(todayHabitsRef, { dayKey });
       },
     }),
     getInboxTasks: createTool({

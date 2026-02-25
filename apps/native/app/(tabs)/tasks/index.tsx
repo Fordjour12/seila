@@ -1,298 +1,256 @@
-/**
- * Life OS — Tasks Screen
- * Route: app/(tabs)/tasks/index.tsx
- *
- * Sections:
- *   - Focus (max 3 slots — enforced)
- *   - Inbox (triage: Focus / Later / Done)
- *   - Quick capture
- *
- * Rules:
- *   - 4th Focus item prompts defer/drop of existing
- *   - AI never populates Focus
- *   - "Abandoned" not "failed"
- */
+import React from "react";
+import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { useRouter } from "expo-router";
+import type { Id } from "@seila/backend/convex/_generated/dataModel";
+import { useMutation, useQuery } from "convex/react";
+import { useToast } from "heroui-native";
 
-import React, { useState, useRef } from "react";
 import {
-  View,
-  Text,
-  ScrollView,
-  Pressable,
-  TextInput,
-  Animated,
-  Platform,
-  KeyboardAvoidingView,
-} from "react-native";
-import { api } from "@seila/backend/convex/_generated/api";
-import { useQuery } from "convex/react";
+  abandonTaskRef,
+  captureTaskRef,
+  completeTaskRef,
+  deferTaskRef,
+  focusTaskRef,
+  tasksDeferredRef,
+  tasksFocusRef,
+  tasksInboxRef,
+} from "../../../lib/productivity-refs";
+import { Button, SectionLabel } from "../../../components/ui";
 
-import { SectionLabel } from "../../../components/ui";
-
-type TaskState = "inbox" | "focus" | "deferred" | "done" | "abandoned";
-
-interface Task {
-  id: string;
-  text: string;
-  state: TaskState;
-  capturedAt: string;
-}
-
-const MOCK_TASKS: Task[] = [
-  { id: "1", text: "Reply to Dr. Osei email", state: "focus", capturedAt: "Today" },
-  { id: "2", text: "Book therapy appointment", state: "focus", capturedAt: "Today" },
-  { id: "3", text: "Pick up prescription", state: "inbox", capturedAt: "Today" },
-  { id: "4", text: "Read recovery workbook ch.4", state: "inbox", capturedAt: "Yesterday" },
-  { id: "5", text: "Call mom back", state: "inbox", capturedAt: "Yesterday" },
-  { id: "6", text: "Look into support group times", state: "deferred", capturedAt: "3 days ago" },
-];
-
-function FocusSlot({
-  task,
-  onComplete,
-  onDefer,
-}: {
-  task?: Task;
-  onComplete?: () => void;
-  onDefer?: () => void;
-}) {
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-
-  const handleComplete = () => {
-    Animated.sequence([
-      Animated.timing(scaleAnim, { toValue: 0.95, duration: 80, useNativeDriver: true }),
-      Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true, damping: 15 }),
-    ]).start(onComplete);
-  };
-
-  if (!task) {
-    return (
-      <View className="h-14 border border-dashed border-border rounded-lg items-center justify-center">
-        <Text className="text-xs text-muted-foreground uppercase tracking-widest font-bold">open slot</Text>
-      </View>
-    );
-  }
-
-  return (
-    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-      <Pressable onLongPress={onDefer} className="h-14 border border-border rounded-lg bg-surface flex-row items-center px-4 gap-3">
-        <Pressable onPress={handleComplete} className="w-5.5 h-5.5 border border-border rounded-sm items-center justify-center">
-          <View className="w-2 h-2 rounded-sm" />
-        </Pressable>
-        <Text className="text-base text-foreground flex-1">{task.text}</Text>
-        <Pressable onPress={onDefer} className="p-2">
-          <Text className="text-muted-foreground">↓</Text>
-        </Pressable>
-      </Pressable>
-    </Animated.View>
-  );
-}
-
-function InboxRow({
-  task,
+function TaskCard({
+  title,
+  status,
+  onEdit,
   onFocus,
   onDefer,
-  onDone,
-  focusFull,
+  onComplete,
+  onAbandon,
+  focusDisabled,
+  isSubmitting,
 }: {
-  task: Task;
+  title: string;
+  status: string;
+  onEdit: () => void;
   onFocus: () => void;
   onDefer: () => void;
-  onDone: () => void;
-  focusFull: boolean;
+  onComplete: () => void;
+  onAbandon: () => void;
+  focusDisabled: boolean;
+  isSubmitting: boolean;
 }) {
-  const [open, setOpen] = useState(false);
-  const heightAnim = useRef(new Animated.Value(0)).current;
-
-  const toggle = () => {
-    const next = !open;
-    setOpen(next);
-    Animated.timing(heightAnim, {
-      toValue: next ? 1 : 0,
-      duration: 180,
-      useNativeDriver: false,
-    }).start();
-  };
-
-  const actionsHeight = heightAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 50],
-  });
-
   return (
-    <View className="bg-surface rounded-lg border border-border overflow-hidden mb-2">
-      <Pressable onPress={toggle} className="flex-row items-center gap-3 p-4">
-        <View className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
-        <Text className="text-base text-foreground flex-1">{task.text}</Text>
-        <Text className="text-xs text-muted-foreground">{task.capturedAt}</Text>
-      </Pressable>
-      <Animated.View style={{ height: actionsHeight }} className="overflow-hidden border-t border-border">
-        <View className="flex-row gap-2 p-3">
-          <Pressable
-            onPress={() => {
-              onFocus();
-              setOpen(false);
-            }}
-            className={`flex-1 items-center py-2 rounded-sm border ${focusFull ? "opacity-40" : "bg-amber-500/10 border-amber-500/20"}`}
-            disabled={focusFull}
-          >
-            <Text className={`text-xs font-medium ${focusFull ? "text-muted-foreground" : "text-amber-500"}`}>
-              {focusFull ? "Focus full" : "Focus"}
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => {
-              onDefer();
-              setOpen(false);
-            }}
-            className="flex-1 items-center py-2 rounded-sm border border-border"
-          >
-            <Text className="text-xs text-muted-foreground">Later</Text>
-          </Pressable>
-          <Pressable
-            onPress={() => {
-              onDone();
-              setOpen(false);
-            }}
-            className="flex-1 items-center py-2 rounded-sm border border-border"
-          >
-            <Text className="text-xs text-muted-foreground">Done</Text>
-          </Pressable>
-        </View>
-      </Animated.View>
-    </View>
-  );
-}
+    <View className="border border-border rounded-xl p-3 gap-3 bg-background">
+      <View className="flex-row items-center justify-between gap-3">
+        <Text className="text-base font-medium text-foreground flex-1">{title}</Text>
+        <Text className="text-xs uppercase text-muted-foreground">{status}</Text>
+      </View>
 
-function CaptureBar({ onAdd }: { onAdd: (text: string) => void }) {
-  const [text, setText] = useState("");
+      <View className="flex-row flex-wrap gap-2">
+        <Pressable
+          className={`rounded-lg px-3 py-2 border ${focusDisabled ? "bg-muted border-border opacity-50" : "bg-warning/10 border-warning/20"}`}
+          onPress={onFocus}
+          disabled={focusDisabled || isSubmitting}
+        >
+          <Text className={`text-xs font-medium ${focusDisabled ? "text-muted-foreground" : "text-warning"}`}>
+            Focus
+          </Text>
+        </Pressable>
 
-  const submit = () => {
-    if (!text.trim()) return;
-    onAdd(text.trim());
-    setText("");
-  };
+        <Pressable
+          className="bg-primary/10 border border-primary/20 rounded-lg px-3 py-2"
+          onPress={onDefer}
+          disabled={isSubmitting}
+        >
+          <Text className="text-xs font-medium text-primary">Later</Text>
+        </Pressable>
 
-  return (
-    <View className="flex-row gap-2 bg-background pt-4 pb-6 px-6 border-t border-border">
-      <TextInput
-        className="flex-1 bg-surface border border-border rounded-lg px-4 py-3 text-base text-foreground"
-        placeholder="Capture a task…"
-        placeholderTextColor="#6b7280"
-        value={text}
-        onChangeText={setText}
-        onSubmitEditing={submit}
-        returnKeyType="done"
-        blurOnSubmit={false}
-      />
-      <Pressable onPress={submit} className="bg-amber-500 rounded-lg px-4 items-center justify-center" disabled={!text.trim()}>
-        <Text className="text-base font-medium text-background">Add</Text>
-      </Pressable>
+        <Pressable
+          className="bg-success/10 border border-success/20 rounded-lg px-3 py-2"
+          onPress={onComplete}
+          disabled={isSubmitting}
+        >
+          <Text className="text-xs font-medium text-success">Done</Text>
+        </Pressable>
+
+        <Pressable
+          className="bg-warning/10 border border-warning/20 rounded-lg px-3 py-2"
+          onPress={onEdit}
+        >
+          <Text className="text-xs font-medium text-warning">Edit</Text>
+        </Pressable>
+
+        <Pressable
+          className="bg-danger/10 border border-danger/20 rounded-lg px-3 py-2"
+          onPress={onAbandon}
+          disabled={isSubmitting}
+        >
+          <Text className="text-xs font-medium text-danger">Abandon</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
 
 export default function TasksScreen() {
-  const [tasks, setTasks] = useState(MOCK_TASKS);
+  const router = useRouter();
+  const { toast } = useToast();
 
-  const focusTasks = tasks.filter((t) => t.state === "focus");
-  const inboxTasks = tasks.filter((t) => t.state === "inbox");
-  const deferredTasks = tasks.filter((t) => t.state === "deferred");
+  const focusTasks = useQuery(tasksFocusRef, {}) || [];
+  const inboxTasks = useQuery(tasksInboxRef, {}) || [];
+  const deferredTasks = useQuery(tasksDeferredRef, {}) || [];
+
+  const captureTask = useMutation(captureTaskRef);
+  const focusTask = useMutation(focusTaskRef);
+  const deferTask = useMutation(deferTaskRef);
+  const completeTask = useMutation(completeTaskRef);
+  const abandonTask = useMutation(abandonTaskRef);
+
+  const [captureTitle, setCaptureTitle] = React.useState("");
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
   const focusFull = focusTasks.length >= 3;
 
-  const updateState = (id: string, state: TaskState) => {
-    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, state } : t)));
+  const runTaskAction = async (action: () => Promise<void>, successLabel: string, errorLabel: string) => {
+    setIsSubmitting(true);
+    try {
+      await action();
+      toast.show({ variant: "success", label: successLabel });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : errorLabel;
+      toast.show({ variant: "danger", label: message || errorLabel });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const addTask = (text: string) => {
-    setTasks((prev) => [
-      ...prev,
-      {
-        id: Date.now().toString(),
-        text,
-        state: "inbox",
-        capturedAt: "Just now",
+  const handleCapture = async () => {
+    const title = captureTitle.trim();
+    if (!title) {
+      toast.show({ variant: "warning", label: "Task title is required" });
+      return;
+    }
+
+    await runTaskAction(
+      async () => {
+        await captureTask({
+          idempotencyKey: `tasks.capture.quick:${Date.now()}`,
+          title,
+        });
+        setCaptureTitle("");
       },
-    ]);
+      "Task captured",
+      "Failed to capture task",
+    );
   };
 
-  const focusSlots = Array.from({ length: 3 }, (_, i) => focusTasks[i] ?? null);
+  const doFocus = (taskId: Id<"tasks">) =>
+    runTaskAction(
+      async () => {
+        await focusTask({ idempotencyKey: `tasks.focus:${taskId}:${Date.now()}`, taskId });
+      },
+      "Moved to focus",
+      "Failed to focus task",
+    );
+
+  const doDefer = (taskId: Id<"tasks">) =>
+    runTaskAction(
+      async () => {
+        await deferTask({ idempotencyKey: `tasks.defer:${taskId}:${Date.now()}`, taskId });
+      },
+      "Task moved to later",
+      "Failed to defer task",
+    );
+
+  const doComplete = (taskId: Id<"tasks">) =>
+    runTaskAction(
+      async () => {
+        await completeTask({ idempotencyKey: `tasks.complete:${taskId}:${Date.now()}`, taskId });
+      },
+      "Task completed",
+      "Failed to complete task",
+    );
+
+  const doAbandon = (taskId: Id<"tasks">) =>
+    runTaskAction(
+      async () => {
+        await abandonTask({ idempotencyKey: `tasks.abandon:${taskId}:${Date.now()}`, taskId });
+      },
+      "Task abandoned",
+      "Failed to abandon task",
+    );
+
+  const renderTask = (task: (typeof inboxTasks)[number], inFocusSection = false) => (
+    <TaskCard
+      key={task._id}
+      title={task.title}
+      status={task.status}
+      onEdit={() => router.push({ pathname: "/(tabs)/tasks/edit", params: { id: task._id } } as any)}
+      onFocus={() => doFocus(task._id)}
+      onDefer={() => doDefer(task._id)}
+      onComplete={() => doComplete(task._id)}
+      onAbandon={() => doAbandon(task._id)}
+      focusDisabled={inFocusSection || focusFull}
+      isSubmitting={isSubmitting}
+    />
+  );
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      className="flex-1 bg-background"
-    >
-      <ScrollView
-        className="flex-1 bg-background"
-        contentContainerClassName="p-6 pb-24 gap-6"
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-      <View className="mb-4">
-        <Text className="text-xs text-muted-foreground uppercase tracking-widest font-bold mb-2">Tasks</Text>
-        <Text className="text-3xl font-serif text-foreground tracking-tight">Focus on{"\n"}what matters.</Text>
+    <ScrollView className="flex-1 bg-background" contentContainerClassName="p-6 pb-24 gap-6">
+      <View className="mb-2">
+        <Text className="text-3xl font-serif text-foreground tracking-tight">Tasks</Text>
+        <Text className="text-sm text-muted-foreground mt-1">
+          Focus {focusTasks.length}/3 · Inbox {inboxTasks.length} · Later {deferredTasks.length}
+        </Text>
+      </View>
+
+      <View className="bg-surface rounded-2xl border border-border p-4 gap-3 shadow-sm">
+        <SectionLabel>Quick Capture</SectionLabel>
+        <TextInput
+          className="bg-background border border-border rounded-xl px-3 py-2 text-sm text-foreground"
+          placeholder="Capture a task"
+          placeholderTextColor="#6b7280"
+          value={captureTitle}
+          onChangeText={setCaptureTitle}
+          onSubmitEditing={handleCapture}
+        />
+        <View className="flex-row gap-2">
+          <Button label="Capture" onPress={handleCapture} />
+          <Button label="Add Task" variant="ghost" onPress={() => router.push("/(tabs)/tasks/add" as any)} />
+        </View>
       </View>
 
       <View className="gap-3">
-        <View className="flex-row justify-between items-center mb-3">
-          <SectionLabel>Today&apos;s focus</SectionLabel>
-          <Text className="text-xs text-muted-foreground font-medium">{focusTasks.length}/3</Text>
-        </View>
-        <View className="gap-2">
-          {focusSlots.map((task, i) => (
-            <FocusSlot
-              key={task?.id ?? `empty-${i}`}
-              task={task ?? undefined}
-              onComplete={() => task && updateState(task.id, "done")}
-              onDefer={() => task && updateState(task.id, "inbox")}
-            />
-          ))}
+        <SectionLabel>Today&apos;s Focus</SectionLabel>
+        <View className="bg-surface rounded-2xl border border-border p-4 gap-3 shadow-sm">
+          {focusTasks.length === 0 ? (
+            <Text className="text-sm text-muted-foreground">No focus tasks yet.</Text>
+          ) : (
+            focusTasks.map((task) => renderTask(task, true))
+          )}
         </View>
       </View>
 
-      {inboxTasks.length > 0 && (
-        <View className="gap-3">
-          <SectionLabel>Inbox</SectionLabel>
-          {inboxTasks.map((task) => (
-            <InboxRow
-              key={task.id}
-              task={task}
-              focusFull={focusFull}
-              onFocus={() => updateState(task.id, "focus")}
-              onDefer={() => updateState(task.id, "deferred")}
-              onDone={() => updateState(task.id, "done")}
-            />
-          ))}
+      <View className="gap-3">
+        <SectionLabel>Inbox</SectionLabel>
+        <View className="bg-surface rounded-2xl border border-border p-4 gap-3 shadow-sm">
+          {inboxTasks.length === 0 ? (
+            <Text className="text-sm text-muted-foreground">Inbox is clear.</Text>
+          ) : (
+            inboxTasks.map((task) => renderTask(task))
+          )}
         </View>
-      )}
+      </View>
 
-      {deferredTasks.length > 0 && (
-        <View className="gap-3">
-          <SectionLabel>Later</SectionLabel>
-          {deferredTasks.map((task) => (
-            <InboxRow
-              key={task.id}
-              task={task}
-              focusFull={focusFull}
-              onFocus={() => updateState(task.id, "focus")}
-              onDefer={() => updateState(task.id, "deferred")}
-              onDone={() => updateState(task.id, "done")}
-            />
-          ))}
+      <View className="gap-3">
+        <SectionLabel>Later</SectionLabel>
+        <View className="bg-surface rounded-2xl border border-border p-4 gap-3 shadow-sm">
+          {deferredTasks.length === 0 ? (
+            <Text className="text-sm text-muted-foreground">No deferred tasks.</Text>
+          ) : (
+            deferredTasks.map((task) => renderTask(task))
+          )}
         </View>
-      )}
-
-      {inboxTasks.length === 0 && focusTasks.length === 0 && (
-        <View className="py-12 items-center justify-center">
-          <Text className="text-base text-muted-foreground">All clear</Text>
-          <Text className="text-sm text-muted-foreground mt-1">Capture something when you&apos;re ready</Text>
-        </View>
-      )}
-
-      <View className="h-20" />
+      </View>
     </ScrollView>
-    <CaptureBar onAdd={addTask} />
-    </KeyboardAvoidingView>
   );
 }

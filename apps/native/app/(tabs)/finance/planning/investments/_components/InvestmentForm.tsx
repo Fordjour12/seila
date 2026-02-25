@@ -117,3 +117,5 @@ export function InvestmentForm({
     </View>
   );
 }
+
+export default InvestmentForm;

@@ -2,15 +2,12 @@ import { ConvexError, v } from "convex/values";
 
 import { mutation } from "../../_generated/server";
 import {
-  appendHabitEvent,
-  getDedupedEventByIdempotencyKey,
-  syncHabitProjection,
-  upsertHabitLog,
+  clearHabitLog,
   dayKeyValidator,
-  isHabitActiveOnDay,
+  getDedupedEventByIdempotencyKey,
 } from "../../habits/shared";
 
-export const logHabit = mutation({
+export const clearHabitTodayStatus = mutation({
   args: {
     idempotencyKey: v.string(),
     habitId: v.id("habits"),
@@ -21,6 +18,7 @@ export const logHabit = mutation({
     if (existing) {
       return {
         habitId: args.habitId,
+        cleared: true,
         deduplicated: true,
       };
     }
@@ -29,44 +27,25 @@ export const logHabit = mutation({
     if (!habit || habit.archivedAt) {
       throw new ConvexError("Habit not found or archived");
     }
-    if (
-      !isHabitActiveOnDay({
-        dayKey: args.dayKey,
-        startDayKey: habit.startDayKey,
-        endDayKey: habit.endDayKey,
-      })
-    ) {
-      throw new ConvexError("Habit is outside its active date range");
-    }
 
-    const occurredAt = Date.now();
+    const cleared = await clearHabitLog(ctx, {
+      habitId: args.habitId,
+      dayKey: args.dayKey,
+    });
 
-    await appendHabitEvent(ctx, {
-      type: "habit.completed",
-      occurredAt,
+    await ctx.db.insert("events", {
+      type: "habit.today_cleared",
+      occurredAt: Date.now(),
       idempotencyKey: args.idempotencyKey,
       payload: {
         habitId: args.habitId as unknown as string,
+        dayKey: args.dayKey,
       },
-      meta: {},
     });
-
-    await upsertHabitLog(ctx, {
-      habitId: args.habitId,
-      dayKey: args.dayKey,
-      status: "completed",
-      occurredAt,
-    });
-
-    await ctx.db.patch(args.habitId, {
-      lastEngagedAt: occurredAt,
-      stalePromptSnoozedUntil: undefined,
-    });
-
-    await syncHabitProjection(ctx, args.habitId);
 
     return {
       habitId: args.habitId,
+      cleared,
       deduplicated: false,
     };
   },

@@ -5,12 +5,16 @@ import {
   appendHabitEvent,
   getDedupedEventByIdempotencyKey,
   syncHabitProjection,
+  upsertHabitLog,
+  dayKeyValidator,
+  isHabitActiveOnDay,
 } from "../../habits/shared";
 
 export const snoozeHabit = mutation({
   args: {
     idempotencyKey: v.string(),
     habitId: v.id("habits"),
+    dayKey: dayKeyValidator,
     snoozedUntil: v.number(),
   },
   handler: async (ctx, args) => {
@@ -26,20 +30,44 @@ export const snoozeHabit = mutation({
     if (!habit || habit.archivedAt) {
       throw new ConvexError("Habit not found or archived");
     }
+    if (
+      !isHabitActiveOnDay({
+        dayKey: args.dayKey,
+        startDayKey: habit.startDayKey,
+        endDayKey: habit.endDayKey,
+      })
+    ) {
+      throw new ConvexError("Habit is outside its active date range");
+    }
 
     if (args.snoozedUntil <= Date.now()) {
       throw new ConvexError("snoozedUntil must be in the future");
     }
 
+    const occurredAt = Date.now();
+
     await appendHabitEvent(ctx, {
       type: "habit.snoozed",
-      occurredAt: Date.now(),
+      occurredAt,
       idempotencyKey: args.idempotencyKey,
       payload: {
         habitId: args.habitId as unknown as string,
         snoozedUntil: args.snoozedUntil,
       },
       meta: {},
+    });
+
+    await upsertHabitLog(ctx, {
+      habitId: args.habitId,
+      dayKey: args.dayKey,
+      status: "snoozed",
+      occurredAt,
+      snoozedUntil: args.snoozedUntil,
+    });
+
+    await ctx.db.patch(args.habitId, {
+      lastEngagedAt: occurredAt,
+      stalePromptSnoozedUntil: undefined,
     });
 
     await syncHabitProjection(ctx, args.habitId);

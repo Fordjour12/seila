@@ -35,6 +35,12 @@ export default defineSchema({
       ),
     ),
     difficulty: v.optional(v.union(v.literal("low"), v.literal("medium"), v.literal("high"))),
+    kind: v.optional(v.union(v.literal("build"), v.literal("break"))),
+    startDayKey: v.optional(v.string()),
+    endDayKey: v.optional(v.string()),
+    pausedUntilDayKey: v.optional(v.string()),
+    stalePromptSnoozedUntil: v.optional(v.number()),
+    lastEngagedAt: v.optional(v.number()),
     archivedAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -42,6 +48,17 @@ export default defineSchema({
     lastSkippedAt: v.optional(v.number()),
     snoozedUntil: v.optional(v.number()),
   }).index("by_archived_at", ["archivedAt"]),
+  habitLogs: defineTable({
+    habitId: v.id("habits"),
+    dayKey: v.string(),
+    status: v.union(v.literal("completed"), v.literal("skipped"), v.literal("snoozed")),
+    occurredAt: v.number(),
+    snoozedUntil: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_day_key", ["dayKey"])
+    .index("by_habit_day", ["habitId", "dayKey"]),
   checkins: defineTable({
     type: v.union(v.literal("daily"), v.literal("weekly")),
     mood: v.number(),

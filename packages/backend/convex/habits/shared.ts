@@ -4,6 +4,7 @@ import {
   type HabitCadence,
   type HabitDifficulty,
   type HabitEvent,
+  type HabitKind,
 } from "@seila/domain-kernel";
 import { v, ConvexError } from "convex/values";
 
@@ -29,8 +30,12 @@ export const difficultyValidator = v.union(
   v.literal("high"),
 );
 
+export const kindValidator = v.union(v.literal("build"), v.literal("break"));
+export const dayKeyValidator = v.string();
+
 const HABIT_EVENT_TYPES = new Set([
   "habit.created",
+  "habit.updated",
   "habit.completed",
   "habit.skipped",
   "habit.snoozed",
@@ -56,6 +61,27 @@ function parseCadence(value: unknown): HabitCadence | null {
   return null;
 }
 
+function parseCadenceFromPayload(payload: Record<string, unknown>): HabitCadence | null {
+  const directCadence = parseCadence(payload.cadence);
+  if (directCadence) {
+    return directCadence;
+  }
+
+  const cadenceType = payload.cadenceType;
+  if (cadenceType === "daily" || cadenceType === "weekdays") {
+    return cadenceType;
+  }
+
+  if (cadenceType === "custom" && Array.isArray(payload.customDays)) {
+    const customDays = payload.customDays.filter((day): day is number => typeof day === "number");
+    if (customDays.length > 0) {
+      return { customDays };
+    }
+  }
+
+  return null;
+}
+
 function parseStringEnum<T extends string>(
   value: unknown,
   allowed: ReadonlyArray<T>,
@@ -71,6 +97,16 @@ function parseStringEnum<T extends string>(
   return undefined;
 }
 
+function parseOptionalDayKey(value: unknown): string | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return undefined;
+  }
+  return value;
+}
+
 function eventFromDoc(doc: Doc<"events">): HabitEvent | null {
   if (!HABIT_EVENT_TYPES.has(doc.type) || !isRecord(doc.payload)) {
     return null;
@@ -83,7 +119,7 @@ function eventFromDoc(doc: Doc<"events">): HabitEvent | null {
 
   if (doc.type === "habit.created") {
     const name = doc.payload.name;
-    const cadence = parseCadence(doc.payload.cadence);
+    const cadence = parseCadenceFromPayload(doc.payload);
 
     if (typeof name !== "string" || !cadence) {
       return null;
@@ -108,6 +144,44 @@ function eventFromDoc(doc: Doc<"events">): HabitEvent | null {
           "medium",
           "high",
         ]),
+        kind: parseStringEnum<HabitKind>(doc.payload.kind, ["build", "break"]),
+        startDayKey: parseOptionalDayKey(doc.payload.startDayKey),
+        endDayKey: parseOptionalDayKey(doc.payload.endDayKey),
+      },
+      meta: {},
+    };
+  }
+
+  if (doc.type === "habit.updated") {
+    const name = doc.payload.name;
+    const cadence = parseCadenceFromPayload(doc.payload);
+
+    if (typeof name !== "string" || !cadence) {
+      return null;
+    }
+
+    return {
+      type: "habit.updated",
+      occurredAt: doc.occurredAt,
+      idempotencyKey: doc.idempotencyKey,
+      payload: {
+        habitId,
+        name,
+        cadence,
+        anchor: parseStringEnum<HabitAnchor>(doc.payload.anchor, [
+          "morning",
+          "afternoon",
+          "evening",
+          "anytime",
+        ]),
+        difficulty: parseStringEnum<HabitDifficulty>(doc.payload.difficulty, [
+          "low",
+          "medium",
+          "high",
+        ]),
+        kind: parseStringEnum<HabitKind>(doc.payload.kind, ["build", "break"]),
+        startDayKey: parseOptionalDayKey(doc.payload.startDayKey),
+        endDayKey: parseOptionalDayKey(doc.payload.endDayKey),
       },
       meta: {},
     };
@@ -186,11 +260,31 @@ export async function listHabitEvents(ctx: MutationCtx | QueryCtx, habitId?: str
 }
 
 export async function appendHabitEvent(ctx: MutationCtx, event: HabitEvent) {
+  let payload: Record<string, unknown> = event.payload as unknown as Record<string, unknown>;
+
+  if ((event.type === "habit.created" || event.type === "habit.updated") && "cadence" in payload) {
+    const cadence = payload.cadence;
+    if (cadence === "daily" || cadence === "weekdays") {
+      payload = {
+        ...payload,
+        cadenceType: cadence,
+      };
+      delete payload.cadence;
+    } else if (isRecord(cadence) && Array.isArray(cadence.customDays)) {
+      payload = {
+        ...payload,
+        cadenceType: "custom",
+        customDays: cadence.customDays.filter((day): day is number => typeof day === "number"),
+      };
+      delete payload.cadence;
+    }
+  }
+
   return await ctx.db.insert("events", {
     type: event.type,
     occurredAt: event.occurredAt,
     idempotencyKey: event.idempotencyKey,
-    payload: event.payload,
+    payload: payload as any,
   });
 }
 
@@ -208,6 +302,104 @@ export function assertValidCustomCadence(cadence: HabitCadence) {
       throw new ConvexError("customDays must use integers 0-6");
     }
   }
+}
+
+export function assertValidDayKey(dayKey: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dayKey)) {
+    throw new ConvexError("dayKey must be in YYYY-MM-DD format");
+  }
+}
+
+export function assertValidHabitWindow(args: { startDayKey?: string; endDayKey?: string }) {
+  const { startDayKey, endDayKey } = args;
+  if (startDayKey) {
+    assertValidDayKey(startDayKey);
+  }
+  if (endDayKey) {
+    assertValidDayKey(endDayKey);
+  }
+  if (startDayKey && endDayKey && endDayKey < startDayKey) {
+    throw new ConvexError("endDayKey must be on or after startDayKey");
+  }
+}
+
+export function isHabitActiveOnDay(args: {
+  dayKey: string;
+  startDayKey?: string;
+  endDayKey?: string;
+  pausedUntilDayKey?: string;
+}) {
+  const { dayKey, startDayKey, endDayKey, pausedUntilDayKey } = args;
+  if (startDayKey && dayKey < startDayKey) {
+    return false;
+  }
+  if (endDayKey && dayKey > endDayKey) {
+    return false;
+  }
+  if (pausedUntilDayKey && dayKey <= pausedUntilDayKey) {
+    return false;
+  }
+  return true;
+}
+
+export async function upsertHabitLog(
+  ctx: MutationCtx,
+  args: {
+    habitId: Id<"habits">;
+    dayKey: string;
+    status: "completed" | "skipped" | "snoozed";
+    occurredAt: number;
+    snoozedUntil?: number;
+  },
+) {
+  assertValidDayKey(args.dayKey);
+
+  const existing = await ctx.db
+    .query("habitLogs")
+    .withIndex("by_habit_day", (q) => q.eq("habitId", args.habitId).eq("dayKey", args.dayKey))
+    .first();
+
+  if (existing) {
+    await ctx.db.patch(existing._id, {
+      status: args.status,
+      occurredAt: args.occurredAt,
+      snoozedUntil: args.snoozedUntil,
+      updatedAt: Date.now(),
+    });
+    return;
+  }
+
+  await ctx.db.insert("habitLogs", {
+    habitId: args.habitId,
+    dayKey: args.dayKey,
+    status: args.status,
+    occurredAt: args.occurredAt,
+    snoozedUntil: args.snoozedUntil,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  });
+}
+
+export async function clearHabitLog(
+  ctx: MutationCtx,
+  args: {
+    habitId: Id<"habits">;
+    dayKey: string;
+  },
+) {
+  assertValidDayKey(args.dayKey);
+
+  const existing = await ctx.db
+    .query("habitLogs")
+    .withIndex("by_habit_day", (q) => q.eq("habitId", args.habitId).eq("dayKey", args.dayKey))
+    .first();
+
+  if (!existing) {
+    return false;
+  }
+
+  await ctx.db.delete(existing._id);
+  return true;
 }
 
 function pickLatestTimestamp(events: ReadonlyArray<HabitEvent>, type: HabitEvent["type"]) {
@@ -263,6 +455,9 @@ export async function syncHabitProjection(ctx: MutationCtx, habitId: Id<"habits"
     cadence: activeHabit.cadence,
     anchor: activeHabit.anchor,
     difficulty: activeHabit.difficulty,
+    kind: activeHabit.kind,
+    startDayKey: activeHabit.startDayKey,
+    endDayKey: activeHabit.endDayKey,
     updatedAt: Date.now(),
     lastCompletedAt,
     lastSkippedAt,

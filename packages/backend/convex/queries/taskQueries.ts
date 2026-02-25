@@ -1,4 +1,5 @@
 import { internalQuery, query } from "../_generated/server";
+import { v } from "convex/values";
 
 export const todayFocus = query({
   args: {},
@@ -47,5 +48,14 @@ export const internalInbox = internalQuery({
       .withIndex("by_status", (q) => q.eq("status", "inbox"))
       .order("desc")
       .collect();
+  },
+});
+
+export const taskById = query({
+  args: {
+    taskId: v.id("tasks"),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.taskId);
   },
 });

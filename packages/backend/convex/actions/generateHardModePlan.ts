@@ -86,6 +86,14 @@ function truncateRationale(input: string) {
   return `${input.slice(0, MAX_RATIONALE_LENGTH - 3)}...`;
 }
 
+function toDayKey(timestamp: number) {
+  const date = new Date(timestamp);
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function byConfidenceDesc(a: PlannedItem, b: PlannedItem) {
   return b.confidence - a.confidence;
 }
@@ -216,6 +224,7 @@ export const generateHardModePlan = internalAction({
   },
   handler: async (ctx, args) => {
     const aiContext = await readAiContext(ctx);
+    const dayKey = toDayKey(args.dayStart);
 
     const session = await ctx.runQuery(getSessionByIdRef, {
       sessionId: args.sessionId,
@@ -231,7 +240,7 @@ export const generateHardModePlan = internalAction({
       { mood: number; energy: number } | null,
       { hardDayLooksLike?: string; knownTriggers: string[]; restDefinition?: string } | null,
     ] = await Promise.all([
-      ctx.runQuery(api.queries.todayHabits.todayHabits, {}),
+      ctx.runQuery(api.queries.todayHabits.todayHabits, { dayKey }),
       ctx.runQuery(api.queries.taskQueries.inbox, {}),
       ctx.runQuery(api.queries.lastCheckin.lastCheckin, {}),
       ctx.runQuery(recoveryContextRef, {}),
