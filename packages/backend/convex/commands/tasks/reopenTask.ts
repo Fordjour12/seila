@@ -1,11 +1,10 @@
 import { v } from "convex/values";
 import { mutation } from "../../_generated/server";
 
-export const deferTask = mutation({
+export const reopenTask = mutation({
   args: {
     idempotencyKey: v.string(),
     taskId: v.id("tasks"),
-    deferUntil: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const task = await ctx.db.get(args.taskId);
@@ -14,21 +13,19 @@ export const deferTask = mutation({
     }
 
     const occurredAt = Date.now();
-
     await ctx.db.patch(args.taskId, {
-      status: "deferred",
-      deferredUntil: args.deferUntil,
+      status: "inbox",
+      reopenedAt: occurredAt,
+      completedAt: undefined,
+      abandonedAt: undefined,
       updatedAt: occurredAt,
     });
 
     await ctx.db.insert("events", {
-      type: "task.deferred",
+      type: "task.reopened",
       occurredAt,
       idempotencyKey: args.idempotencyKey,
-      payload: {
-        id: args.taskId,
-        ...(args.deferUntil !== undefined ? { deferUntil: args.deferUntil } : {}),
-      },
+      payload: { id: args.taskId },
     });
 
     return { success: true };

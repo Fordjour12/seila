@@ -235,21 +235,44 @@ export const tasksDeferredRef = makeFunctionReference<"query", {}, Doc<"tasks">[
   "queries/taskQueries:deferred",
 );
 
+export const tasksDoneRecentlyRef = makeFunctionReference<"query", {}, Doc<"tasks">[]>(
+  "queries/taskQueries:doneRecently",
+);
+
 export const taskByIdRef = makeFunctionReference<
   "query",
   { taskId: Id<"tasks"> },
   Doc<"tasks"> | null
 >("queries/taskQueries:taskById");
 
+export const taskHistoryRef = makeFunctionReference<
+  "query",
+  { taskId: Id<"tasks"> },
+  Array<{ type: string; occurredAt: number; payload: unknown }>
+>("queries/taskQueries:taskHistory");
+
 export const captureTaskRef = makeFunctionReference<
   "mutation",
-  { idempotencyKey: string; title: string },
+  {
+    idempotencyKey: string;
+    title: string;
+    note?: string;
+    priority?: "low" | "medium" | "high";
+    dueAt?: number;
+  },
   Id<"tasks">
 >("commands/tasks/captureTask:captureTask");
 
 export const updateTaskRef = makeFunctionReference<
   "mutation",
-  { idempotencyKey: string; taskId: Id<"tasks">; title: string },
+  {
+    idempotencyKey: string;
+    taskId: Id<"tasks">;
+    title: string;
+    note?: string;
+    priority?: "low" | "medium" | "high";
+    dueAt?: number;
+  },
   { success: boolean; deduplicated?: boolean }
 >("commands/tasks/updateTask:updateTask");
 
@@ -276,6 +299,12 @@ export const abandonTaskRef = makeFunctionReference<
   { idempotencyKey: string; taskId: Id<"tasks"> },
   { success: boolean }
 >("commands/tasks/abandonTask:abandonTask");
+
+export const reopenTaskRef = makeFunctionReference<
+  "mutation",
+  { idempotencyKey: string; taskId: Id<"tasks"> },
+  { success: boolean }
+>("commands/tasks/reopenTask:reopenTask");
 
 export const tasksConsistencyRef = makeFunctionReference<
   "query",

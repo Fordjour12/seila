@@ -73,6 +73,7 @@ import type * as commands_tasks_captureTask from "../commands/tasks/captureTask.
 import type * as commands_tasks_completeTask from "../commands/tasks/completeTask.js";
 import type * as commands_tasks_deferTask from "../commands/tasks/deferTask.js";
 import type * as commands_tasks_focusTask from "../commands/tasks/focusTask.js";
+import type * as commands_tasks_reopenTask from "../commands/tasks/reopenTask.js";
 import type * as commands_tasks_updateTask from "../commands/tasks/updateTask.js";
 import type * as commands_transactions_attachReceipt from "../commands/transactions/attachReceipt.js";
 import type * as commands_transactions_bulkUpdateTransactions from "../commands/transactions/bulkUpdateTransactions.js";
@@ -226,6 +227,7 @@ declare const fullApi: ApiFromModules<{
   "commands/tasks/completeTask": typeof commands_tasks_completeTask;
   "commands/tasks/deferTask": typeof commands_tasks_deferTask;
   "commands/tasks/focusTask": typeof commands_tasks_focusTask;
+  "commands/tasks/reopenTask": typeof commands_tasks_reopenTask;
   "commands/tasks/updateTask": typeof commands_tasks_updateTask;
   "commands/transactions/attachReceipt": typeof commands_transactions_attachReceipt;
   "commands/transactions/bulkUpdateTransactions": typeof commands_transactions_bulkUpdateTransactions;

@@ -17,6 +17,7 @@ export const completeTask = mutation({
     await ctx.db.patch(args.taskId, {
       status: "completed",
       completedAt: occurredAt,
+      updatedAt: occurredAt,
     });
 
     await ctx.db.insert("events", {

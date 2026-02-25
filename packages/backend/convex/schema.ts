@@ -88,6 +88,22 @@ export default defineSchema({
     .index("by_type", ["type"]),
   tasks: defineTable({
     title: v.string(),
+    note: v.optional(v.string()),
+    estimateMinutes: v.optional(v.number()),
+    recurrence: v.optional(v.union(v.literal("daily"), v.literal("weekly"), v.literal("monthly"))),
+    blockedByTaskId: v.optional(v.id("tasks")),
+    blockedReason: v.optional(v.string()),
+    subtasks: v.optional(
+      v.array(
+        v.object({
+          id: v.string(),
+          title: v.string(),
+          completed: v.boolean(),
+        }),
+      ),
+    ),
+    priority: v.optional(v.union(v.literal("low"), v.literal("medium"), v.literal("high"))),
+    dueAt: v.optional(v.number()),
     status: v.union(
       v.literal("inbox"),
       v.literal("focus"),
@@ -96,13 +112,16 @@ export default defineSchema({
       v.literal("abandoned"),
     ),
     createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+    reopenedAt: v.optional(v.number()),
     focusedAt: v.optional(v.number()),
     deferredUntil: v.optional(v.number()),
     completedAt: v.optional(v.number()),
     abandonedAt: v.optional(v.number()),
   })
     .index("by_status", ["status"])
-    .index("by_createdAt", ["createdAt"]),
+    .index("by_createdAt", ["createdAt"])
+    .index("by_due_at", ["dueAt"]),
   suggestions: defineTable({
     policy: v.string(),
     headline: v.string(),

@@ -35,6 +35,7 @@ export const focusTask = mutation({
     await ctx.db.patch(args.taskId, {
       status: "focus",
       focusedAt: occurredAt,
+      updatedAt: occurredAt,
     });
 
     await ctx.db.insert("events", {

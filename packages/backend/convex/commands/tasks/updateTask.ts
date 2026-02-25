@@ -7,6 +7,9 @@ export const updateTask = mutation({
     idempotencyKey: v.string(),
     taskId: v.id("tasks"),
     title: v.string(),
+    note: v.optional(v.string()),
+    priority: v.optional(v.union(v.literal("low"), v.literal("medium"), v.literal("high"))),
+    dueAt: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
@@ -32,13 +35,23 @@ export const updateTask = mutation({
 
     await ctx.db.patch(args.taskId, {
       title,
+      note: args.note?.trim() || undefined,
+      priority: args.priority,
+      dueAt: args.dueAt,
+      updatedAt: occurredAt,
     });
 
     await ctx.db.insert("events", {
       type: "task.updated",
       occurredAt,
       idempotencyKey: args.idempotencyKey,
-      payload: { id: args.taskId, title },
+      payload: {
+        id: args.taskId,
+        title,
+        ...(args.note?.trim() ? { note: args.note.trim() } : {}),
+        ...(args.priority ? { priority: args.priority } : {}),
+        ...(typeof args.dueAt === "number" ? { dueAt: args.dueAt } : {}),
+      },
     });
 
     return { success: true, deduplicated: false };

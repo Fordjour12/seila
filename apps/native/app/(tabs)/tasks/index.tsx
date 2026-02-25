@@ -11,7 +11,9 @@ import {
   completeTaskRef,
   deferTaskRef,
   focusTaskRef,
+  reopenTaskRef,
   tasksConsistencyRef,
+  tasksDoneRecentlyRef,
   tasksDeferredRef,
   tasksFocusRef,
   tasksInboxRef,
@@ -21,60 +23,97 @@ import { getLocalDayKey } from "../../../lib/date";
 
 function TaskCard({
   title,
+  note,
+  priority,
+  dueAt,
   status,
   onEdit,
   onStats,
   onFocus,
   onDefer,
   onComplete,
+  onReopen,
   onAbandon,
   focusDisabled,
   isSubmitting,
 }: {
   title: string;
+  note?: string;
+  priority?: "low" | "medium" | "high";
+  dueAt?: number;
   status: string;
   onEdit: () => void;
   onStats: () => void;
   onFocus: () => void;
   onDefer: () => void;
   onComplete: () => void;
+  onReopen: () => void;
   onAbandon: () => void;
   focusDisabled: boolean;
   isSubmitting: boolean;
 }) {
+  const priorityClass =
+    priority === "high"
+      ? "bg-danger/10 border-danger/20 text-danger"
+      : priority === "low"
+        ? "bg-success/10 border-success/20 text-success"
+        : "bg-warning/10 border-warning/20 text-warning";
+  const now = Date.now();
+  const isOverdue = typeof dueAt === "number" && dueAt < now && status !== "completed";
+  const dueClass = isOverdue ? "bg-danger/10 border-danger/20 text-danger" : "bg-primary/10 border-primary/20 text-primary";
+
   return (
-    <View className="border border-border rounded-xl p-3 gap-3 bg-background">
+    <View className={`border rounded-xl p-3 gap-3 bg-background ${isOverdue ? "border-danger/30" : "border-border"}`}>
       <View className="flex-row items-center justify-between gap-3">
         <Text className="text-base font-medium text-foreground flex-1">{title}</Text>
         <Text className="text-xs uppercase text-muted-foreground">{status}</Text>
       </View>
+      <View className="flex-row flex-wrap gap-2">
+        <View className={`rounded-full border px-2.5 py-1 ${priorityClass}`}>
+          <Text className="text-[11px] font-medium uppercase">{priority || "medium"}</Text>
+        </View>
+        {dueAt ? (
+          <View className={`rounded-full border px-2.5 py-1 ${dueClass}`}>
+            <Text className="text-[11px] font-medium">
+              {isOverdue ? "Overdue" : "Due"} {new Date(dueAt).toLocaleDateString()}
+            </Text>
+          </View>
+        ) : null}
+      </View>
+      {note ? <Text className="text-xs text-muted-foreground">{note}</Text> : null}
 
       <View className="flex-row flex-wrap gap-2">
-        <Pressable
-          className={`rounded-lg px-3 py-2 border ${focusDisabled ? "bg-muted border-border opacity-50" : "bg-warning/10 border-warning/20"}`}
-          onPress={onFocus}
-          disabled={focusDisabled || isSubmitting}
-        >
-          <Text className={`text-xs font-medium ${focusDisabled ? "text-muted-foreground" : "text-warning"}`}>
-            Focus
-          </Text>
-        </Pressable>
+        {status !== "completed" && status !== "abandoned" ? (
+          <>
+            <Pressable
+              className={`rounded-lg px-3 py-2 border ${focusDisabled ? "bg-muted border-border opacity-50" : "bg-warning/10 border-warning/20"}`}
+              onPress={onFocus}
+              disabled={focusDisabled || isSubmitting}
+            >
+              <Text className={`text-xs font-medium ${focusDisabled ? "text-muted-foreground" : "text-warning"}`}>
+                Focus
+              </Text>
+            </Pressable>
 
-        <Pressable
-          className="bg-primary/10 border border-primary/20 rounded-lg px-3 py-2"
-          onPress={onDefer}
-          disabled={isSubmitting}
-        >
-          <Text className="text-xs font-medium text-primary">Later</Text>
-        </Pressable>
+            <Pressable
+              className="bg-primary/10 border border-primary/20 rounded-lg px-3 py-2"
+              onPress={onDefer}
+              disabled={isSubmitting}
+            >
+              <Text className="text-xs font-medium text-primary">Later</Text>
+            </Pressable>
+          </>
+        ) : null}
 
-        <Pressable
-          className="bg-success/10 border border-success/20 rounded-lg px-3 py-2"
-          onPress={onComplete}
-          disabled={isSubmitting}
-        >
-          <Text className="text-xs font-medium text-success">Done</Text>
-        </Pressable>
+        {status !== "completed" ? (
+          <Pressable
+            className="bg-success/10 border border-success/20 rounded-lg px-3 py-2"
+            onPress={onComplete}
+            disabled={isSubmitting}
+          >
+            <Text className="text-xs font-medium text-success">Done</Text>
+          </Pressable>
+        ) : null}
 
         <Pressable
           className="bg-warning/10 border border-warning/20 rounded-lg px-3 py-2"
@@ -87,13 +126,25 @@ function TaskCard({
           <Text className="text-xs font-medium text-primary">Stats</Text>
         </Pressable>
 
-        <Pressable
-          className="bg-danger/10 border border-danger/20 rounded-lg px-3 py-2"
-          onPress={onAbandon}
-          disabled={isSubmitting}
-        >
-          <Text className="text-xs font-medium text-danger">Abandon</Text>
-        </Pressable>
+        {(status === "completed" || status === "abandoned") ? (
+          <Pressable
+            className="bg-primary/10 border border-primary/20 rounded-lg px-3 py-2"
+            onPress={onReopen}
+            disabled={isSubmitting}
+          >
+            <Text className="text-xs font-medium text-primary">Reopen</Text>
+          </Pressable>
+        ) : null}
+
+        {status !== "abandoned" ? (
+          <Pressable
+            className="bg-danger/10 border border-danger/20 rounded-lg px-3 py-2"
+            onPress={onAbandon}
+            disabled={isSubmitting}
+          >
+            <Text className="text-xs font-medium text-danger">Abandon</Text>
+          </Pressable>
+        ) : null}
       </View>
     </View>
   );
@@ -127,6 +178,7 @@ export default function TasksScreen() {
   const focusTasks = useQuery(tasksFocusRef, {}) || [];
   const inboxTasks = useQuery(tasksInboxRef, {}) || [];
   const deferredTasks = useQuery(tasksDeferredRef, {}) || [];
+  const doneRecently = useQuery(tasksDoneRecentlyRef, {}) || [];
   const consistency = useQuery(tasksConsistencyRef, { dayKey, windowDays: 30, trendDays: 14 });
 
   const captureTask = useMutation(captureTaskRef);
@@ -134,6 +186,7 @@ export default function TasksScreen() {
   const deferTask = useMutation(deferTaskRef);
   const completeTask = useMutation(completeTaskRef);
   const abandonTask = useMutation(abandonTaskRef);
+  const reopenTask = useMutation(reopenTaskRef);
 
   const [captureTitle, setCaptureTitle] = React.useState("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -209,10 +262,22 @@ export default function TasksScreen() {
       "Failed to abandon task",
     );
 
+  const doReopen = (taskId: Id<"tasks">) =>
+    runTaskAction(
+      async () => {
+        await reopenTask({ idempotencyKey: `tasks.reopen:${taskId}:${Date.now()}`, taskId });
+      },
+      "Task reopened",
+      "Failed to reopen task",
+    );
+
   const renderTask = (task: (typeof inboxTasks)[number], inFocusSection = false) => (
     <TaskCard
       key={task._id}
       title={task.title}
+      note={task.note}
+      priority={task.priority as "low" | "medium" | "high" | undefined}
+      dueAt={task.dueAt}
       status={task.status}
       onEdit={() => router.push({ pathname: "/(tabs)/tasks/edit", params: { id: task._id } } as any)}
       onStats={() =>
@@ -221,6 +286,7 @@ export default function TasksScreen() {
       onFocus={() => doFocus(task._id)}
       onDefer={() => doDefer(task._id)}
       onComplete={() => doComplete(task._id)}
+      onReopen={() => doReopen(task._id)}
       onAbandon={() => doAbandon(task._id)}
       focusDisabled={inFocusSection || focusFull}
       isSubmitting={isSubmitting}
@@ -300,6 +366,17 @@ export default function TasksScreen() {
             <Text className="text-sm text-muted-foreground">No deferred tasks.</Text>
           ) : (
             deferredTasks.map((task) => renderTask(task))
+          )}
+        </View>
+      </View>
+
+      <View className="gap-3">
+        <SectionLabel>Done Recently</SectionLabel>
+        <View className="bg-surface rounded-2xl border border-border p-4 gap-3 shadow-sm">
+          {doneRecently.length === 0 ? (
+            <Text className="text-sm text-muted-foreground">No completed or abandoned tasks yet.</Text>
+          ) : (
+            doneRecently.map((task) => renderTask(task))
           )}
         </View>
       </View>

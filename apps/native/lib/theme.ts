@@ -31,6 +31,10 @@ export interface ThemeColors {
   divider: string;
   link: string;
   transparent: string;
+  taskFocus: string;
+  taskDueSoon: string;
+  taskOverdue: string;
+  taskDone: string;
 
   light: Record<string, string>;
   dark: Record<string, string>;
@@ -144,6 +148,10 @@ export const Colors: ThemeColors = {
   divider: "#2D333B",
   link: "#E86B5B",
   transparent: "transparent",
+  taskFocus: "#E86B5B",
+  taskDueSoon: "#F5A524",
+  taskOverdue: "#FF6B8A",
+  taskDone: "#77C8A0",
 
   light: {
     background: "#FBFAF9",
@@ -174,6 +182,10 @@ export const Colors: ThemeColors = {
     divider: "#E5E4E1",
     link: "#E86B5B",
     transparent: "transparent",
+    taskFocus: "#E86B5B",
+    taskDueSoon: "#E9A849",
+    taskOverdue: "#D95450",
+    taskDone: "#5FB076",
   },
   dark: {
     background: "#0C0D0F",
@@ -204,5 +216,9 @@ export const Colors: ThemeColors = {
     divider: "#2D333B",
     link: "#E86B5B",
     transparent: "transparent",
+    taskFocus: "#E86B5B",
+    taskDueSoon: "#F5A524",
+    taskOverdue: "#FF6B8A",
+    taskDone: "#77C8A0",
   },
 };
