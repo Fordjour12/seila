@@ -7,11 +7,14 @@ import { useToast } from "heroui-native";
 
 import {
   abandonTaskRef,
+  bulkUpdateTasksRef,
   captureTaskRef,
   completeTaskRef,
   deferTaskRef,
   focusTaskRef,
   reopenTaskRef,
+  taskTimeBlockSuggestionsRef,
+  tasksFilteredRef,
   tasksConsistencyRef,
   tasksDoneRecentlyRef,
   tasksDeferredRef,
@@ -26,6 +29,10 @@ function TaskCard({
   note,
   priority,
   dueAt,
+  estimateMinutes,
+  recurrence,
+  subtasks,
+  blockedReason,
   status,
   onEdit,
   onStats,
@@ -41,6 +48,10 @@ function TaskCard({
   note?: string;
   priority?: "low" | "medium" | "high";
   dueAt?: number;
+  estimateMinutes?: number;
+  recurrence?: "daily" | "weekly" | "monthly";
+  subtasks?: Array<{ id: string; title: string; completed: boolean }>;
+  blockedReason?: string;
   status: string;
   onEdit: () => void;
   onStats: () => void;
@@ -81,6 +92,16 @@ function TaskCard({
         ) : null}
       </View>
       {note ? <Text className="text-xs text-muted-foreground">{note}</Text> : null}
+      <Text className="text-xs text-muted-foreground">
+        {estimateMinutes ? `${estimateMinutes}m` : "30m default"}
+        {recurrence ? ` · repeats ${recurrence}` : ""}
+        {subtasks && subtasks.length ? ` · subtasks ${subtasks.filter((s) => s.completed).length}/${subtasks.length}` : ""}
+      </Text>
+      {blockedReason ? (
+        <View className="rounded-lg border border-danger/20 bg-danger/10 px-2 py-1 self-start">
+          <Text className="text-[11px] text-danger">Blocked: {blockedReason}</Text>
+        </View>
+      ) : null}
 
       <View className="flex-row flex-wrap gap-2">
         {status !== "completed" && status !== "abandoned" ? (
@@ -179,6 +200,17 @@ export default function TasksScreen() {
   const inboxTasks = useQuery(tasksInboxRef, {}) || [];
   const deferredTasks = useQuery(tasksDeferredRef, {}) || [];
   const doneRecently = useQuery(tasksDoneRecentlyRef, {}) || [];
+  const [search, setSearch] = React.useState("");
+  const [filterStatus, setFilterStatus] = React.useState<"inbox" | "focus" | "deferred" | "completed" | "abandoned" | undefined>();
+  const [filterPriority, setFilterPriority] = React.useState<"low" | "medium" | "high" | undefined>();
+  const [dueBucket, setDueBucket] = React.useState<"all" | "today" | "overdue" | "none">("all");
+  const filteredTasks = useQuery(tasksFilteredRef, {
+    search: search.trim() || undefined,
+    status: filterStatus,
+    priority: filterPriority,
+    dueBucket,
+  }) || [];
+  const suggestions = useQuery(taskTimeBlockSuggestionsRef, { horizonMinutes: 180 }) || [];
   const consistency = useQuery(tasksConsistencyRef, { dayKey, windowDays: 30, trendDays: 14 });
 
   const captureTask = useMutation(captureTaskRef);
@@ -187,8 +219,10 @@ export default function TasksScreen() {
   const completeTask = useMutation(completeTaskRef);
   const abandonTask = useMutation(abandonTaskRef);
   const reopenTask = useMutation(reopenTaskRef);
+  const bulkUpdate = useMutation(bulkUpdateTasksRef);
 
   const [captureTitle, setCaptureTitle] = React.useState("");
+  const [selectedTaskIds, setSelectedTaskIds] = React.useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const focusFull = focusTasks.length >= 3;
@@ -271,26 +305,55 @@ export default function TasksScreen() {
       "Failed to reopen task",
     );
 
+  const toggleSelection = (taskId: string) => {
+    setSelectedTaskIds((prev) =>
+      prev.includes(taskId) ? prev.filter((id) => id !== taskId) : [...prev, taskId],
+    );
+  };
+
+  const runBulk = (action: "focus" | "defer" | "complete" | "abandon" | "reopen" | "setPriority", priority?: "low" | "medium" | "high") =>
+    runTaskAction(
+      async () => {
+        if (selectedTaskIds.length === 0) return;
+        await bulkUpdate({
+          idempotencyKey: `tasks.bulk:${action}:${Date.now()}`,
+          taskIds: selectedTaskIds as Id<"tasks">[],
+          action,
+          priority,
+        });
+        setSelectedTaskIds([]);
+      },
+      "Bulk update applied",
+      "Bulk update failed",
+    );
+
   const renderTask = (task: (typeof inboxTasks)[number], inFocusSection = false) => (
-    <TaskCard
-      key={task._id}
-      title={task.title}
-      note={task.note}
-      priority={task.priority as "low" | "medium" | "high" | undefined}
-      dueAt={task.dueAt}
-      status={task.status}
-      onEdit={() => router.push({ pathname: "/(tabs)/tasks/edit", params: { id: task._id } } as any)}
-      onStats={() =>
-        router.push({ pathname: "/(tabs)/tasks/task-consistency", params: { id: task._id } } as any)
-      }
-      onFocus={() => doFocus(task._id)}
-      onDefer={() => doDefer(task._id)}
-      onComplete={() => doComplete(task._id)}
-      onReopen={() => doReopen(task._id)}
-      onAbandon={() => doAbandon(task._id)}
-      focusDisabled={inFocusSection || focusFull}
-      isSubmitting={isSubmitting}
-    />
+    <Pressable key={task._id} onLongPress={() => toggleSelection(String(task._id))}>
+      <View className={selectedTaskIds.includes(String(task._id)) ? "border border-primary/40 rounded-xl" : ""}>
+        <TaskCard
+          title={task.title}
+          note={task.note}
+          priority={task.priority as "low" | "medium" | "high" | undefined}
+          dueAt={task.dueAt}
+          estimateMinutes={task.estimateMinutes}
+          recurrence={task.recurrence as "daily" | "weekly" | "monthly" | undefined}
+          subtasks={task.subtasks as Array<{ id: string; title: string; completed: boolean }> | undefined}
+          blockedReason={task.blockedReason}
+          status={task.status}
+          onEdit={() => router.push({ pathname: "/(tabs)/tasks/edit", params: { id: task._id } } as any)}
+          onStats={() =>
+            router.push({ pathname: "/(tabs)/tasks/task-consistency", params: { id: task._id } } as any)
+          }
+          onFocus={() => doFocus(task._id)}
+          onDefer={() => doDefer(task._id)}
+          onComplete={() => doComplete(task._id)}
+          onReopen={() => doReopen(task._id)}
+          onAbandon={() => doAbandon(task._id)}
+          focusDisabled={inFocusSection || focusFull}
+          isSubmitting={isSubmitting}
+        />
+      </View>
+    </Pressable>
   );
 
   return (
@@ -335,6 +398,84 @@ export default function TasksScreen() {
           <Button label="Capture" onPress={handleCapture} />
           <Button label="Add Task" variant="ghost" onPress={() => router.push("/(tabs)/tasks/add" as any)} />
         </View>
+      </View>
+
+      <View className="bg-surface rounded-2xl border border-border p-4 gap-3 shadow-sm">
+        <SectionLabel>Search & Filters</SectionLabel>
+        <TextInput
+          className="bg-background border border-border rounded-xl px-3 py-2 text-sm text-foreground"
+          placeholder="Search tasks"
+          placeholderTextColor="#6b7280"
+          value={search}
+          onChangeText={setSearch}
+        />
+        <View className="flex-row flex-wrap gap-2">
+          {(["inbox", "focus", "deferred", "completed", "abandoned"] as const).map((value) => (
+            <Pressable
+              key={value}
+              className={`rounded-full border px-3 py-2 ${filterStatus === value ? "bg-warning/10 border-warning/30" : "bg-background border-border"}`}
+              onPress={() => setFilterStatus(filterStatus === value ? undefined : value)}
+            >
+              <Text className={`text-xs ${filterStatus === value ? "text-warning" : "text-muted-foreground"}`}>
+                {value}
+              </Text>
+            </Pressable>
+          ))}
+          {(["low", "medium", "high"] as const).map((value) => (
+            <Pressable
+              key={value}
+              className={`rounded-full border px-3 py-2 ${filterPriority === value ? "bg-success/10 border-success/30" : "bg-background border-border"}`}
+              onPress={() => setFilterPriority(filterPriority === value ? undefined : value)}
+            >
+              <Text className={`text-xs ${filterPriority === value ? "text-success" : "text-muted-foreground"}`}>
+                {value}
+              </Text>
+            </Pressable>
+          ))}
+          {(["all", "today", "overdue", "none"] as const).map((value) => (
+            <Pressable
+              key={value}
+              className={`rounded-full border px-3 py-2 ${dueBucket === value ? "bg-primary/10 border-primary/30" : "bg-background border-border"}`}
+              onPress={() => setDueBucket(value)}
+            >
+              <Text className={`text-xs ${dueBucket === value ? "text-primary" : "text-muted-foreground"}`}>{value}</Text>
+            </Pressable>
+          ))}
+        </View>
+        {search.trim() ? (
+          <View className="gap-2">
+            <Text className="text-xs text-muted-foreground">{filteredTasks.length} results</Text>
+            {filteredTasks.slice(0, 5).map((task) => renderTask(task as any))}
+          </View>
+        ) : null}
+      </View>
+
+      {selectedTaskIds.length > 0 ? (
+        <View className="bg-surface rounded-2xl border border-border p-4 gap-3 shadow-sm">
+          <SectionLabel>Bulk Actions ({selectedTaskIds.length})</SectionLabel>
+          <View className="flex-row flex-wrap gap-2">
+            <Button label="Focus" variant="ghost" onPress={() => runBulk("focus")} />
+            <Button label="Complete" variant="ghost" onPress={() => runBulk("complete")} />
+            <Button label="Abandon" variant="ghost" onPress={() => runBulk("abandon")} />
+            <Button label="Priority High" variant="ghost" onPress={() => runBulk("setPriority", "high")} />
+          </View>
+        </View>
+      ) : null}
+
+      <View className="bg-surface rounded-2xl border border-border p-4 gap-3 shadow-sm">
+        <SectionLabel>Time Blocks (Next 3h)</SectionLabel>
+        {suggestions.length === 0 ? (
+          <Text className="text-sm text-muted-foreground">No suggestions.</Text>
+        ) : (
+          suggestions.map((slot) => (
+            <View key={`${slot.taskId}:${slot.startAt}`} className="rounded-xl border border-border bg-background p-3">
+              <Text className="text-sm font-medium text-foreground">{slot.title}</Text>
+              <Text className="text-xs text-muted-foreground">
+                {new Date(slot.startAt).toLocaleTimeString()} - {new Date(slot.endAt).toLocaleTimeString()} ({slot.estimateMinutes}m)
+              </Text>
+            </View>
+          ))
+        )}
       </View>
 
       <View className="gap-3">

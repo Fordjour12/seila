@@ -30,6 +30,13 @@ export const focusTask = mutation({
       return { success: true, message: "Task already in focus" };
     }
 
+    if (task.blockedByTaskId) {
+      const blocker = await ctx.db.get(task.blockedByTaskId);
+      if (blocker && blocker.status !== "completed") {
+        throw new Error("Task is blocked by an incomplete dependency");
+      }
+    }
+
     const occurredAt = Date.now();
 
     await ctx.db.patch(args.taskId, {

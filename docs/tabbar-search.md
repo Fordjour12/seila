@@ -20,7 +20,7 @@ The input currently does nothing - it only updates local state.
 | Category | Data Source | Search Field | Navigation |
 |----------|-------------|--------------|------------|
 | Routes/Tabs | Hardcoded `TAB_CONFIG` | label, name | Direct navigate |
-| Habits | `api.queries.todayHabits` | name | `habits/edit` |
+| Habits | `api.queries.todayHabits.todayHabits({ dayKey })` | name | `habits/edit?id=...` |
 | Tasks | `api.queries.taskQueries` | title | `tasks/edit` |
 | Transactions | `api.queries.transactionSearch` | merchantHint, note | `finance/transactions/edit` |
 
@@ -28,7 +28,7 @@ The input currently does nothing - it only updates local state.
 
 | Category | Data Source | Search Field | Navigation |
 |----------|-------------|--------------|------------|
-| Accounts | `api.queries.accountSummary` | name, institution | `finance/accounts/edit` |
+| Accounts | `api.queries.accountSummary.accountSummary` | name, institution | `finance/accounts` |
 | Envelopes | `api.queries.envelopeSummary` | name, emoji | `finance/budget/edit` |
 | Suggestions | `api.queries.activeSuggestions` | headline, subtext | Handle via action |
 | Savings Goals | `api.queries.savingsGoals` | name | `finance/savings/edit` |
@@ -102,8 +102,9 @@ function fuzzyMatch(query: string, text: string): boolean {
 }
 
 export function useSearchResults(query: string): SearchResult[] {
-  const habits = useQuery(api.queries.todayHabits.todayHabits);
-  const tasks = useQuery(api.queries.taskQueries.inboxTasks);
+  const dayKey = getLocalDayKey();
+  const habits = useQuery(api.queries.todayHabits.todayHabits, { dayKey });
+  const tasks = useQuery(api.queries.taskQueries.inbox);
   const accounts = useQuery(api.queries.accountSummary.accountSummary);
   const envelopes = useQuery(api.queries.envelopeSummary.envelopeSummary);
   const savingsGoals = useQuery(api.queries.savingsGoals.savingsGoals);
@@ -125,7 +126,7 @@ export function useSearchResults(query: string): SearchResult[] {
     if (habits) {
       for (const habit of habits) {
         if (fuzzyMatch(query, habit.name)) {
-          results.push({ type: "habit", id: habit._id, name: habit.name, anchor: habit.anchor });
+          results.push({ type: "habit", id: habit.habitId, name: habit.name, anchor: habit.anchor });
         }
       }
     }
@@ -140,10 +141,10 @@ export function useSearchResults(query: string): SearchResult[] {
     }
     
     // Add matching accounts
-    if (accounts) {
-      for (const account of accounts) {
+    if (accounts?.accounts) {
+      for (const account of accounts.accounts) {
         if (fuzzyMatch(query, account.name) || fuzzyMatch(query, account.institution ?? "")) {
-          results.push({ type: "account", id: account._id, name: account.name, type: account.type });
+          results.push({ type: "account", id: account.accountId, name: account.name, type: account.type });
         }
       }
     }
@@ -152,7 +153,7 @@ export function useSearchResults(query: string): SearchResult[] {
     if (envelopes) {
       for (const envelope of envelopes) {
         if (fuzzyMatch(query, envelope.name)) {
-          results.push({ type: "envelope", id: envelope._id, name: envelope.name, emoji: envelope.emoji });
+          results.push({ type: "envelope", id: envelope.envelopeId, name: envelope.name, emoji: envelope.emoji });
         }
       }
     }
@@ -161,7 +162,7 @@ export function useSearchResults(query: string): SearchResult[] {
     if (savingsGoals) {
       for (const goal of savingsGoals) {
         if (fuzzyMatch(query, goal.name)) {
-          results.push({ type: "savingsGoal", id: goal._id, name: goal.name, currentAmount: goal.currentAmount });
+          results.push({ type: "savingsGoal", id: goal.goalId, name: goal.name, currentAmount: goal.currentAmount });
         }
       }
     }
@@ -203,22 +204,22 @@ const handleSelect = (result: SearchResult) => {
       navigation.navigate(result.name);
       break;
     case "habit":
-      navigation.navigate("habits/edit", { habitId: result.id });
+      navigation.navigate("habits/edit", { id: result.id });
       break;
     case "task":
-      navigation.navigate("tasks/edit", { taskId: result.id });
+      navigation.navigate("tasks/edit", { id: result.id });
       break;
     case "transaction":
       navigation.navigate("finance/transactions/edit", { transactionId: result.id });
       break;
     case "account":
-      navigation.navigate("finance/accounts/edit", { accountId: result.id });
+      navigation.navigate("finance/accounts");
       break;
     case "envelope":
-      navigation.navigate("finance/budget/edit", { envelopeId: result.id });
+      navigation.navigate("finance/budget/edit", { id: result.id });
       break;
     case "savingsGoal":
-      navigation.navigate("finance/savings/edit", { goalId: result.id });
+      navigation.navigate("finance/savings/edit", { id: result.id });
       break;
     case "suggestion":
       // Handle based on suggestion.action if available
@@ -257,8 +258,7 @@ Based on `app/(tabs)/_layout.tsx` and nested routes:
 | `habits/add` | Add habit | route |
 | `habits/edit` | Edit habit | habit |
 | `habits/consistency` | Habit consistency | route |
-| `checkin/index` | Check-in | route |
-| `checkin/weekly` | Weekly check-in | route |
+| `checkin/index` | Check-in (daily + weekly modes) | route |
 | `tasks` | Tasks list | route |
 | `tasks/add` | Add task | route |
 | `tasks/edit` | Edit task | task |
@@ -267,9 +267,8 @@ Based on `app/(tabs)/_layout.tsx` and nested routes:
 | `finance/transactions` | Transactions list | route |
 | `finance/transactions/add` | Add transaction | route |
 | `finance/transactions/edit` | Edit transaction | transaction |
-| `finance/accounts` | Accounts | route |
 | `finance/accounts/add` | Add account | route |
-| `finance/accounts/edit` | Edit account | account |
+| `finance/accounts` | Accounts & goals | account |
 | `finance/budget` | Budget envelopes | route |
 | `finance/budget/edit` | Edit envelope | envelope |
 | `finance/recurring` | Recurring transactions | route |

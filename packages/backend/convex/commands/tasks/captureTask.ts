@@ -8,6 +8,12 @@ export const captureTask = mutation({
     note: v.optional(v.string()),
     estimateMinutes: v.optional(v.number()),
     recurrence: v.optional(v.union(v.literal("daily"), v.literal("weekly"), v.literal("monthly"))),
+    seriesId: v.optional(v.string()),
+    recurrenceEnabled: v.optional(v.boolean()),
+    skipNextRecurrence: v.optional(v.boolean()),
+    remindersEnabled: v.optional(v.boolean()),
+    reminderOffsetMinutes: v.optional(v.number()),
+    reminderSnoozedUntil: v.optional(v.number()),
     blockedByTaskId: v.optional(v.id("tasks")),
     blockedReason: v.optional(v.string()),
     subtasks: v.optional(
@@ -39,11 +45,24 @@ export const captureTask = mutation({
       throw new Error("Task title cannot be empty");
     }
 
+    if (args.blockedByTaskId) {
+      const blocker = await ctx.db.get(args.blockedByTaskId);
+      if (!blocker) {
+        throw new Error("Blocked-by task not found");
+      }
+    }
+
     const taskId = await ctx.db.insert("tasks", {
       title,
       note: args.note?.trim() || undefined,
       estimateMinutes: args.estimateMinutes,
       recurrence: args.recurrence,
+      seriesId: args.seriesId,
+      recurrenceEnabled: args.recurrenceEnabled ?? true,
+      skipNextRecurrence: args.skipNextRecurrence ?? false,
+      remindersEnabled: args.remindersEnabled ?? false,
+      reminderOffsetMinutes: args.reminderOffsetMinutes,
+      reminderSnoozedUntil: args.reminderSnoozedUntil,
       blockedByTaskId: args.blockedByTaskId,
       blockedReason: args.blockedReason?.trim() || undefined,
       subtasks: args.subtasks,

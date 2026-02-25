@@ -239,6 +239,55 @@ export const tasksDoneRecentlyRef = makeFunctionReference<"query", {}, Doc<"task
   "queries/taskQueries:doneRecently",
 );
 
+export const tasksFilteredRef = makeFunctionReference<
+  "query",
+  {
+    search?: string;
+    status?: "inbox" | "focus" | "deferred" | "completed" | "abandoned";
+    priority?: "low" | "medium" | "high";
+    dueBucket?: "all" | "today" | "overdue" | "none";
+  },
+  Doc<"tasks">[]
+>("queries/taskQueries:filteredTasks");
+
+export const taskTimeBlockSuggestionsRef = makeFunctionReference<
+  "query",
+  { startAt?: number; horizonMinutes?: number },
+  Array<{
+    taskId: string;
+    title: string;
+    startAt: number;
+    endAt: number;
+    estimateMinutes: number;
+    priority?: "low" | "medium" | "high";
+  }>
+>("queries/taskQueries:taskTimeBlockSuggestions");
+
+export const taskOnTimeMetricsRef = makeFunctionReference<
+  "query",
+  { windowDays?: number },
+  {
+    windowDays: number;
+    completed: number;
+    completedWithDue: number;
+    onTimeCompleted: number;
+    overdueCompletions: number;
+    onTimeRatePct: number;
+  }
+>("queries/taskQueries:taskOnTimeMetrics");
+
+export const taskDataHealthRef = makeFunctionReference<
+  "query",
+  {},
+  {
+    totalTasks: number;
+    missingUpdatedAt: number;
+    missingPriority: number;
+    recurringWithoutSeries: number;
+    invalidDependencies: number;
+  }
+>("queries/taskQueries:taskDataHealth");
+
 export const taskByIdRef = makeFunctionReference<
   "query",
   { taskId: Id<"tasks"> },
@@ -257,6 +306,17 @@ export const captureTaskRef = makeFunctionReference<
     idempotencyKey: string;
     title: string;
     note?: string;
+    estimateMinutes?: number;
+    recurrence?: "daily" | "weekly" | "monthly";
+    blockedByTaskId?: Id<"tasks">;
+    blockedReason?: string;
+    subtasks?: Array<{ id: string; title: string; completed: boolean }>;
+    seriesId?: string;
+    recurrenceEnabled?: boolean;
+    skipNextRecurrence?: boolean;
+    remindersEnabled?: boolean;
+    reminderOffsetMinutes?: number;
+    reminderSnoozedUntil?: number;
     priority?: "low" | "medium" | "high";
     dueAt?: number;
   },
@@ -270,6 +330,17 @@ export const updateTaskRef = makeFunctionReference<
     taskId: Id<"tasks">;
     title: string;
     note?: string;
+    estimateMinutes?: number;
+    recurrence?: "daily" | "weekly" | "monthly";
+    blockedByTaskId?: Id<"tasks">;
+    blockedReason?: string;
+    subtasks?: Array<{ id: string; title: string; completed: boolean }>;
+    seriesId?: string;
+    recurrenceEnabled?: boolean;
+    skipNextRecurrence?: boolean;
+    remindersEnabled?: boolean;
+    reminderOffsetMinutes?: number;
+    reminderSnoozedUntil?: number;
     priority?: "low" | "medium" | "high";
     dueAt?: number;
   },
@@ -305,6 +376,56 @@ export const reopenTaskRef = makeFunctionReference<
   { idempotencyKey: string; taskId: Id<"tasks"> },
   { success: boolean }
 >("commands/tasks/reopenTask:reopenTask");
+
+export const bulkUpdateTasksRef = makeFunctionReference<
+  "mutation",
+  {
+    idempotencyKey: string;
+    taskIds: Id<"tasks">[];
+    action: "focus" | "defer" | "complete" | "abandon" | "reopen" | "setPriority";
+    deferUntil?: number;
+    priority?: "low" | "medium" | "high";
+  },
+  { updated: number }
+>("commands/tasks/bulkUpdateTasks:bulkUpdateTasks");
+
+export const skipNextRecurrenceRef = makeFunctionReference<
+  "mutation",
+  { idempotencyKey: string; taskId: Id<"tasks"> },
+  { success: boolean }
+>("commands/tasks/skipNextRecurrence:skipNextRecurrence");
+
+export const pauseTaskRecurrenceRef = makeFunctionReference<
+  "mutation",
+  { idempotencyKey: string; taskId: Id<"tasks">; paused: boolean },
+  { success: boolean }
+>("commands/tasks/pauseTaskRecurrence:pauseTaskRecurrence");
+
+export const updateTaskSeriesRef = makeFunctionReference<
+  "mutation",
+  {
+    idempotencyKey: string;
+    taskId: Id<"tasks">;
+    applyTo: "this" | "future";
+    recurrence?: "daily" | "weekly" | "monthly";
+    note?: string;
+    estimateMinutes?: number;
+    priority?: "low" | "medium" | "high";
+  },
+  { updated: number }
+>("commands/tasks/updateTaskSeries:updateTaskSeries");
+
+export const snoozeTaskReminderRef = makeFunctionReference<
+  "mutation",
+  { idempotencyKey: string; taskId: Id<"tasks">; snoozeMinutes: number },
+  { success: boolean; snoozedUntil: number }
+>("commands/tasks/snoozeTaskReminder:snoozeTaskReminder");
+
+export const backfillTaskDefaultsRef = makeFunctionReference<
+  "mutation",
+  { idempotencyKey: string },
+  { updated: number }
+>("commands/tasks/backfillTaskDefaults:backfillTaskDefaults");
 
 export const tasksConsistencyRef = makeFunctionReference<
   "query",

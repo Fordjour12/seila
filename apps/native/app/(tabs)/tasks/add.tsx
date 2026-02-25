@@ -23,6 +23,10 @@ export default function AddTaskScreen() {
   const [note, setNote] = React.useState("");
   const [priority, setPriority] = React.useState<"low" | "medium" | "high">("medium");
   const [dueDayKey, setDueDayKey] = React.useState<string | undefined>();
+  const [estimateMinutes, setEstimateMinutes] = React.useState("30");
+  const [recurrence, setRecurrence] = React.useState<"none" | "daily" | "weekly" | "monthly">("none");
+  const [blockedReason, setBlockedReason] = React.useState("");
+  const [subtasks, setSubtasks] = React.useState<Array<{ id: string; title: string; completed: boolean }>>([]);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const validationError = React.useMemo(() => {
@@ -42,6 +46,10 @@ export default function AddTaskScreen() {
           idempotencyKey: `tasks.capture:${Date.now()}`,
           title: taskTitle.trim(),
           note: note.trim() || undefined,
+          estimateMinutes: estimateMinutes.trim() ? Number(estimateMinutes) : undefined,
+          recurrence: recurrence === "none" ? undefined : recurrence,
+          blockedReason: blockedReason.trim() || undefined,
+          subtasks: subtasks.length ? subtasks : undefined,
           priority,
           dueAt: dueDayKeyToTimestamp(dueDayKey),
         });
@@ -69,6 +77,10 @@ export default function AddTaskScreen() {
         note={note}
         priority={priority}
         dueDayKey={dueDayKey}
+        estimateMinutes={estimateMinutes}
+        recurrence={recurrence}
+        blockedReason={blockedReason}
+        subtasks={subtasks}
         validationError={validationError}
         isSubmitting={isSubmitting}
         submitLabel="Add Task"
@@ -76,6 +88,10 @@ export default function AddTaskScreen() {
         onNoteChange={setNote}
         onPriorityChange={setPriority}
         onDueDayKeyChange={setDueDayKey}
+        onEstimateMinutesChange={setEstimateMinutes}
+        onRecurrenceChange={setRecurrence}
+        onBlockedReasonChange={setBlockedReason}
+        onSubtasksChange={setSubtasks}
         onSubmit={handleSubmit}
       />
     </ScrollView>

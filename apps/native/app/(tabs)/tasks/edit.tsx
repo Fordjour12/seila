@@ -1,11 +1,18 @@
 import React from "react";
-import { ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import type { Id } from "@seila/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useToast } from "heroui-native";
 
-import { taskByIdRef, taskHistoryRef, updateTaskRef } from "../../../lib/productivity-refs";
+import {
+  taskByIdRef,
+  taskHistoryRef,
+  tasksDeferredRef,
+  tasksFocusRef,
+  tasksInboxRef,
+  updateTaskRef,
+} from "../../../lib/productivity-refs";
 import { Button } from "../../../components/ui";
 import { TaskForm } from "./_components/TaskForm";
 
@@ -33,12 +40,20 @@ export default function EditTaskScreen() {
 
   const task = useQuery(taskByIdRef, { taskId: taskIdParam });
   const history = useQuery(taskHistoryRef, { taskId: taskIdParam });
+  const inboxTasks = useQuery(tasksInboxRef, {}) || [];
+  const focusTasks = useQuery(tasksFocusRef, {}) || [];
+  const deferredTasks = useQuery(tasksDeferredRef, {}) || [];
   const updateTask = useMutation(updateTaskRef);
 
   const [taskTitle, setTaskTitle] = React.useState("");
   const [note, setNote] = React.useState("");
   const [priority, setPriority] = React.useState<"low" | "medium" | "high">("medium");
   const [dueDayKey, setDueDayKey] = React.useState<string | undefined>();
+  const [estimateMinutes, setEstimateMinutes] = React.useState("30");
+  const [recurrence, setRecurrence] = React.useState<"none" | "daily" | "weekly" | "monthly">("none");
+  const [blockedByTaskId, setBlockedByTaskId] = React.useState<Id<"tasks"> | undefined>();
+  const [blockedReason, setBlockedReason] = React.useState("");
+  const [subtasks, setSubtasks] = React.useState<Array<{ id: string; title: string; completed: boolean }>>([]);
   const [hydratedTaskId, setHydratedTaskId] = React.useState<Id<"tasks"> | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
@@ -50,6 +65,11 @@ export default function EditTaskScreen() {
     setNote(task.note || "");
     setPriority((task.priority as "low" | "medium" | "high") || "medium");
     setDueDayKey(dueAtToDayKey(task.dueAt));
+    setEstimateMinutes(task.estimateMinutes ? String(task.estimateMinutes) : "30");
+    setRecurrence((task.recurrence as "daily" | "weekly" | "monthly" | undefined) || "none");
+    setBlockedByTaskId(task.blockedByTaskId);
+    setBlockedReason(task.blockedReason || "");
+    setSubtasks(task.subtasks || []);
     setHydratedTaskId(task._id);
   }, [task, hydratedTaskId]);
 
@@ -79,6 +99,11 @@ export default function EditTaskScreen() {
         taskId: task._id,
         title: taskTitle.trim(),
         note: note.trim() || undefined,
+        estimateMinutes: estimateMinutes.trim() ? Number(estimateMinutes) : undefined,
+        recurrence: recurrence === "none" ? undefined : recurrence,
+        blockedByTaskId,
+        blockedReason: blockedReason.trim() || undefined,
+        subtasks: subtasks.length ? subtasks : undefined,
         priority,
         dueAt: dueDayKeyToTimestamp(dueDayKey),
       });
@@ -121,6 +146,10 @@ export default function EditTaskScreen() {
             note={note}
             priority={priority}
             dueDayKey={dueDayKey}
+            estimateMinutes={estimateMinutes}
+            recurrence={recurrence}
+            blockedReason={blockedReason}
+            subtasks={subtasks}
             helperText={`Current status: ${task.status}`}
             validationError={validationError}
             isSubmitting={isSubmitting}
@@ -129,9 +158,37 @@ export default function EditTaskScreen() {
             onNoteChange={setNote}
             onPriorityChange={setPriority}
             onDueDayKeyChange={setDueDayKey}
+            onEstimateMinutesChange={setEstimateMinutes}
+            onRecurrenceChange={setRecurrence}
+            onBlockedReasonChange={setBlockedReason}
+            onSubtasksChange={setSubtasks}
             onSubmit={handleSubmit}
             onCancel={() => router.back()}
           />
+
+          <View className="bg-surface rounded-2xl border border-border p-4 gap-2 shadow-sm">
+            <Text className="text-sm font-medium text-foreground">Dependency</Text>
+            <Text className="text-xs text-muted-foreground">Select task that must be completed first.</Text>
+            <View className="flex-row flex-wrap gap-2">
+              {[...focusTasks, ...inboxTasks, ...deferredTasks]
+                .filter((candidate) => candidate._id !== task._id)
+                .slice(0, 8)
+                .map((candidate) => {
+                  const active = blockedByTaskId === candidate._id;
+                  return (
+                    <Pressable
+                      key={candidate._id}
+                      className={`rounded-full border px-3 py-2 ${active ? "bg-danger/10 border-danger/30" : "bg-background border-border"}`}
+                      onPress={() => setBlockedByTaskId(active ? undefined : candidate._id)}
+                    >
+                      <Text className={`text-xs ${active ? "text-danger" : "text-muted-foreground"}`}>
+                        {candidate.title}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+            </View>
+          </View>
 
           <View className="bg-surface rounded-2xl border border-border p-4 gap-2 shadow-sm">
             <Text className="text-sm font-medium text-foreground">History</Text>
