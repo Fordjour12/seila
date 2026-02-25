@@ -2,6 +2,7 @@ import { api } from "@seila/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { Surface } from "heroui-native";
 import { Text, View, ScrollView } from "react-native";
+import { getLocalDayKey } from "../../lib/date";
 
 const MOOD_EMOJIS: Record<number, string> = {
   1: "😞",
@@ -16,8 +17,9 @@ interface DashboardProps {
 }
 
 export function Dashboard({ compact = false }: DashboardProps) {
+  const dayKey = getLocalDayKey();
   const moodTrend = useQuery(api.queries.moodTrend.moodTrend, {});
-  const todayHabits = useQuery(api.queries.todayHabits.todayHabits, {});
+  const todayHabits = useQuery(api.queries.todayHabits.todayHabits, { dayKey });
   const lastReview = useQuery(api.queries.reviewQueries.lastReview, {});
   const activePatterns = useQuery(api.queries.activePatterns.activePatterns, {});
   const todayFocus = useQuery(api.queries.taskQueries.todayFocus, {});

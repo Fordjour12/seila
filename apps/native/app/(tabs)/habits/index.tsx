@@ -8,9 +8,15 @@ import { useToast } from "heroui-native";
 import {
   archiveHabitRef,
   clearHabitTodayStatusRef,
+  habitLifecycleRef,
+  habitsConsistencyRef,
   habitStalePromptsRef,
   logHabitRef,
+  relapseHabitRef,
+  resolveMissedHabitsRef,
   respondStaleHabitPromptRef,
+  restoreArchivedHabitRef,
+  resumePausedHabitRef,
   skipHabitRef,
   snoozeHabitRef,
   todayHabitsRef,
@@ -68,11 +74,35 @@ function formatCadence(cadence: HabitCadence) {
   return cadence.customDays.map((day) => map[day] || "?").join(", ");
 }
 
-function formatStatus(status?: "completed" | "skipped" | "snoozed") {
+function formatStatus(status?: "completed" | "skipped" | "snoozed" | "missed" | "relapsed") {
   if (status === "completed") return "Done Today";
   if (status === "skipped") return "Skipped Today";
   if (status === "snoozed") return "Snoozed Today";
+  if (status === "missed") return "Missed";
+  if (status === "relapsed") return "Relapsed";
   return "Pending";
+}
+
+function HeatDots({
+  values,
+}: {
+  values: number[];
+}) {
+  return (
+    <View className="flex-row gap-1">
+      {values.map((value, index) => {
+        const shade =
+          value >= 0.95
+            ? "bg-success"
+            : value >= 0.5
+              ? "bg-warning"
+              : value > 0
+                ? "bg-warning/40"
+                : "bg-muted";
+        return <View key={index} className={`h-2.5 flex-1 rounded-full ${shade}`} />;
+      })}
+    </View>
+  );
 }
 
 export default function HabitsScreen() {
@@ -85,13 +115,19 @@ export default function HabitsScreen() {
   const weekDays = React.useMemo(() => buildWeekDays(new Date()), []);
 
   const habits = useQuery(todayHabitsRef, { dayKey });
+  const consistency = useQuery(habitsConsistencyRef, { dayKey, windowDays: 30, trendDays: 14 });
+  const lifecycle = useQuery(habitLifecycleRef, { dayKey });
   const stalePrompts = useQuery(habitStalePromptsRef, { dayKey });
   const logHabit = useMutation(logHabitRef);
   const skipHabit = useMutation(skipHabitRef);
   const snoozeHabit = useMutation(snoozeHabitRef);
+  const relapseHabit = useMutation(relapseHabitRef);
   const archiveHabit = useMutation(archiveHabitRef);
   const clearHabitTodayStatus = useMutation(clearHabitTodayStatusRef);
   const respondStaleHabitPrompt = useMutation(respondStaleHabitPromptRef);
+  const resolveMissedHabits = useMutation(resolveMissedHabitsRef);
+  const resumePausedHabit = useMutation(resumePausedHabitRef);
+  const restoreArchivedHabit = useMutation(restoreArchivedHabitRef);
 
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
@@ -106,6 +142,10 @@ export default function HabitsScreen() {
   const doneCount = (habits || []).filter((habit) => habit.todayStatus === "completed").length;
   const totalCount = (habits || []).length;
   const isLoading = habits === undefined;
+
+  React.useEffect(() => {
+    void resolveMissedHabits({ dayKey, lookbackDays: 21 }).catch(() => undefined);
+  }, [dayKey, resolveMissedHabits]);
 
   const handleLog = async (habitId: string) => {
     setIsSubmitting(true);
@@ -187,6 +227,22 @@ export default function HabitsScreen() {
     }
   };
 
+  const handleRelapse = async (habitId: string) => {
+    setIsSubmitting(true);
+    try {
+      await relapseHabit({
+        idempotencyKey: `habits.relapse:${habitId}:${Date.now()}`,
+        habitId: habitId as Id<"habits">,
+        dayKey,
+      });
+      toast.show({ variant: "warning", label: "Relapse logged for today" });
+    } catch {
+      toast.show({ variant: "danger", label: "Failed to log relapse" });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleStalePrompt = async (
     habitId: string,
     action: "keep" | "pause_30" | "archive",
@@ -210,6 +266,36 @@ export default function HabitsScreen() {
       });
     } catch {
       toast.show({ variant: "danger", label: "Failed to update stale habit" });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleResumePaused = async (habitId: Id<"habits">) => {
+    setIsSubmitting(true);
+    try {
+      await resumePausedHabit({
+        idempotencyKey: `habits.resume:${habitId}:${Date.now()}`,
+        habitId,
+      });
+      toast.show({ variant: "success", label: "Habit resumed" });
+    } catch {
+      toast.show({ variant: "danger", label: "Failed to resume habit" });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleRestoreArchived = async (habitId: Id<"habits">) => {
+    setIsSubmitting(true);
+    try {
+      await restoreArchivedHabit({
+        idempotencyKey: `habits.restore:${habitId}:${Date.now()}`,
+        habitId,
+      });
+      toast.show({ variant: "success", label: "Habit restored as new" });
+    } catch {
+      toast.show({ variant: "danger", label: "Failed to restore habit" });
     } finally {
       setIsSubmitting(false);
     }
@@ -249,12 +335,52 @@ export default function HabitsScreen() {
       </View>
 
       <View className="bg-surface rounded-2xl border border-border p-4 gap-3 shadow-sm">
+        <SectionLabel>Consistency (30d)</SectionLabel>
+        <View className="flex-row items-end justify-between">
+          <Text className="text-4xl font-serif text-foreground">{consistency?.consistencyPct ?? 0}%</Text>
+          <Text className="text-xs text-muted-foreground">
+            {consistency?.completedScheduledDays ?? 0}/{consistency?.scheduledDays ?? 0} scheduled
+          </Text>
+        </View>
+        <Text className="text-xs text-muted-foreground">
+          Streak {consistency?.currentStreak ?? 0}d · Best {consistency?.bestStreak ?? 0}d · Missed 14d{" "}
+          {consistency?.missedLast14 ?? 0}
+        </Text>
+        <HeatDots values={(consistency?.trend || []).map((item) => item.score)} />
+        <Button
+          label="View Details"
+          variant="ghost"
+          onPress={() => router.push("/(tabs)/habits/consistency" as any)}
+        />
+      </View>
+
+      <View className="bg-surface rounded-2xl border border-border p-4 gap-3 shadow-sm">
         <SectionLabel>Quick Actions</SectionLabel>
         <Button label="Add Habit" onPress={() => router.push("/(tabs)/habits/add" as any)} />
+        <Button label="Manage Paused/Archived" variant="ghost" onPress={() => router.push("/(tabs)/habits/manage" as any)} />
         {!isTodayView ? (
           <Text className="text-xs text-muted-foreground">Viewing history. Switch to today to log actions.</Text>
         ) : null}
       </View>
+
+      {(lifecycle?.paused.length || 0) > 0 ? (
+        <View className="bg-surface rounded-2xl border border-border p-4 gap-3 shadow-sm">
+          <SectionLabel>Paused Habits</SectionLabel>
+          {lifecycle?.paused.map((habit) => (
+            <View key={habit.habitId} className="rounded-xl border border-border bg-background p-3 gap-2">
+              <Text className="text-sm text-foreground font-medium">{habit.name}</Text>
+              <Text className="text-xs text-muted-foreground">Paused until {habit.pausedUntilDayKey}</Text>
+              <Pressable
+                className="self-start bg-primary/10 border border-primary/20 rounded-lg px-3 py-2"
+                onPress={() => handleResumePaused(habit.habitId)}
+                disabled={isSubmitting}
+              >
+                <Text className="text-xs font-medium text-primary">Resume</Text>
+              </Pressable>
+            </View>
+          ))}
+        </View>
+      ) : null}
 
       {isTodayView && (stalePrompts || []).length > 0 ? (
         <View className="bg-surface rounded-2xl border border-border p-4 gap-3 shadow-sm">
@@ -310,7 +436,11 @@ export default function HabitsScreen() {
             <View className="bg-surface rounded-2xl border border-border p-4 gap-3 shadow-sm">
               {group.items.map((habit) => {
                 const status = formatStatus(habit.todayStatus);
-                const resolved = status === "Done Today" || status === "Skipped Today";
+                const resolved =
+                  status === "Done Today" ||
+                  status === "Skipped Today" ||
+                  status === "Relapsed" ||
+                  status === "Missed";
                 const hasTodayStatus = status !== "Pending";
 
                 return (
@@ -323,6 +453,10 @@ export default function HabitsScreen() {
                             ? "text-success"
                             : status === "Skipped Today"
                               ? "text-warning"
+                              : status === "Relapsed"
+                                ? "text-danger"
+                                : status === "Missed"
+                                  ? "text-danger"
                               : status === "Snoozed Today"
                                 ? "text-primary"
                                 : "text-muted-foreground"
@@ -334,6 +468,7 @@ export default function HabitsScreen() {
 
                     <Text className="text-xs text-muted-foreground">
                       {formatCadence(habit.cadence)} · {toTitleCase(habit.difficulty || "low")}
+                      {habit.targetValue ? ` · ${habit.targetValue} ${habit.targetUnit || "units"}` : ""}
                     </Text>
 
                     <View className="self-start bg-primary/10 border border-primary/20 rounded-full px-2.5 py-1">
@@ -366,6 +501,15 @@ export default function HabitsScreen() {
                           >
                             <Text className="text-xs font-medium text-primary">Snooze Today</Text>
                           </Pressable>
+                          {habit.kind === "break" ? (
+                            <Pressable
+                              className="bg-danger/10 border border-danger/20 rounded-lg px-3 py-2"
+                              onPress={() => handleRelapse(habit.habitId)}
+                              disabled={isSubmitting || !isTodayView}
+                            >
+                              <Text className="text-xs font-medium text-danger">Relapse</Text>
+                            </Pressable>
+                          ) : null}
                         </>
                       ) : null}
 
@@ -389,6 +533,18 @@ export default function HabitsScreen() {
                       </Pressable>
 
                       <Pressable
+                        className="bg-primary/10 border border-primary/20 rounded-lg px-3 py-2"
+                        onPress={() =>
+                          router.push({
+                            pathname: "/(tabs)/habits/habit-consistency",
+                            params: { id: habit.habitId },
+                          } as any)
+                        }
+                      >
+                        <Text className="text-xs font-medium text-primary">Stats</Text>
+                      </Pressable>
+
+                      <Pressable
                         className="bg-danger/10 border border-danger/20 rounded-lg px-3 py-2"
                         onPress={() => handleArchive(habit.habitId)}
                         disabled={isSubmitting}
@@ -403,6 +559,24 @@ export default function HabitsScreen() {
           </View>
         ))
       )}
+
+      {(lifecycle?.archived.length || 0) > 0 ? (
+        <View className="bg-surface rounded-2xl border border-border p-4 gap-3 shadow-sm">
+          <SectionLabel>Archived Habits</SectionLabel>
+          {(lifecycle?.archived || []).slice(0, 4).map((habit) => (
+            <View key={habit.habitId} className="rounded-xl border border-border bg-background p-3 gap-2">
+              <Text className="text-sm text-foreground font-medium">{habit.name}</Text>
+              <Pressable
+                className="self-start bg-warning/10 border border-warning/20 rounded-lg px-3 py-2"
+                onPress={() => handleRestoreArchived(habit.habitId)}
+                disabled={isSubmitting}
+              >
+                <Text className="text-xs font-medium text-warning">Restore as New</Text>
+              </Pressable>
+            </View>
+          ))}
+        </View>
+      ) : null}
     </ScrollView>
   );
 }

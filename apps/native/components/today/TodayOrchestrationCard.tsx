@@ -12,6 +12,7 @@ import {
   setQuietTodayRef,
   todayScratchpadRef,
 } from "@/lib/recovery-refs";
+import { getLocalDayKey } from "@/lib/date";
 
 function idempotencyKey(prefix: string) {
   return `${prefix}:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`;
@@ -24,10 +25,11 @@ type NextAction = {
 };
 
 export function TodayOrchestrationCard() {
+  const dayKey = getLocalDayKey();
   const quietToday = useQuery(quietTodayRef, {});
   const scratchpad = useQuery(todayScratchpadRef, {});
-  const focus = useQuery(api.queries.taskQueries.todayFocus);
-  const habits = useQuery(api.queries.todayHabits.todayHabits);
+  const focus = useQuery(api.queries.taskQueries.todayFocus, {});
+  const habits = useQuery(api.queries.todayHabits.todayHabits, { dayKey });
   const lastCheckin = useQuery(api.queries.lastCheckin.lastCheckin);
   const recoveryContext = useQuery(recoveryContextRef, {});
 

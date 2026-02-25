@@ -29,7 +29,7 @@ const logTransactionRef = makeFunctionReference<
     note?: string;
   },
   { transactionId?: Id<"transactions">; deduplicated: boolean }
->("commands/logTransaction:logTransaction");
+>("commands/transactions/logTransaction:logTransaction");
 
 const updateRecurringTransactionRef = makeFunctionReference<
   "mutation",
@@ -41,13 +41,13 @@ const updateRecurringTransactionRef = makeFunctionReference<
     envelopeId?: Id<"envelopes">;
   },
   { recurringId?: string; deduplicated: boolean }
->("commands/updateRecurringTransaction:updateRecurringTransaction");
+>("commands/recurring/updateRecurringTransaction:updateRecurringTransaction");
 
 const recordRecurringTelemetryRef = makeFunctionReference<
   "mutation",
   { processed: number; skippedDueToLimit: number; dueCount: number; maxExecutions: number },
   { recorded: boolean }
->("commands/recordRecurringTelemetry:recordRecurringTelemetry");
+>("commands/recurring/recordRecurringTelemetry:recordRecurringTelemetry");
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_EXECUTIONS_PER_RUN = 25;

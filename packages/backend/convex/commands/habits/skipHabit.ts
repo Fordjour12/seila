@@ -34,6 +34,7 @@ export const skipHabit = mutation({
         dayKey: args.dayKey,
         startDayKey: habit.startDayKey,
         endDayKey: habit.endDayKey,
+        pausedUntilDayKey: habit.pausedUntilDayKey,
       })
     ) {
       throw new ConvexError("Habit is outside its active date range");

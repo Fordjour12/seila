@@ -17,6 +17,7 @@ export const abandonTask = mutation({
     await ctx.db.patch(args.taskId, {
       status: "abandoned",
       abandonedAt: occurredAt,
+      updatedAt: occurredAt,
     });
 
     await ctx.db.insert("events", {

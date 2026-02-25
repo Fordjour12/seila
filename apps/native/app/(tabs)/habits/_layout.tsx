@@ -42,6 +42,42 @@ export default function HabitsLayout() {
           contentStyle: { backgroundColor: Colors.bg },
         }}
       />
+      <Stack.Screen
+        name="consistency"
+        options={{
+          title: "Habit Consistency",
+          headerShown: true,
+          headerBackVisible: true,
+          headerStyle: { backgroundColor: Colors.bgRaised },
+          headerTintColor: Colors.textPrimary,
+          headerShadowVisible: false,
+          contentStyle: { backgroundColor: Colors.bg },
+        }}
+      />
+      <Stack.Screen
+        name="habit-consistency"
+        options={{
+          title: "Habit Details",
+          headerShown: true,
+          headerBackVisible: true,
+          headerStyle: { backgroundColor: Colors.bgRaised },
+          headerTintColor: Colors.textPrimary,
+          headerShadowVisible: false,
+          contentStyle: { backgroundColor: Colors.bg },
+        }}
+      />
+      <Stack.Screen
+        name="manage"
+        options={{
+          title: "Manage Habits",
+          headerShown: true,
+          headerBackVisible: true,
+          headerStyle: { backgroundColor: Colors.bgRaised },
+          headerTintColor: Colors.textPrimary,
+          headerShadowVisible: false,
+          contentStyle: { backgroundColor: Colors.bg },
+        }}
+      />
     </Stack>
   );
 }

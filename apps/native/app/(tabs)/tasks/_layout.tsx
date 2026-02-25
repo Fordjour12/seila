@@ -43,6 +43,30 @@ export default function TasksLayout() {
           contentStyle: { backgroundColor: Colors.bg },
         }}
       />
+      <Stack.Screen
+        name="consistency"
+        options={{
+          headerShown: true,
+          title: "Task Consistency",
+          headerBackVisible: true,
+          headerStyle: { backgroundColor: Colors.bgRaised },
+          headerTintColor: Colors.textPrimary,
+          headerShadowVisible: false,
+          contentStyle: { backgroundColor: Colors.bg },
+        }}
+      />
+      <Stack.Screen
+        name="task-consistency"
+        options={{
+          headerShown: true,
+          title: "Task Details",
+          headerBackVisible: true,
+          headerStyle: { backgroundColor: Colors.bgRaised },
+          headerTintColor: Colors.textPrimary,
+          headerShadowVisible: false,
+          contentStyle: { backgroundColor: Colors.bg },
+        }}
+      />
     </Stack>
   );
 }

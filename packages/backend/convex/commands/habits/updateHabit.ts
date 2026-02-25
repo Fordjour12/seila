@@ -12,6 +12,7 @@ import {
   kindValidator,
   dayKeyValidator,
   assertValidHabitWindow,
+  assertValidHabitTarget,
   syncHabitProjection,
 } from "../../habits/shared";
 
@@ -24,6 +25,9 @@ export const updateHabit = mutation({
     anchor: v.optional(anchorValidator),
     difficulty: v.optional(difficultyValidator),
     kind: v.optional(kindValidator),
+    targetValue: v.optional(v.number()),
+    targetUnit: v.optional(v.string()),
+    timezone: v.optional(v.string()),
     startDayKey: v.optional(dayKeyValidator),
     endDayKey: v.optional(dayKeyValidator),
   },
@@ -51,6 +55,10 @@ export const updateHabit = mutation({
       startDayKey: args.startDayKey,
       endDayKey: args.endDayKey,
     });
+    assertValidHabitTarget({
+      targetValue: args.targetValue,
+      targetUnit: args.targetUnit,
+    });
 
     await appendHabitEvent(ctx, {
       type: "habit.updated",
@@ -63,6 +71,9 @@ export const updateHabit = mutation({
         anchor: args.anchor,
         difficulty: args.difficulty,
         kind: args.kind,
+        targetValue: args.targetValue,
+        targetUnit: args.targetUnit,
+        timezone: args.timezone,
         startDayKey: args.startDayKey,
         endDayKey: args.endDayKey,
       },

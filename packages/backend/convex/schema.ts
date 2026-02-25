@@ -36,6 +36,9 @@ export default defineSchema({
     ),
     difficulty: v.optional(v.union(v.literal("low"), v.literal("medium"), v.literal("high"))),
     kind: v.optional(v.union(v.literal("build"), v.literal("break"))),
+    targetValue: v.optional(v.number()),
+    targetUnit: v.optional(v.string()),
+    timezone: v.optional(v.string()),
     startDayKey: v.optional(v.string()),
     endDayKey: v.optional(v.string()),
     pausedUntilDayKey: v.optional(v.string()),
@@ -51,7 +54,13 @@ export default defineSchema({
   habitLogs: defineTable({
     habitId: v.id("habits"),
     dayKey: v.string(),
-    status: v.union(v.literal("completed"), v.literal("skipped"), v.literal("snoozed")),
+    status: v.union(
+      v.literal("completed"),
+      v.literal("skipped"),
+      v.literal("snoozed"),
+      v.literal("missed"),
+      v.literal("relapsed"),
+    ),
     occurredAt: v.number(),
     snoozedUntil: v.optional(v.number()),
     createdAt: v.number(),
@@ -79,6 +88,29 @@ export default defineSchema({
     .index("by_type", ["type"]),
   tasks: defineTable({
     title: v.string(),
+    note: v.optional(v.string()),
+    estimateMinutes: v.optional(v.number()),
+    recurrence: v.optional(v.union(v.literal("daily"), v.literal("weekly"), v.literal("monthly"))),
+    seriesId: v.optional(v.string()),
+    recurrenceEnabled: v.optional(v.boolean()),
+    skipNextRecurrence: v.optional(v.boolean()),
+    remindersEnabled: v.optional(v.boolean()),
+    reminderOffsetMinutes: v.optional(v.number()),
+    reminderSnoozedUntil: v.optional(v.number()),
+    lastReminderAt: v.optional(v.number()),
+    blockedByTaskId: v.optional(v.id("tasks")),
+    blockedReason: v.optional(v.string()),
+    subtasks: v.optional(
+      v.array(
+        v.object({
+          id: v.string(),
+          title: v.string(),
+          completed: v.boolean(),
+        }),
+      ),
+    ),
+    priority: v.optional(v.union(v.literal("low"), v.literal("medium"), v.literal("high"))),
+    dueAt: v.optional(v.number()),
     status: v.union(
       v.literal("inbox"),
       v.literal("focus"),
@@ -87,13 +119,16 @@ export default defineSchema({
       v.literal("abandoned"),
     ),
     createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+    reopenedAt: v.optional(v.number()),
     focusedAt: v.optional(v.number()),
     deferredUntil: v.optional(v.number()),
     completedAt: v.optional(v.number()),
     abandonedAt: v.optional(v.number()),
   })
     .index("by_status", ["status"])
-    .index("by_createdAt", ["createdAt"]),
+    .index("by_createdAt", ["createdAt"])
+    .index("by_due_at", ["dueAt"]),
   suggestions: defineTable({
     policy: v.string(),
     headline: v.string(),

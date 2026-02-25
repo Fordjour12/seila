@@ -315,6 +315,42 @@ describe("habit reducer", () => {
     expect(trace.pass).toBe(true);
   });
 
+  test("create/update preserve target and timezone fields", () => {
+    const created = commandToEvent({
+      type: "createHabit",
+      idempotencyKey: "cmd-create-target",
+      requestedAt: NOW,
+      payload: {
+        name: "Read",
+        cadence: "daily",
+        targetValue: 20,
+        targetUnit: "pages",
+        timezone: "Africa/Accra",
+      },
+      meta: {},
+    });
+
+    const updated = commandToEvent({
+      type: "updateHabit",
+      idempotencyKey: "cmd-update-target",
+      requestedAt: NOW + 1000,
+      payload: {
+        habitId: "habit-1",
+        name: "Read Deeply",
+        cadence: "daily",
+        targetValue: 30,
+        targetUnit: "pages",
+        timezone: "America/New_York",
+      },
+      meta: {},
+    });
+
+    const state = replayHabitEvents([created, updated]);
+    expect(state.activeHabits["habit-1"]?.targetValue).toBe(30);
+    expect(state.activeHabits["habit-1"]?.targetUnit).toBe("pages");
+    expect(state.activeHabits["habit-1"]?.timezone).toBe("America/New_York");
+  });
+
   test("shame-free invariant: no missed status is derived", () => {
     const yesterday = NOW - 24 * 60 * 60 * 1000;
     const state = replayHabitEvents(

@@ -7,6 +7,11 @@ const crons = cronJobs();
 const processRecurringTransactionsRef = makeFunctionReference<"action", {}, { processed: number }>(
   "actions/processRecurringTransactions:processRecurringTransactions",
 );
+const processTaskRemindersRef = makeFunctionReference<
+  "action",
+  {},
+  { sent: number; suppressed: number }
+>("actions/processTaskReminders:processTaskReminders");
 
 crons.interval("run policy engine", { hours: 1 }, internal.policies.runner.runPolicyEngine, {});
 
@@ -30,5 +35,7 @@ crons.interval(
   processRecurringTransactionsRef,
   {},
 );
+
+crons.interval("process task reminders", { minutes: 10 }, processTaskRemindersRef, {});
 
 export default crons;

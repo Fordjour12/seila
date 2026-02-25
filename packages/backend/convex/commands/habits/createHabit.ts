@@ -12,6 +12,7 @@ import {
   kindValidator,
   dayKeyValidator,
   assertValidHabitWindow,
+  assertValidHabitTarget,
   syncHabitProjection,
 } from "../../habits/shared";
 
@@ -23,6 +24,9 @@ export const createHabit = mutation({
     anchor: v.optional(anchorValidator),
     difficulty: v.optional(difficultyValidator),
     kind: v.optional(kindValidator),
+    targetValue: v.optional(v.number()),
+    targetUnit: v.optional(v.string()),
+    timezone: v.optional(v.string()),
     startDayKey: v.optional(dayKeyValidator),
     endDayKey: v.optional(dayKeyValidator),
   },
@@ -51,6 +55,10 @@ export const createHabit = mutation({
       startDayKey: args.startDayKey,
       endDayKey: args.endDayKey,
     });
+    assertValidHabitTarget({
+      targetValue: args.targetValue,
+      targetUnit: args.targetUnit,
+    });
 
     const now = Date.now();
     const habitId = await ctx.db.insert("habits", {
@@ -59,6 +67,9 @@ export const createHabit = mutation({
       anchor: args.anchor,
       difficulty: args.difficulty,
       kind: args.kind,
+      targetValue: args.targetValue,
+      targetUnit: args.targetUnit,
+      timezone: args.timezone,
       startDayKey: args.startDayKey,
       endDayKey: args.endDayKey,
       createdAt: now,
@@ -77,6 +88,9 @@ export const createHabit = mutation({
         anchor: args.anchor,
         difficulty: args.difficulty,
         kind: args.kind,
+        targetValue: args.targetValue,
+        targetUnit: args.targetUnit,
+        timezone: args.timezone,
         startDayKey: args.startDayKey,
         endDayKey: args.endDayKey,
       },

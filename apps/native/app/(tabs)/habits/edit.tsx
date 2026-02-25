@@ -34,6 +34,9 @@ export default function EditHabitScreen() {
   const [customDays, setCustomDays] = React.useState<number[]>([1, 2, 3, 4, 5]);
   const [startDayKey, setStartDayKey] = React.useState<string | undefined>();
   const [endDayKey, setEndDayKey] = React.useState<string | undefined>();
+  const [targetValue, setTargetValue] = React.useState("1");
+  const [targetUnit, setTargetUnit] = React.useState("session");
+  const [timezone, setTimezone] = React.useState("UTC");
   const [hydratedHabitId, setHydratedHabitId] = React.useState<Id<"habits"> | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
@@ -45,6 +48,9 @@ export default function EditHabitScreen() {
     setAnchor(habit.anchor || "morning");
     setDifficulty(habit.difficulty || "low");
     setKind(habit.kind || "build");
+    setTargetValue(habit.targetValue ? String(habit.targetValue) : "1");
+    setTargetUnit(habit.targetUnit || "session");
+    setTimezone(habit.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC");
     setStartDayKey(habit.startDayKey);
     setEndDayKey(habit.endDayKey);
 
@@ -68,8 +74,11 @@ export default function EditHabitScreen() {
     if (startDayKey && endDayKey && endDayKey < startDayKey) {
       return "End date must be on or after start date";
     }
+    if (targetValue.trim() && Number(targetValue) <= 0) {
+      return "Target value must be greater than 0";
+    }
     return null;
-  }, [cadenceType, customDays.length, endDayKey, habit, name, startDayKey]);
+  }, [cadenceType, customDays.length, endDayKey, habit, name, startDayKey, targetValue]);
 
   const isLoading = habits === undefined;
 
@@ -94,6 +103,9 @@ export default function EditHabitScreen() {
         anchor,
         difficulty,
         kind,
+        targetValue: targetValue.trim() ? Number(targetValue) : undefined,
+        targetUnit: targetUnit.trim() || undefined,
+        timezone: timezone.trim() || undefined,
         startDayKey,
         endDayKey,
       });
@@ -139,6 +151,9 @@ export default function EditHabitScreen() {
           customDays={customDays}
           startDayKey={startDayKey}
           endDayKey={endDayKey}
+          targetValue={targetValue}
+          targetUnit={targetUnit}
+          timezone={timezone}
           validationError={validationError}
           isSubmitting={isSubmitting}
           submitLabel="Save Habit"
@@ -150,6 +165,9 @@ export default function EditHabitScreen() {
           onCustomDaysChange={setCustomDays}
           onStartDayKeyChange={setStartDayKey}
           onEndDayKeyChange={setEndDayKey}
+          onTargetValueChange={setTargetValue}
+          onTargetUnitChange={setTargetUnit}
+          onTimezoneChange={setTimezone}
           onSubmit={handleSubmit}
           onCancel={() => router.back()}
         />

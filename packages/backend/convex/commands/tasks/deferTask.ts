@@ -18,6 +18,7 @@ export const deferTask = mutation({
     await ctx.db.patch(args.taskId, {
       status: "deferred",
       deferredUntil: args.deferUntil,
+      updatedAt: occurredAt,
     });
 
     await ctx.db.insert("events", {

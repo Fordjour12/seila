@@ -19,6 +19,9 @@ type HabitAddPremiumProps = {
   customDays: number[];
   startDayKey?: string;
   endDayKey?: string;
+  targetValue: string;
+  targetUnit: string;
+  timezone: string;
   validationError: string | null;
   isSubmitting: boolean;
   onNameChange: (value: string) => void;
@@ -29,6 +32,9 @@ type HabitAddPremiumProps = {
   onCustomDaysChange: (days: number[]) => void;
   onStartDayKeyChange: (value?: string) => void;
   onEndDayKeyChange: (value?: string) => void;
+  onTargetValueChange: (value: string) => void;
+  onTargetUnitChange: (value: string) => void;
+  onTimezoneChange: (value: string) => void;
   onSubmit: () => void;
 };
 
@@ -134,6 +140,9 @@ export function HabitAddPremiumCardVariant({
   customDays,
   startDayKey,
   endDayKey,
+  targetValue,
+  targetUnit,
+  timezone,
   validationError,
   isSubmitting,
   onNameChange,
@@ -144,6 +153,9 @@ export function HabitAddPremiumCardVariant({
   onCustomDaysChange,
   onStartDayKeyChange,
   onEndDayKeyChange,
+  onTargetValueChange,
+  onTargetUnitChange,
+  onTimezoneChange,
   onSubmit,
 }: HabitAddPremiumProps) {
   const [showStartPicker, setShowStartPicker] = React.useState(false);
@@ -233,11 +245,40 @@ export function HabitAddPremiumCardVariant({
           </View>
         </View>
 
+        <View className="bg-background rounded-2xl border border-border p-3 gap-2">
+          <Text className="text-xs text-muted-foreground uppercase tracking-wider">Target</Text>
+          <View className="flex-row gap-2">
+            <TextInput
+              className="flex-1 bg-surface border border-border rounded-xl px-3 py-2 text-sm text-foreground"
+              placeholder="Value"
+              placeholderTextColor="#6b7280"
+              keyboardType="decimal-pad"
+              value={targetValue}
+              onChangeText={onTargetValueChange}
+            />
+            <TextInput
+              className="flex-1 bg-surface border border-border rounded-xl px-3 py-2 text-sm text-foreground"
+              placeholder="Unit"
+              placeholderTextColor="#6b7280"
+              value={targetUnit}
+              onChangeText={onTargetUnitChange}
+            />
+          </View>
+          <TextInput
+            className="bg-surface border border-border rounded-xl px-3 py-2 text-sm text-foreground"
+            placeholder="Timezone (e.g. Africa/Accra)"
+            placeholderTextColor="#6b7280"
+            value={timezone}
+            onChangeText={onTimezoneChange}
+          />
+        </View>
+
         <View className="bg-warning/10 border border-warning/20 rounded-2xl p-3">
           <Text className="text-xs text-warning uppercase tracking-wider">Preview</Text>
           <Text className="text-sm text-foreground mt-1">
             {name.trim() || "Unnamed Habit"} · {toTitleCase(kind)} · {toTitleCase(cadenceType)} ·{" "}
             {toTitleCase(anchor)} · {toTitleCase(difficulty)}
+            {targetValue.trim() ? ` · ${targetValue.trim()} ${targetUnit.trim() || "units"}` : ""}
           </Text>
         </View>
 
