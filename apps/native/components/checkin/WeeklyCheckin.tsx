@@ -40,9 +40,7 @@ export function WeeklyCheckin({ onComplete }: WeeklyCheckinProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const toggleFlag = (flag: CheckinFlag) => {
-    setFlags((prev) =>
-      prev.includes(flag) ? prev.filter((f) => f !== flag) : [...prev, flag],
-    );
+    setFlags((prev) => (prev.includes(flag) ? prev.filter((f) => f !== flag) : [...prev, flag]));
   };
 
   const MOOD_EMOJIS: Record<number, string> = {
@@ -102,9 +100,7 @@ export function WeeklyCheckin({ onComplete }: WeeklyCheckinProps) {
   return (
     <View className="p-4 gap-6">
       <View>
-        <Text className="text-lg font-medium text-foreground mb-3">
-          How was your week?
-        </Text>
+        <Text className="text-lg font-medium text-foreground mb-3">How was your week?</Text>
         <View className="flex-row justify-between">
           {[1, 2, 3, 4, 5].map((value) => (
             <View key={value} className="items-center">
@@ -116,16 +112,14 @@ export function WeeklyCheckin({ onComplete }: WeeklyCheckinProps) {
               >
                 <Text className="text-2xl">{MOOD_EMOJIS[value]}</Text>
               </Button>
-              <Text className="text-xs text-muted mt-1">{MOOD_LABELS[value]}</Text>
+              <Text className="text-xs text-muted-foreground mt-1">{MOOD_LABELS[value]}</Text>
             </View>
           ))}
         </View>
       </View>
 
       <View>
-        <Text className="text-lg font-medium text-foreground mb-3">
-          Energy level
-        </Text>
+        <Text className="text-lg font-medium text-foreground mb-3">Energy level</Text>
         <View className="flex-row justify-between">
           {[1, 2, 3, 4, 5].map((value) => (
             <Button
@@ -142,9 +136,7 @@ export function WeeklyCheckin({ onComplete }: WeeklyCheckinProps) {
       </View>
 
       <View>
-        <Text className="text-lg font-medium text-foreground mb-3">
-          Quick flags
-        </Text>
+        <Text className="text-lg font-medium text-foreground mb-3">Quick flags</Text>
         <View className="flex-row flex-wrap gap-2">
           {ALL_FLAGS.map((flag) => (
             <Button
@@ -159,73 +151,47 @@ export function WeeklyCheckin({ onComplete }: WeeklyCheckinProps) {
         </View>
       </View>
 
-      <Text className="text-xl font-medium text-foreground mt-4">
-        Weekly Reflection
-      </Text>
+      <Text className="text-xl font-medium text-foreground mt-4">Weekly Reflection</Text>
 
       <View>
-        <Text className="text-sm text-muted mb-2">What felt good this week?</Text>
+        <Text className="text-sm text-muted-foreground mb-2">What felt good this week?</Text>
         <TextInput
+          className="border border-border rounded-xl px-3 py-2.5 text-foreground min-h-[80] text-base"
           placeholder="Reflect on the positives..."
           placeholderTextColor="#9CA3AF"
           value={feltGood}
           onChangeText={setFeltGood}
           multiline
           numberOfLines={3}
-          style={{
-            borderWidth: 1,
-            borderColor: "#D1D5DB",
-            borderRadius: 10,
-            paddingHorizontal: 12,
-            paddingVertical: 10,
-            color: "#111827",
-            minHeight: 80,
-            textAlignVertical: "top",
-          }}
+          textAlignVertical="top"
         />
       </View>
 
       <View>
-        <Text className="text-sm text-muted mb-2">What felt hard?</Text>
+        <Text className="text-sm text-muted-foreground mb-2">What felt hard?</Text>
         <TextInput
+          className="border border-border rounded-xl px-3 py-2.5 text-foreground min-h-[80] text-base"
           placeholder="What were the challenges?"
           placeholderTextColor="#9CA3AF"
           value={feltHard}
           onChangeText={setFeltHard}
           multiline
           numberOfLines={3}
-          style={{
-            borderWidth: 1,
-            borderColor: "#D1D5DB",
-            borderRadius: 10,
-            paddingHorizontal: 12,
-            paddingVertical: 10,
-            color: "#111827",
-            minHeight: 80,
-            textAlignVertical: "top",
-          }}
+          textAlignVertical="top"
         />
       </View>
 
       <View>
-        <Text className="text-sm text-muted mb-2">What do you want to carry into next week?</Text>
+        <Text className="text-sm text-muted-foreground mb-2">What do you want to carry into next week?</Text>
         <TextInput
+          className="border border-border rounded-xl px-3 py-2.5 text-foreground min-h-[80] text-base"
           placeholder="Your intentions for next week..."
           placeholderTextColor="#9CA3AF"
           value={carryForward}
           onChangeText={setCarryForward}
           multiline
           numberOfLines={3}
-          style={{
-            borderWidth: 1,
-            borderColor: "#D1D5DB",
-            borderRadius: 10,
-            paddingHorizontal: 12,
-            paddingVertical: 10,
-            color: "#111827",
-            minHeight: 80,
-            textAlignVertical: "top",
-          }}
+          textAlignVertical="top"
         />
       </View>
 

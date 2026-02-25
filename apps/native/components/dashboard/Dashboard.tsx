@@ -16,19 +16,11 @@ interface DashboardProps {
 }
 
 export function Dashboard({ compact = false }: DashboardProps) {
-  const untypedApi = api as any;
-
-  const moodTrend = useQuery(untypedApi.queries.moodTrend.moodTrend) as {
-    averageMood: number;
-    averageEnergy: number;
-    daysTracked: number;
-  } | null;
-
-  const todayHabits = useQuery(untypedApi.queries.todayHabits.todayHabits) as any[] | null;
-  const lastCheckin = useQuery(untypedApi.queries.lastCheckin.lastCheckin) as any | null;
-  const lastReview = useQuery(untypedApi.queries.reviewQueries.lastReview) as any | null;
-  const activePatterns = useQuery(untypedApi.queries.activePatterns.activePatterns) as any[] | null;
-  const todayFocus = useQuery(untypedApi.queries.taskQueries.todayFocus) as any[] | null;
+  const moodTrend = useQuery(api.queries.moodTrend.moodTrend, {});
+  const todayHabits = useQuery(api.queries.todayHabits.todayHabits, {});
+  const lastReview = useQuery(api.queries.reviewQueries.lastReview, {});
+  const activePatterns = useQuery(api.queries.activePatterns.activePatterns, {});
+  const todayFocus = useQuery(api.queries.taskQueries.todayFocus, {});
 
   const completedHabits = todayHabits?.filter((h) => h.todayStatus === "completed").length ?? 0;
   const totalHabits = todayHabits?.length ?? 0;
@@ -75,7 +67,9 @@ export function Dashboard({ compact = false }: DashboardProps) {
               <View className="flex-row items-center gap-2">
                 <Text className="text-3xl">{MOOD_EMOJIS[Math.round(moodTrend.averageMood)]}</Text>
                 <View>
-                  <Text className="text-foreground font-medium">{moodTrend.averageMood.toFixed(1)}/5</Text>
+                  <Text className="text-foreground font-medium">
+                    {moodTrend.averageMood.toFixed(1)}/5
+                  </Text>
                   <Text className="text-muted text-xs">{moodTrend.daysTracked} days</Text>
                 </View>
               </View>
@@ -115,13 +109,19 @@ export function Dashboard({ compact = false }: DashboardProps) {
         <Surface variant="secondary" className="p-4 rounded-xl">
           <Text className="text-muted text-xs mb-2">Last Weekly Review</Text>
           <Text className="text-foreground text-sm font-medium mb-1">
-            Week of {new Date(lastReview.weekStart).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+            Week of{" "}
+            {new Date(lastReview.weekStart).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+            })}
           </Text>
           {lastReview.intentions && lastReview.intentions.length > 0 && (
             <View className="mt-2">
               <Text className="text-muted text-xs mb-1">Intentions:</Text>
               {lastReview.intentions.slice(0, 2).map((int: string, i: number) => (
-                <Text key={i} className="text-foreground text-sm">• {int}</Text>
+                <Text key={i} className="text-foreground text-sm">
+                  • {int}
+                </Text>
               ))}
             </View>
           )}

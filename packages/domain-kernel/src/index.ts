@@ -25,12 +25,12 @@ export type LifeEvent<
 export type AnyCommand = Command<string, unknown, Record<string, unknown>>;
 export type AnyLifeEvent = LifeEvent<string, unknown, Record<string, unknown>>;
 
-export * from "./habits";
-export * from "./checkin";
-export * from "./tasks";
-export * from "./weekly-review";
-export * from "./finance";
-export * from "./policies";
-export * from "./patterns";
-export * from "./hard-mode";
-export * from "./trace-harness";
+export * from "./habits.js";
+export * from "./checkin.js";
+export * from "./tasks.js";
+export * from "./weekly-review.js";
+export * from "./finance.js";
+export * from "./policies.js";
+export * from "./patterns.js";
+export * from "./hard-mode.js";
+export * from "./trace-harness.js";

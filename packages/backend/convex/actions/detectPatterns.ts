@@ -1,10 +1,14 @@
 "use node";
 
-import { internalAction } from "../_generated/server";
+import { internalAction, type ActionCtx } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { makeFunctionReference } from "convex/server";
 
 import { passesPatternTonePolicy } from "../patterns/tonePolicy";
+import { readAiContext, writeAiContext } from "../lib/aiContext";
+import { patternAgent } from "../agents/patternAgent";
+import { tonePolicy } from "../lib/tonePolicy";
+import { runAgentText } from "../lib/runAgentText";
 
 type Candidate = {
   type: "mood_habit" | "energy_checkin_timing" | "spending_mood";
@@ -146,7 +150,12 @@ function createEnergyTimingCandidate(input: {
 
 function createSpendingMoodCandidate(input: {
   checkins: Array<{ mood: number; occurredAt: number }>;
-  transactions: Array<{ amount: number; occurredAt: number; pendingImport: boolean; voidedAt?: number }>;
+  transactions: Array<{
+    amount: number;
+    occurredAt: number;
+    pendingImport: boolean;
+    voidedAt?: number;
+  }>;
 }): Candidate | null {
   const spendingByDay = new Map<number, number>();
   for (const transaction of input.transactions) {
@@ -205,9 +214,47 @@ function createSpendingMoodCandidate(input: {
   };
 }
 
+/**
+ * Uses the pattern agent to explain a candidate in plain language.
+ * Falls back to the raw headline if agent fails.
+ */
+async function explainWithAgent(
+  ctx: ActionCtx,
+  candidate: Candidate,
+): Promise<{ headline: string; subtext: string }> {
+  try {
+    const { thread } = await patternAgent.createThread(ctx);
+
+    const result = await runAgentText(
+      thread,
+      `Explain this pattern in plain language.
+               Pattern type: ${candidate.type}
+               Correlation: ${candidate.correlation.toFixed(3)}
+               Confidence: ${candidate.confidence.toFixed(2)}
+               Raw headline: ${candidate.headline}
+               Raw subtext: ${candidate.subtext}
+               Max 2 sentences. Positive or neutral framing only.`,
+    );
+
+    const safe = tonePolicy(result.text);
+
+    return {
+      headline: safe.split(". ")[0] || candidate.headline,
+      subtext: safe,
+    };
+  } catch {
+    // Agent failure — fall back to rule-based headlines
+    return {
+      headline: candidate.headline,
+      subtext: candidate.subtext,
+    };
+  }
+}
+
 export const detectPatterns: ReturnType<typeof internalAction> = internalAction({
   args: {},
   handler: async (ctx): Promise<{ scanned: number; created: number }> => {
+    const aiContext = await readAiContext(ctx);
     const now = Date.now();
     const since = now - THIRTY_DAYS_MS;
 
@@ -241,22 +288,29 @@ export const detectPatterns: ReturnType<typeof internalAction> = internalAction(
       .filter((candidate): candidate is Candidate => candidate !== null)
       .filter((candidate) => candidate.confidence >= MIN_CONFIDENCE)
       .filter((candidate) => passesPatternTonePolicy(candidate))
-      .map((candidate) => {
-        if (!recoveryContext?.hardDayLooksLike) {
-          return candidate;
-        }
-
-        return {
-          ...candidate,
-          subtext: `${candidate.subtext} Context note: ${recoveryContext.hardDayLooksLike}`.slice(0, 220),
-        };
-      })
       .sort((a, b) => b.confidence - a.confidence)
       .slice(0, 3);
 
+    // Use agent to explain each candidate in plain language
+    const explained = await Promise.all(
+      candidates.map(async (candidate) => {
+        const { headline, subtext } = await explainWithAgent(ctx, candidate);
+        let finalSubtext = subtext;
+
+        if (recoveryContext?.hardDayLooksLike) {
+          finalSubtext = `${subtext} Context note: ${recoveryContext.hardDayLooksLike}`.slice(
+            0,
+            220,
+          );
+        }
+
+        return { ...candidate, headline, subtext: finalSubtext };
+      }),
+    );
+
     let created = 0;
 
-    for (const candidate of candidates) {
+    for (const candidate of explained) {
       const persisted = await ctx.runMutation(
         internal.queries.activePatterns.upsertDetectedPattern,
         {
@@ -278,6 +332,24 @@ export const detectPatterns: ReturnType<typeof internalAction> = internalAction(
     await ctx.runMutation(internal.queries.activePatterns.expireOldPatterns, {
       now,
     });
+
+    if (candidates.length > 0) {
+      await writeAiContext(ctx, {
+        workingModelPatch: {
+          habitResonance: candidates.some((candidate) => candidate.type === "mood_habit")
+            ? "Habit completion continues to correlate with better mood windows."
+            : aiContext.workingModel.habitResonance,
+        },
+        memoryEntries: [
+          {
+            module: "patterns",
+            observation: `Pattern scan surfaced ${candidates.length} candidates and created ${created}.`,
+            confidence: "medium",
+            source: "patternAgent",
+          },
+        ],
+      });
+    }
 
     return {
       scanned: candidates.length,

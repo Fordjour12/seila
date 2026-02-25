@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "../test-compat.js";
 
 import {
   defaultPolicies,
@@ -6,10 +6,10 @@ import {
   type DomainState,
   type PolicyFn,
   type Suggestion,
-} from "../policies";
-import { initialCheckinState } from "../checkin";
-import { initialHabitState } from "../habits";
-import { initialTaskState } from "../tasks";
+} from "../policies.js";
+import { initialCheckinState } from "../checkin.js";
+import { initialHabitState } from "../habits.js";
+import { initialTaskState } from "../tasks.js";
 
 function baseState(overrides?: Partial<DomainState>): DomainState {
   return {

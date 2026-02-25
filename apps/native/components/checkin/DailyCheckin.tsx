@@ -62,9 +62,7 @@ export function DailyCheckin({ onComplete }: DailyCheckinProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const toggleFlag = (flag: (typeof ALL_FLAGS)[number]) => {
-    setFlags((prev) =>
-      prev.includes(flag) ? prev.filter((f) => f !== flag) : [...prev, flag],
-    );
+    setFlags((prev) => (prev.includes(flag) ? prev.filter((f) => f !== flag) : [...prev, flag]));
   };
 
   const handleSubmit = async () => {
@@ -104,9 +102,7 @@ export function DailyCheckin({ onComplete }: DailyCheckinProps) {
   return (
     <View className="p-4 gap-6">
       <View>
-        <Text className="text-lg font-medium text-foreground mb-3">
-          How are you feeling?
-        </Text>
+        <Text className="text-lg font-medium text-foreground mb-3">How are you feeling?</Text>
         <View className="flex-row justify-between">
           {[1, 2, 3, 4, 5].map((value) => (
             <View key={value} className="items-center">
@@ -118,7 +114,7 @@ export function DailyCheckin({ onComplete }: DailyCheckinProps) {
               >
                 <Text className="text-2xl">{MOOD_EMOJIS[value]}</Text>
               </Button>
-              <Text className="text-xs text-muted mt-1">{MOOD_LABELS[value]}</Text>
+              <Text className="text-xs text-muted-foreground mt-1">{MOOD_LABELS[value]}</Text>
             </View>
           ))}
         </View>
@@ -144,9 +140,7 @@ export function DailyCheckin({ onComplete }: DailyCheckinProps) {
       </View>
 
       <View>
-        <Text className="text-lg font-medium text-foreground mb-3">
-          What's on your mind?
-        </Text>
+        <Text className="text-lg font-medium text-foreground mb-3">What&apos;s on your mind?</Text>
         <View className="flex-row flex-wrap gap-2">
           {ALL_FLAGS.map((flag) => (
             <Button
@@ -162,24 +156,16 @@ export function DailyCheckin({ onComplete }: DailyCheckinProps) {
       </View>
 
       <View>
-        <Text className="text-sm text-muted mb-2">Note (optional)</Text>
+        <Text className="text-sm text-muted-foreground mb-2">Note (optional)</Text>
         <TextInput
+          className="border border-border rounded-xl px-3 py-2.5 text-foreground min-h-[90] text-base"
           placeholder="What's noteworthy about today?"
           placeholderTextColor="#9CA3AF"
           value={note}
           onChangeText={setNote}
           multiline
           numberOfLines={3}
-          style={{
-            borderWidth: 1,
-            borderColor: "#D1D5DB",
-            borderRadius: 10,
-            paddingHorizontal: 12,
-            paddingVertical: 10,
-            color: "#111827",
-            minHeight: 90,
-            textAlignVertical: "top",
-          }}
+          textAlignVertical="top"
         />
       </View>
 

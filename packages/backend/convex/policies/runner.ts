@@ -72,8 +72,7 @@ function buildHabitState(habits: Doc<"habits">[], events: Doc<"events">[]): Habi
     todayLog[payload.habitId] = {
       status: "snoozed",
       occurredAt: event.occurredAt,
-      snoozedUntil:
-        typeof payload.snoozedUntil === "number" ? payload.snoozedUntil : undefined,
+      snoozedUntil: typeof payload.snoozedUntil === "number" ? payload.snoozedUntil : undefined,
     };
   }
 
@@ -151,10 +150,7 @@ function buildTaskState(tasks: Doc<"tasks">[]): TaskState {
   };
 }
 
-function buildFinanceSnapshot(
-  envelopes: Doc<"envelopes">[],
-  transactions: Doc<"transactions">[],
-) {
+function buildFinanceSnapshot(envelopes: Doc<"envelopes">[], transactions: Doc<"transactions">[]) {
   const monthStart = new Date();
   monthStart.setUTCDate(1);
   monthStart.setUTCHours(0, 0, 0, 0);
@@ -278,7 +274,9 @@ export const runPolicyEngine = internalMutation({
     const nextByPolicy = new Map(nextSuggestions.map((item) => [item.policy, item]));
 
     for (const activeSuggestion of active) {
-      if (!nextByPolicy.has(activeSuggestion.policy as (typeof nextSuggestions)[number]["policy"])) {
+      if (
+        !nextByPolicy.has(activeSuggestion.policy as (typeof nextSuggestions)[number]["policy"])
+      ) {
         await ctx.db.patch(activeSuggestion._id, {
           dismissedAt: Date.now(),
         });

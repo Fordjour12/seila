@@ -1,6 +1,6 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "../test-compat.js";
 
-import { createTraceHarness } from "../trace-harness";
+import { createTraceHarness } from "../trace-harness.js";
 import {
   type HabitCommand,
   habitReducer,
@@ -8,7 +8,7 @@ import {
   replayHabitEvents,
   type HabitEvent,
   type HabitState,
-} from "../habits";
+} from "../habits.js";
 
 const NOW = Date.now();
 
@@ -20,6 +20,22 @@ function commandToEvent(command: HabitCommand): HabitEvent {
       idempotencyKey: command.idempotencyKey,
       payload: {
         habitId: "habit-1",
+        name: command.payload.name,
+        cadence: command.payload.cadence,
+        anchor: command.payload.anchor,
+        difficulty: command.payload.difficulty,
+      },
+      meta: {},
+    };
+  }
+
+  if (command.type === "updateHabit") {
+    return {
+      type: "habit.updated",
+      occurredAt: command.requestedAt,
+      idempotencyKey: command.idempotencyKey,
+      payload: {
+        habitId: command.payload.habitId,
         name: command.payload.name,
         cadence: command.payload.cadence,
         anchor: command.payload.anchor,
@@ -253,6 +269,46 @@ describe("habit reducer", () => {
       })
       .expect({
         activeHabits: {},
+        todayLog: {},
+      });
+
+    expect(trace.pass).toBe(true);
+  });
+
+  test("updateHabit updates habit profile", () => {
+    const created = commandToEvent({
+      type: "createHabit",
+      idempotencyKey: "cmd-create-6",
+      requestedAt: NOW,
+      payload: { name: "Meditate", cadence: "daily", anchor: "evening" },
+      meta: {},
+    });
+
+    const trace = habitTrace
+      .given([created])
+      .when({
+        type: "updateHabit",
+        idempotencyKey: "cmd-update",
+        requestedAt: NOW + 5,
+        payload: {
+          habitId: "habit-1",
+          name: "Meditate (10 min)",
+          cadence: "weekdays",
+          anchor: "morning",
+          difficulty: "medium",
+        },
+        meta: {},
+      })
+      .expect({
+        activeHabits: {
+          "habit-1": {
+            habitId: "habit-1",
+            name: "Meditate (10 min)",
+            cadence: "weekdays",
+            anchor: "morning",
+            difficulty: "medium",
+          },
+        },
         todayLog: {},
       });
 

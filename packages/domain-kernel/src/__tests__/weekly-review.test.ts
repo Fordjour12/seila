@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "../test-compat.js";
 
 import {
   handleReviewCommand,
@@ -7,8 +7,8 @@ import {
   type ReviewCommand,
   type ReviewEvent,
   type ReviewState,
-} from "../weekly-review";
-import { createTraceHarness } from "../trace-harness";
+} from "../weekly-review.js";
+import { createTraceHarness } from "../trace-harness.js";
 
 const reviewHarness = createTraceHarness<ReviewState, ReviewEvent, ReviewCommand>({
   initialState: initialReviewState,

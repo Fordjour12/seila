@@ -13,6 +13,10 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { api } from "../_generated/api";
 import { internalAction } from "../_generated/server";
+import { readAiContext, writeAiContext } from "../lib/aiContext";
+import { plannerAgent } from "../agents/plannerAgent";
+import { tonePolicy } from "../lib/tonePolicy";
+import { runAgentText } from "../lib/runAgentText";
 
 const applyGeneratedPlanRef = makeFunctionReference<
   "mutation",
@@ -43,12 +47,51 @@ const recoveryContextRef = makeFunctionReference<
 
 const MAX_RATIONALE_LENGTH = 80;
 
+type TodayHabit = {
+  habitId: Id<"habits">;
+  name: string;
+  anchor?: "morning" | "afternoon" | "evening" | "anytime";
+  todayStatus?: "completed" | "skipped" | "snoozed";
+};
+
+type InboxTask = {
+  _id: Id<"tasks">;
+  title: string;
+};
+
+type AgentRationalePayload = {
+  rationales?: Record<string, string>;
+};
+
+function parseAgentRationales(raw: string): AgentRationalePayload {
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (parsed && typeof parsed === "object" && "rationales" in parsed) {
+      const rationales = (parsed as { rationales?: unknown }).rationales;
+      if (rationales && typeof rationales === "object") {
+        return { rationales: rationales as Record<string, string> };
+      }
+    }
+  } catch {
+    // fallback handled by caller
+  }
+  return {};
+}
+
 function truncateRationale(input: string) {
   if (input.length <= MAX_RATIONALE_LENGTH) {
     return input;
   }
 
   return `${input.slice(0, MAX_RATIONALE_LENGTH - 3)}...`;
+}
+
+function toDayKey(timestamp: number) {
+  const date = new Date(timestamp);
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function byConfidenceDesc(a: PlannedItem, b: PlannedItem) {
@@ -60,6 +103,41 @@ function scheduleConservativeCadence(dayStart: number, sorted: PlannedItem[]): P
     ...item,
     scheduledAt: dayStart + (index + 1) * 90 * 60 * 1000,
   }));
+}
+
+function adjustForCalibration(input: {
+  items: PlannedItem[];
+  accuracy: number;
+  scope: HardModeScope;
+  inboxTasks: Array<{ _id: Id<"tasks">; title: string }>;
+}): PlannedItem[] {
+  const sorted = input.items.slice().sort(byConfidenceDesc);
+
+  if (input.accuracy < 0.5 && sorted.length > 1) {
+    return sorted.slice(0, sorted.length - 1);
+  }
+
+  if (input.accuracy > 0.85 && input.scope.tasks) {
+    const existingTaskIds = new Set(
+      sorted.filter((item) => item.module === "tasks").map((item) => item.id),
+    );
+    const extraTask = input.inboxTasks.find((task) => !existingTaskIds.has(`task:${task._id}`));
+
+    if (extraTask) {
+      sorted.push({
+        id: `task:${extraTask._id}`,
+        module: "tasks",
+        kind: "task.focus",
+        title: `Focus optional task: ${extraTask.title}`,
+        scheduledAt: 0,
+        confidence: 0.49,
+        rationale: truncateRationale("Calibration suggests one optional extra task may fit today."),
+        status: "planned",
+      });
+    }
+  }
+
+  return sorted;
 }
 
 function buildCandidates(input: {
@@ -145,6 +223,9 @@ export const generateHardModePlan = internalAction({
     dayStart: v.number(),
   },
   handler: async (ctx, args) => {
+    const aiContext = await readAiContext(ctx);
+    const dayKey = toDayKey(args.dayStart);
+
     const session = await ctx.runQuery(getSessionByIdRef, {
       sessionId: args.sessionId,
     });
@@ -153,12 +234,48 @@ export const generateHardModePlan = internalAction({
       return { generated: false };
     }
 
-    const [todayHabits, inboxTasks, lastCheckin, recoveryContext] = await Promise.all([
-      ctx.runQuery(api.queries.todayHabits.todayHabits, {}),
+    const [todayHabits, inboxTasks, lastCheckin, recoveryContext]: [
+      TodayHabit[],
+      InboxTask[],
+      { mood: number; energy: number } | null,
+      { hardDayLooksLike?: string; knownTriggers: string[]; restDefinition?: string } | null,
+    ] = await Promise.all([
+      ctx.runQuery(api.queries.todayHabits.todayHabits, { dayKey }),
       ctx.runQuery(api.queries.taskQueries.inbox, {}),
       ctx.runQuery(api.queries.lastCheckin.lastCheckin, {}),
       ctx.runQuery(recoveryContextRef, {}),
     ]);
+
+    // Use the planner agent with stable threadId for session continuity
+    const { thread } = await plannerAgent.continueThread(ctx, {
+      threadId: `hardmode-${args.sessionId}`,
+    });
+
+    // Let the agent generate rationale refinements
+    let agentRationales: Record<string, string> = {};
+    try {
+      const result = await runAgentText(
+        thread,
+        `Generate today's Hard Mode plan rationales.
+                 Session scope: ${JSON.stringify(session.scope)}
+                 Constraints: ${JSON.stringify(session.constraints)}
+                 Today habits: ${JSON.stringify(todayHabits.map((habit) => ({ name: habit.name, anchor: habit.anchor, status: habit.todayStatus })))}
+                 Inbox tasks: ${JSON.stringify(inboxTasks.slice(0, 3).map((task) => ({ id: task._id, title: task.title })))}
+                 Last check-in: mood=${lastCheckin?.mood ?? "?"} energy=${lastCheckin?.energy ?? "?"}
+                 Calibration accuracy: ${aiContext.calibration.hardModePlanAccuracy.toFixed(2)}
+                 
+                 For each planned item, provide an observational rationale (max 80 chars).
+                 Return JSON only: { "rationales": { "itemId": "rationale string" } }`,
+      );
+
+      const safe = tonePolicy(result.text);
+      const parsed = parseAgentRationales(safe);
+      if (parsed.rationales) {
+        agentRationales = parsed.rationales;
+      }
+    } catch {
+      /* agent failure — use rule-based rationales */
+    }
 
     const candidates = buildCandidates({
       scope: session.scope as HardModeScope,
@@ -167,9 +284,28 @@ export const generateHardModePlan = internalAction({
       recoveryContext,
     });
 
+    // Apply agent rationales where available
+    const enhancedCandidates = candidates.map((item) => {
+      const agentRationale = agentRationales[item.id];
+      if (agentRationale) {
+        return {
+          ...item,
+          rationale: truncateRationale(tonePolicy(agentRationale)),
+        };
+      }
+      return item;
+    });
+
+    const calibratedCandidates = adjustForCalibration({
+      items: enhancedCandidates,
+      accuracy: aiContext.calibration.hardModePlanAccuracy,
+      scope: session.scope as HardModeScope,
+      inboxTasks,
+    });
+
     const conservative = scheduleConservativeCadence(
       args.dayStart,
-      candidates.slice().sort(byConfidenceDesc),
+      calibratedCandidates.slice().sort(byConfidenceDesc),
     );
 
     const basePlan: HardModePlan = {
@@ -185,6 +321,17 @@ export const generateHardModePlan = internalAction({
     await ctx.runMutation(applyGeneratedPlanRef, {
       sessionId: args.sessionId,
       plan: safePlan,
+    });
+
+    await writeAiContext(ctx, {
+      memoryEntries: [
+        {
+          module: "hard_mode",
+          observation: `Generated hard mode plan with ${safePlan.items.length} items at accuracy ${aiContext.calibration.hardModePlanAccuracy.toFixed(2)}.`,
+          confidence: "medium",
+          source: "plannerAgent",
+        },
+      ],
     });
 
     return { generated: true };

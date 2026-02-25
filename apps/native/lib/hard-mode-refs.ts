@@ -57,11 +57,9 @@ export type HardModeSessionDoc = {
   };
 };
 
-export const hardModeSessionRef = makeFunctionReference<
-  "query",
-  {},
-  HardModeSessionDoc | null
->("queries/hardModeSession:hardModeSession");
+export const hardModeSessionRef = makeFunctionReference<"query", {}, HardModeSessionDoc | null>(
+  "queries/hardModeSession:hardModeSession",
+);
 
 export const currentHardModePlanRef = makeFunctionReference<
   "query",
@@ -131,8 +129,6 @@ export function asMutationRef<TArgs extends Record<string, unknown>, TReturn>(
   return ref;
 }
 
-export function asQueryRef<TReturn>(
-  ref: FunctionReference<"query", "public", {}, TReturn>,
-) {
+export function asQueryRef<TReturn>(ref: FunctionReference<"query", "public", {}, TReturn>) {
   return ref;
 }

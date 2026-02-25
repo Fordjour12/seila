@@ -1,12 +1,14 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "../test-compat.js";
 
-import type { Command, LifeEvent } from "../index";
+import type { Command, LifeEvent } from "../index.js";
 import {
   checkinReducer,
   handleCheckinCommand,
   initialCheckinState,
-} from "../checkin";
-import { createTraceHarness } from "../trace-harness";
+  type CheckinCommand as KernelCheckinCommand,
+  type CheckinEvent as KernelCheckinEvent,
+} from "../checkin.js";
+import { createTraceHarness } from "../trace-harness.js";
 
 type CheckinEvent = LifeEvent<
   "checkin.submitted" | "checkin.updated",
@@ -66,30 +68,28 @@ const checkinHarness = createTraceHarness<
   ) => ReturnType<typeof checkinReducer>,
   handleCommand: (events, command) => {
     const emitted = handleCheckinCommand(
-      events as any,
-      command as any,
+      events as ReadonlyArray<KernelCheckinEvent>,
+      command as KernelCheckinCommand,
     );
-    return emitted as any;
+    return emitted as ReadonlyArray<CheckinEvent>;
   },
 });
 
 describe("checkin reducer", () => {
   test("submit daily checkin", () => {
-    const result = checkinHarness
-      .given([])
-      .when({
-        type: "checkin.submit",
-        idempotencyKey: "checkin-1",
-        requestedAt: Date.now(),
-        payload: {
-          type: "daily",
-          mood: 4,
-          energy: 3,
-          flags: ["grateful", "focused"],
-          note: "Feeling good today",
-        },
-        meta: {},
-      });
+    const result = checkinHarness.given([]).when({
+      type: "checkin.submit",
+      idempotencyKey: "checkin-1",
+      requestedAt: Date.now(),
+      payload: {
+        type: "daily",
+        mood: 4,
+        energy: 3,
+        flags: ["grateful", "focused"],
+        note: "Feeling good today",
+      },
+      meta: {},
+    });
 
     expect(result.state.checkins).toHaveLength(1);
     expect(result.state.checkins[0].type).toBe("daily");
@@ -103,25 +103,23 @@ describe("checkin reducer", () => {
   });
 
   test("submit weekly checkin with answers", () => {
-    const result = checkinHarness
-      .given([])
-      .when({
-        type: "checkin.submit",
-        idempotencyKey: "checkin-weekly-1",
-        requestedAt: Date.now(),
-        payload: {
-          type: "weekly",
-          mood: 3,
-          energy: 2,
-          flags: ["tired"],
-          weeklyAnswers: {
-            feltGood: "Finished the project",
-            feltHard: "Not enough sleep",
-            carryForward: "Keep exercising",
-          },
+    const result = checkinHarness.given([]).when({
+      type: "checkin.submit",
+      idempotencyKey: "checkin-weekly-1",
+      requestedAt: Date.now(),
+      payload: {
+        type: "weekly",
+        mood: 3,
+        energy: 2,
+        flags: ["tired"],
+        weeklyAnswers: {
+          feltGood: "Finished the project",
+          feltHard: "Not enough sleep",
+          carryForward: "Keep exercising",
         },
-        meta: {},
-      });
+      },
+      meta: {},
+    });
 
     expect(result.state.checkins).toHaveLength(1);
     expect(result.state.checkins[0].type).toBe("weekly");
@@ -166,20 +164,18 @@ describe("checkin reducer", () => {
       },
     ];
 
-    const result = checkinHarness
-      .given(existingEvents)
-      .when({
-        type: "checkin.submit",
-        idempotencyKey: "checkin-3",
-        requestedAt: now,
-        payload: {
-          type: "daily",
-          mood: 5,
-          energy: 4,
-          flags: [],
-        },
-        meta: {},
-      });
+    const result = checkinHarness.given(existingEvents).when({
+      type: "checkin.submit",
+      idempotencyKey: "checkin-3",
+      requestedAt: now,
+      payload: {
+        type: "daily",
+        mood: 5,
+        energy: 4,
+        flags: [],
+      },
+      meta: {},
+    });
 
     expect(result.state.checkins).toHaveLength(3);
     expect(result.state.moodTrend.averageMood).toBe(4);
@@ -207,20 +203,18 @@ describe("checkin reducer", () => {
       },
     ];
 
-    const result = checkinHarness
-      .given(existingEvents)
-      .when({
-        type: "checkin.update",
-        idempotencyKey: "checkin-update-1",
-        requestedAt: now,
-        payload: {
-          checkinId: "checkin-1",
-          mood: 3,
-          energy: 2,
-          note: "Updated note",
-        },
-        meta: {},
-      });
+    const result = checkinHarness.given(existingEvents).when({
+      type: "checkin.update",
+      idempotencyKey: "checkin-update-1",
+      requestedAt: now,
+      payload: {
+        checkinId: "checkin-1",
+        mood: 3,
+        energy: 2,
+        note: "Updated note",
+      },
+      meta: {},
+    });
 
     expect(result.state.checkins).toHaveLength(1);
     expect(result.state.checkins[0].mood).toBe(3);

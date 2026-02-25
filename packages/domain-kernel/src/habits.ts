@@ -1,8 +1,9 @@
-import type { Command, LifeEvent } from "./index";
+import type { Command, LifeEvent } from "./index.js";
 
 export type HabitCadence = "daily" | "weekdays" | { customDays: number[] };
 export type HabitAnchor = "morning" | "afternoon" | "evening" | "anytime";
 export type HabitDifficulty = "low" | "medium" | "high";
+export type HabitKind = "build" | "break";
 
 export type CreateHabitCommand = Command<
   "createHabit",
@@ -11,6 +12,9 @@ export type CreateHabitCommand = Command<
     cadence: HabitCadence;
     anchor?: HabitAnchor;
     difficulty?: HabitDifficulty;
+    kind?: HabitKind;
+    startDayKey?: string;
+    endDayKey?: string;
   }
 >;
 
@@ -24,9 +28,23 @@ export type SnoozeHabitCommand = Command<
   }
 >;
 export type ArchiveHabitCommand = Command<"archiveHabit", { habitId: string }>;
+export type UpdateHabitCommand = Command<
+  "updateHabit",
+  {
+    habitId: string;
+    name: string;
+    cadence: HabitCadence;
+    anchor?: HabitAnchor;
+    difficulty?: HabitDifficulty;
+    kind?: HabitKind;
+    startDayKey?: string;
+    endDayKey?: string;
+  }
+>;
 
 export type HabitCommand =
   | CreateHabitCommand
+  | UpdateHabitCommand
   | LogHabitCommand
   | SkipHabitCommand
   | SnoozeHabitCommand
@@ -40,6 +58,9 @@ export type HabitCreatedEvent = LifeEvent<
     cadence: HabitCadence;
     anchor?: HabitAnchor;
     difficulty?: HabitDifficulty;
+    kind?: HabitKind;
+    startDayKey?: string;
+    endDayKey?: string;
   }
 >;
 
@@ -53,9 +74,23 @@ export type HabitSnoozedEvent = LifeEvent<
   }
 >;
 export type HabitArchivedEvent = LifeEvent<"habit.archived", { habitId: string }>;
+export type HabitUpdatedEvent = LifeEvent<
+  "habit.updated",
+  {
+    habitId: string;
+    name: string;
+    cadence: HabitCadence;
+    anchor?: HabitAnchor;
+    difficulty?: HabitDifficulty;
+    kind?: HabitKind;
+    startDayKey?: string;
+    endDayKey?: string;
+  }
+>;
 
 export type HabitEvent =
   | HabitCreatedEvent
+  | HabitUpdatedEvent
   | HabitCompletedEvent
   | HabitSkippedEvent
   | HabitSnoozedEvent
@@ -67,6 +102,9 @@ export type ActiveHabit = {
   cadence: HabitCadence;
   anchor?: HabitAnchor;
   difficulty?: HabitDifficulty;
+  kind?: HabitKind;
+  startDayKey?: string;
+  endDayKey?: string;
 };
 
 export type HabitTodayLogEntry = {
@@ -121,6 +159,33 @@ export function habitReducer(state: HabitState, event: HabitEvent): HabitState {
           cadence: event.payload.cadence,
           anchor: event.payload.anchor,
           difficulty: event.payload.difficulty,
+          kind: event.payload.kind,
+          startDayKey: event.payload.startDayKey,
+          endDayKey: event.payload.endDayKey,
+        },
+      },
+    };
+  }
+
+  if (event.type === "habit.updated") {
+    const current = state.activeHabits[event.payload.habitId];
+    if (!current) {
+      return state;
+    }
+
+    return {
+      ...state,
+      activeHabits: {
+        ...state.activeHabits,
+        [event.payload.habitId]: {
+          ...current,
+          name: event.payload.name,
+          cadence: event.payload.cadence,
+          anchor: event.payload.anchor,
+          difficulty: event.payload.difficulty,
+          kind: event.payload.kind,
+          startDayKey: event.payload.startDayKey,
+          endDayKey: event.payload.endDayKey,
         },
       },
     };

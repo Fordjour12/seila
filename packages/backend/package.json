@@ -13,9 +13,12 @@
     "dev:setup": "convex dev --configure --until-success"
   },
   "dependencies": {
+    "@ai-sdk/google": "^3.0.30",
     "@better-auth/expo": "catalog:",
+    "@convex-dev/agent": "^0.3.2",
     "@convex-dev/better-auth": "catalog:",
     "@seila/domain-kernel": "workspace:*",
+    "ai": "^6.0.94",
     "better-auth": "catalog:",
     "convex": "catalog:",
     "dotenv": "catalog:",

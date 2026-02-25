@@ -1,4 +1,4 @@
-import type { Command, LifeEvent } from "./index";
+import type { Command, LifeEvent } from "./index.js";
 
 export type FinanceSource = "manual" | "imported";
 
@@ -109,10 +109,7 @@ export const initialFinanceState: FinanceState = {
   inbox: [],
 };
 
-function upsertTransaction(
-  transactions: Transaction[],
-  next: Transaction,
-): Transaction[] {
+function upsertTransaction(transactions: Transaction[], next: Transaction): Transaction[] {
   const index = transactions.findIndex(
     (transaction) => transaction.transactionId === next.transactionId,
   );
@@ -126,10 +123,7 @@ function upsertTransaction(
   return updated;
 }
 
-export function financeReducer(
-  state: FinanceState,
-  event: FinanceEvent,
-): FinanceState {
+export function financeReducer(state: FinanceState, event: FinanceEvent): FinanceState {
   if (event.type === "finance.envelopeCreated") {
     return {
       ...state,
@@ -180,9 +174,7 @@ export function financeReducer(
     return {
       ...state,
       recentTransactions: upsertTransaction(state.recentTransactions, transaction),
-      inbox: state.inbox.filter(
-        (item) => item.transactionId !== transaction.transactionId,
-      ),
+      inbox: state.inbox.filter((item) => item.transactionId !== transaction.transactionId),
     };
   }
 
@@ -242,9 +234,7 @@ export function financeReducer(
     return {
       ...state,
       recentTransactions,
-      inbox: state.inbox.filter(
-        (item) => item.transactionId !== event.payload.transactionId,
-      ),
+      inbox: state.inbox.filter((item) => item.transactionId !== event.payload.transactionId),
     };
   }
 

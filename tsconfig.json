@@ -1,3 +1,4 @@
 {
-  "extends": "@seila/config/tsconfig.base.json"
+  "extends": "@seila/config/tsconfig.base.json",
+  "files": []
 }

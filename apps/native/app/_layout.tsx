@@ -1,44 +1,114 @@
 import "@/global.css";
-import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
-import { env } from "@seila/env/native";
-import { ConvexReactClient } from "convex/react";
+import React, { useCallback } from "react";
 import { Stack } from "expo-router";
-import { HeroUINativeProvider } from "heroui-native";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { KeyboardProvider } from "react-native-keyboard-controller";
 
 import { AppThemeProvider } from "@/contexts/app-theme-context";
-import { authClient } from "@/lib/auth-client";
-
-export const unstable_settings = {
-  initialRouteName: "(drawer)",
-};
+import { HeroUINativeProvider, type HeroUINativeConfig } from "heroui-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+// import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
+import { env } from "@seila/env/native";
+import { ConvexProvider, ConvexReactClient } from "convex/react";
+import { KeyboardAvoidingView, KeyboardProvider } from "react-native-keyboard-controller";
 
 const convex = new ConvexReactClient(env.EXPO_PUBLIC_CONVEX_URL, {
-  unsavedChangesWarning: false,
+   unsavedChangesWarning: false,
 });
 
-function StackLayout() {
-  return (
-    <Stack screenOptions={{}}>
-      <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
-      <Stack.Screen name="modal" options={{ title: "Modal", presentation: "modal" }} />
-    </Stack>
-  );
+export default function AppRoot() {
+
+   const contentWrapper = useCallback(
+      (children: React.ReactNode) => (
+         <KeyboardAvoidingView
+            pointerEvents="box-none"
+            behavior="padding"
+            keyboardVerticalOffset={12}
+            className="flex-1"
+         >
+            {children}
+         </KeyboardAvoidingView>
+      ),
+      []
+   );
+
+   const config: HeroUINativeConfig = {
+      // Global text configuration
+      textProps: {
+         minimumFontScale: 0.5,
+         maxFontSizeMultiplier: 1.5,
+         allowFontScaling: true,
+         adjustsFontSizeToFit: false,
+      },
+      // Global animation configuration
+      // Developer information messages configuration
+      devInfo: {
+         stylingPrinciples: true, // Optional: disable styling principles message
+      },
+      toast: {
+         contentWrapper,
+         defaultProps: {
+            variant: "default",
+            placement: "bottom",
+         },
+         insets: {
+            top: 20,
+            bottom: 20,
+            left: 20,
+            right: 20,
+
+         },
+         maxVisibleToasts: 3,
+      },
+   };
+
+
+   return (
+      <ConvexProvider client={convex}>
+         <GestureHandlerRootView style={{ flex: 1 }}>
+            <KeyboardProvider>
+               <AppThemeProvider>
+                  <HeroUINativeProvider config={config}>
+                     <RootLayout />
+                  </HeroUINativeProvider>
+               </AppThemeProvider>
+            </KeyboardProvider>
+         </GestureHandlerRootView>
+      </ConvexProvider>
+   );
 }
 
-export default function Layout() {
-  return (
-    <ConvexBetterAuthProvider client={convex} authClient={authClient}>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <KeyboardProvider>
-          <AppThemeProvider>
-            <HeroUINativeProvider>
-              <StackLayout />
-            </HeroUINativeProvider>
-          </AppThemeProvider>
-        </KeyboardProvider>
-      </GestureHandlerRootView>
-    </ConvexBetterAuthProvider>
-  );
+function RootLayout() {
+   return (
+      <Stack
+         screenOptions={{
+            headerShown: false,
+            animation: "slide_from_right",
+         }}
+      >
+         {/* Tab navigator */}
+         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+
+         <Stack.Screen
+            name="recovery"
+            options={{
+               presentation: "modal",
+               animation: "slide_from_bottom",
+            }}
+         />
+
+         {/* Modal screens */}
+         <Stack.Screen
+            name="hardmode"
+            options={{
+               presentation: "modal",
+               animation: "slide_from_bottom",
+            }}
+         />
+         <Stack.Screen
+            name="settings"
+            options={{
+               animation: "slide_from_right",
+            }}
+         />
+      </Stack>
+   );
 }

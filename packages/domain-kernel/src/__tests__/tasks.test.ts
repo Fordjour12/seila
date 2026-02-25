@@ -1,19 +1,17 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "../test-compat.js";
 
-import type { Command, LifeEvent } from "../index";
+import type { Command, LifeEvent } from "../index.js";
 import {
   handleTaskCommand,
   initialTaskState,
+  type TaskCommand as KernelTaskCommand,
+  type TaskEvent as KernelTaskEvent,
   taskReducer,
-} from "../tasks";
-import { createTraceHarness } from "../trace-harness";
+} from "../tasks.js";
+import { createTraceHarness } from "../trace-harness.js";
 
 type TaskEvent = LifeEvent<
-  | "task.created"
-  | "task.focused"
-  | "task.deferred"
-  | "task.completed"
-  | "task.abandoned",
+  "task.created" | "task.focused" | "task.deferred" | "task.completed" | "task.abandoned",
   { id: string; title?: string; deferUntil?: number; status?: string }
 >;
 
@@ -24,19 +22,18 @@ type TaskCommand =
   | Command<"task.complete", { taskId: string }>
   | Command<"task.abandon", { taskId: string }>;
 
-const taskHarness = createTraceHarness<
-  ReturnType<typeof taskReducer>,
-  TaskEvent,
-  TaskCommand
->({
+const taskHarness = createTraceHarness<ReturnType<typeof taskReducer>, TaskEvent, TaskCommand>({
   initialState: initialTaskState,
   reduce: taskReducer as (
     state: ReturnType<typeof taskReducer>,
     event: TaskEvent,
   ) => ReturnType<typeof taskReducer>,
   handleCommand: (events, command) => {
-    const emitted = handleTaskCommand(events as any, command as any);
-    return emitted as any;
+    const emitted = handleTaskCommand(
+      events as ReadonlyArray<KernelTaskEvent>,
+      command as KernelTaskCommand,
+    );
+    return emitted as ReadonlyArray<TaskEvent>;
   },
 });
 

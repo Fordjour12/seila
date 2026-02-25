@@ -1,0 +1,47 @@
+{
+  "cli": {
+    "version": ">= 18.0.3",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "APP_ENV": "development",
+        "EXPO_PUBLIC_CONVEX_URL": "https://marvelous-basilisk-286.convex.cloud",
+        "EXPO_PUBLIC_CONVEX_SITE_URL": "https://marvelous-basilisk-286.convex.site"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "env": {
+        "APP_ENV": "preview",
+        "EXPO_PUBLIC_CONVEX_URL": "https://marvelous-basilisk-286.convex.cloud",
+        "EXPO_PUBLIC_CONVEX_SITE_URL": "https://marvelous-basilisk-286.convex.site"
+      }
+    },
+    "apk": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "APP_ENV": "preview",
+        "EXPO_PUBLIC_CONVEX_URL": "https://marvelous-basilisk-286.convex.cloud",
+        "EXPO_PUBLIC_CONVEX_SITE_URL": "https://marvelous-basilisk-286.convex.site"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "env": {
+        "APP_ENV": "production",
+        "EXPO_PUBLIC_CONVEX_URL": "https://marvelous-basilisk-286.convex.cloud",
+        "EXPO_PUBLIC_CONVEX_SITE_URL": "https://marvelous-basilisk-286.convex.site"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

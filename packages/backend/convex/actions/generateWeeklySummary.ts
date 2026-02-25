@@ -3,26 +3,18 @@
 import { v } from "convex/values";
 import { makeFunctionReference } from "convex/server";
 
-import { api, internal } from "../_generated/api";
+import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
+import { readAiContext, writeAiContext } from "../lib/aiContext";
+import { summaryAgent } from "../agents/summaryAgent";
+import { tonePolicy } from "../lib/tonePolicy";
+import { runAgentText } from "../lib/runAgentText";
 
 type WeeklySummary = {
   bullets: string[];
   brightSpot: string;
   worthNoticing: string;
 };
-
-const DISALLOWED_TONE_FRAGMENTS = [
-  "you failed",
-  "failure",
-  "lazy",
-  "shame",
-  "guilt",
-  "must",
-  "should",
-  "need to",
-  "have to",
-];
 
 const recoveryContextRef = makeFunctionReference<
   "query",
@@ -34,22 +26,33 @@ const recoveryContextRef = makeFunctionReference<
   } | null
 >("queries/recoveryContext:internalRecoveryContext");
 
-function average(values: number[]): number {
-  if (values.length === 0) return 0;
-  return values.reduce((sum, value) => sum + value, 0) / values.length;
-}
-
-function passesWeeklySummaryTonePolicy(summary: WeeklySummary) {
-  const combined = `${summary.bullets.join(" ")} ${summary.brightSpot} ${summary.worthNoticing}`.toLowerCase();
-  return !DISALLOWED_TONE_FRAGMENTS.some((fragment) => combined.includes(fragment));
-}
-
 function fallbackWeeklySummary(): WeeklySummary {
   return {
     bullets: ["A full week of activity was captured across your routines."],
     brightSpot: "You showed up and kept data flowing.",
     worthNoticing: "Your week had variation, which offers useful context for the next one.",
   };
+}
+
+function parseWeeklySummary(raw: string): WeeklySummary | null {
+  try {
+    const parsed = JSON.parse(raw);
+    if (
+      Array.isArray(parsed.bullets) &&
+      typeof parsed.brightSpot === "string" &&
+      typeof parsed.worthNoticing === "string"
+    ) {
+      return {
+        bullets: parsed.bullets.slice(0, 5),
+        brightSpot: parsed.brightSpot,
+        worthNoticing: parsed.worthNoticing,
+      };
+    }
+  } catch {
+    // Try extracting structured data from free text
+  }
+
+  return null;
 }
 
 export const generateWeeklySummary = internalAction({
@@ -59,98 +62,64 @@ export const generateWeeklySummary = internalAction({
     weekEnd: v.number(),
   },
   handler: async (ctx, args): Promise<WeeklySummary> => {
-    const [events, checkins, recoveryContext] = await Promise.all([
-      ctx.runQuery(api.queries.weeklySummaryQueries.eventsByDateRange, {
-        since: args.weekStart,
-        until: args.weekEnd,
-      }),
-      ctx.runQuery(api.queries.weeklySummaryQueries.recentCheckinsForWeeklySummary, {
-        since: args.weekStart,
-        until: args.weekEnd,
-      }),
-      ctx.runQuery(recoveryContextRef, {}),
-    ]);
+    const aiContext = await readAiContext(ctx);
+    const recoveryContext = await ctx.runQuery(recoveryContextRef, {});
 
-    const bullets: string[] = [];
+    const { thread } = await summaryAgent.createThread(ctx);
 
-    const completedHabits = events.filter((event) => event.type === "habit.completed").length;
-    if (completedHabits > 0) {
-      bullets.push(`${completedHabits} habit completions logged`);
-    }
+    const result = await runAgentText(
+      thread,
+      `Generate this week's summary.
+               Week range: ${new Date(args.weekStart).toISOString()} to ${new Date(args.weekEnd).toISOString()}
+               Use your tools to gather what you need — events, check-ins, mood trend, active patterns, AI context.
+               Fetch each module separately via tool.
+               ${recoveryContext?.restDefinition ? `Rest definition: ${recoveryContext.restDefinition}` : ""}
+               ${recoveryContext?.knownTriggers?.length ? `Known triggers: ${recoveryContext.knownTriggers.slice(0, 2).join(", ")}` : ""}
 
-    const checkinCount = checkins.length;
-    if (checkinCount > 0) {
-      bullets.push(`${checkinCount} check-ins completed`);
-    }
+               Output JSON only:
+               {
+                 "bullets": ["string", ...],
+                 "brightSpot": "string",
+                 "worthNoticing": "string"
+               }
 
-    const completedTasks = events.filter((event) => event.type === "task.completed").length;
-    if (completedTasks > 0) {
-      bullets.push(`${completedTasks} tasks completed`);
-    }
+               Rules:
+               - Max 5 bullets of what happened (factual, no judgment)
+               - One bright spot (specific: "Wednesday showed highest energy of the week")
+               - One worth-noticing observation (neutral, not prescriptive)
+               - No recommendations. No forward instructions. Facts and observations only.
+               - If a week has very little data, generate a shorter summary — do not pad it out`,
+    );
 
-    const transactionLogs = events.filter((event) => event.type === "finance.transactionLogged").length;
-    if (transactionLogs > 0) {
-      bullets.push(`${transactionLogs} transactions logged`);
-    }
+    const safe = tonePolicy(result.text);
+    const parsed = parseWeeklySummary(safe);
+    const safeSummary = parsed ?? fallbackWeeklySummary();
 
-    if (checkins.length > 0) {
-      const moods = checkins.map((checkin) => checkin.mood);
-      const avgMood = average(moods);
-      if (avgMood >= 4) {
-        bullets.push("Overall mood trending positive");
-      } else if (avgMood <= 2) {
-        bullets.push("Mood trend was lower this week");
-      }
-    }
-
-    if (bullets.length > 5) {
-      bullets.length = 5;
-    }
-
-    let brightSpot = "Your consistency with daily habits";
-    let worthNoticing = "Energy levels varied throughout the week";
-
-    if (checkins.length > 0) {
-      const maxMoodEntry = checkins.reduce(
-        (max, checkin) => (checkin.mood > max.mood ? checkin : max),
-        checkins[0],
-      );
-
-      if (maxMoodEntry.mood >= 4) {
-        brightSpot = `You felt your best on ${new Date(maxMoodEntry.occurredAt).toLocaleDateString("en-US", { weekday: "long" })}`;
-      }
-    }
-
-    if (completedHabits > 5) {
-      worthNoticing = "Strong habit completion streak this week";
-    } else if (completedHabits === 0) {
-      worthNoticing = "This week included fewer logged habit completions.";
-    }
-
-    if (recoveryContext?.restDefinition) {
-      bullets.push(`Your rest definition: ${recoveryContext.restDefinition}`);
-    }
-
-    if (recoveryContext?.knownTriggers?.length) {
-      const topTriggers = recoveryContext.knownTriggers.slice(0, 2).join(", ");
-      bullets.push(`Known triggers to keep in view: ${topTriggers}`);
-    }
-
-    const summary: WeeklySummary = {
-      bullets: bullets.slice(0, 5),
-      brightSpot,
-      worthNoticing,
-    };
-
-    const safeSummary = passesWeeklySummaryTonePolicy(summary)
-      ? summary
-      : fallbackWeeklySummary();
-
-    await ctx.runMutation(internal.commands.reviewCommands.applyGeneratedSummary, {
+    await ctx.runMutation(internal.commands.misc.reviewCommands.applyGeneratedSummary, {
       reviewId: args.reviewId,
       bullets: safeSummary.bullets,
       brightSpot: safeSummary.brightSpot,
       worthNoticing: safeSummary.worthNoticing,
+    });
+
+    await writeAiContext(ctx, {
+      workingModelPatch: {
+        reviewEngagement: "Weekly summaries are being generated and reflected in ongoing context.",
+      },
+      memoryEntries: [
+        {
+          module: "weekly_review",
+          observation: `Weekly summary generated with ${safeSummary.bullets.length} bullets.`,
+          confidence: "medium",
+          source: "summaryAgent",
+        },
+      ],
+      calibrationPatch: {
+        preferredSuggestionVolume:
+          aiContext.calibration.preferredSuggestionVolume === "full"
+            ? "moderate"
+            : aiContext.calibration.preferredSuggestionVolume,
+      },
     });
 
     return safeSummary;

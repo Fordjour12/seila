@@ -5,21 +5,42 @@ import {
   hardModePlanValidator,
   hardModeScopeValidator,
 } from "./hardMode/validators";
+import {
+  aiCalibrationValidator,
+  aiMemoryEntryValidator,
+  aiWorkingModelValidator,
+} from "./aiContext/validators";
+import { jsonPayloadObjectValidator } from "./lib/payloadValidators";
 
 export default defineSchema({
   events: defineTable({
     type: v.string(),
     occurredAt: v.number(),
     idempotencyKey: v.string(),
-    payload: v.any(),
+    payload: jsonPayloadObjectValidator,
   }).index("by_idempotency_key", ["idempotencyKey"]),
   habits: defineTable({
     name: v.string(),
-    cadence: v.union(v.literal("daily"), v.literal("weekdays"), v.object({ customDays: v.array(v.number()) })),
+    cadence: v.union(
+      v.literal("daily"),
+      v.literal("weekdays"),
+      v.object({ customDays: v.array(v.number()) }),
+    ),
     anchor: v.optional(
-      v.union(v.literal("morning"), v.literal("afternoon"), v.literal("evening"), v.literal("anytime")),
+      v.union(
+        v.literal("morning"),
+        v.literal("afternoon"),
+        v.literal("evening"),
+        v.literal("anytime"),
+      ),
     ),
     difficulty: v.optional(v.union(v.literal("low"), v.literal("medium"), v.literal("high"))),
+    kind: v.optional(v.union(v.literal("build"), v.literal("break"))),
+    startDayKey: v.optional(v.string()),
+    endDayKey: v.optional(v.string()),
+    pausedUntilDayKey: v.optional(v.string()),
+    stalePromptSnoozedUntil: v.optional(v.number()),
+    lastEngagedAt: v.optional(v.number()),
     archivedAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -27,6 +48,17 @@ export default defineSchema({
     lastSkippedAt: v.optional(v.number()),
     snoozedUntil: v.optional(v.number()),
   }).index("by_archived_at", ["archivedAt"]),
+  habitLogs: defineTable({
+    habitId: v.id("habits"),
+    dayKey: v.string(),
+    status: v.union(v.literal("completed"), v.literal("skipped"), v.literal("snoozed")),
+    occurredAt: v.number(),
+    snoozedUntil: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_day_key", ["dayKey"])
+    .index("by_habit_day", ["habitId", "dayKey"]),
   checkins: defineTable({
     type: v.union(v.literal("daily"), v.literal("weekly")),
     mood: v.number(),
@@ -71,11 +103,12 @@ export default defineSchema({
       v.object({
         type: v.union(v.literal("open_screen"), v.literal("run_command")),
         label: v.string(),
-        payload: v.optional(v.any()),
+        payload: v.optional(jsonPayloadObjectValidator),
       }),
     ),
     createdAt: v.number(),
     dismissedAt: v.optional(v.number()),
+    expiresAt: v.optional(v.number()),
   })
     .index("by_dismissed_at", ["dismissedAt"])
     .index("by_priority", ["priority"]),
@@ -93,6 +126,7 @@ export default defineSchema({
     source: v.union(v.literal("manual"), v.literal("imported")),
     merchantHint: v.optional(v.string()),
     note: v.optional(v.string()),
+    tags: v.optional(v.array(v.string())),
     occurredAt: v.number(),
     pendingImport: v.boolean(),
     voidedAt: v.optional(v.number()),
@@ -179,4 +213,117 @@ export default defineSchema({
     setAt: v.number(),
     reason: v.optional(v.string()),
   }).index("by_day_start", ["dayStart"]),
+  aiContext: defineTable({
+    lastUpdated: v.number(),
+    workingModel: aiWorkingModelValidator,
+    memory: v.array(aiMemoryEntryValidator),
+    calibration: aiCalibrationValidator,
+  }).index("by_last_updated", ["lastUpdated"]),
+  accounts: defineTable({
+    name: v.string(),
+    type: v.union(
+      v.literal("checking"),
+      v.literal("savings"),
+      v.literal("cash"),
+      v.literal("credit"),
+      v.literal("other"),
+    ),
+    balance: v.number(),
+    currency: v.optional(v.string()),
+    institution: v.optional(v.string()),
+    isHidden: v.optional(v.boolean()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_type", ["type"]),
+  incomes: defineTable({
+    amount: v.number(),
+    source: v.optional(v.string()),
+    note: v.optional(v.string()),
+    occurredAt: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_occurred_at", ["occurredAt"]),
+  savingsGoals: defineTable({
+    name: v.string(),
+    targetAmount: v.number(),
+    currentAmount: v.number(),
+    envelopeId: v.optional(v.id("envelopes")),
+    deadlineAt: v.optional(v.number()),
+    archivedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_archived_at", ["archivedAt"]),
+  receiptAttachments: defineTable({
+    transactionId: v.id("transactions"),
+    storageId: v.string(),
+    fileName: v.optional(v.string()),
+    mimeType: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_transaction", ["transactionId"])
+    .index("by_created_at", ["createdAt"]),
+  debts: defineTable({
+    name: v.string(),
+    balance: v.number(),
+    aprBps: v.number(),
+    minPayment: v.number(),
+    isActive: v.boolean(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_active", ["isActive"]),
+  investments: defineTable({
+    name: v.string(),
+    type: v.union(
+      v.literal("stock"),
+      v.literal("fund"),
+      v.literal("crypto"),
+      v.literal("cash"),
+      v.literal("other"),
+    ),
+    currentValue: v.number(),
+    costBasis: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_type", ["type"]),
+  sharedBudgets: defineTable({
+    name: v.string(),
+    budgetAmount: v.number(),
+    spentAmount: v.number(),
+    members: v.array(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_name", ["name"]),
+  fxRates: defineTable({
+    baseCurrency: v.string(),
+    quoteCurrency: v.string(),
+    rateScaled: v.number(),
+    asOf: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_pair", ["baseCurrency", "quoteCurrency"])
+    .index("by_as_of", ["asOf"]),
+  weeklyMoneyCheckins: defineTable({
+    weekStart: v.number(),
+    wins: v.array(v.string()),
+    overspendAreas: v.array(v.string()),
+    correction: v.string(),
+    focus: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_week", ["weekStart"]),
+  lowSpendResets: defineTable({
+    startedAt: v.number(),
+    endsAt: v.number(),
+    reason: v.optional(v.string()),
+    status: v.union(v.literal("active"), v.literal("completed"), v.literal("canceled")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_status", ["status"]),
+  financeSecuritySettings: defineTable({
+    biometricLockEnabled: v.boolean(),
+    offlineModeEnabled: v.boolean(),
+    conflictSafeSyncEnabled: v.boolean(),
+    updatedAt: v.number(),
+    createdAt: v.number(),
+  }).index("by_updated_at", ["updatedAt"]),
 });

@@ -7,10 +7,22 @@ interface NotificationSettingsProps {
 }
 
 const POLICIES = [
-  { id: "morning_habit", label: "Morning Habit Reminder", description: "Remind to log habits by 10am" },
-  { id: "checkin_prompt", label: "Check-in Reminder", description: "Prompt for daily check-in by 8pm" },
+  {
+    id: "morning_habit",
+    label: "Morning Habit Reminder",
+    description: "Remind to log habits by 10am",
+  },
+  {
+    id: "checkin_prompt",
+    label: "Check-in Reminder",
+    description: "Prompt for daily check-in by 8pm",
+  },
   { id: "weekly_review", label: "Weekly Review", description: "Reminder on Sunday evenings" },
-  { id: "focus_empty", label: "Focus Reminder", description: "When focus is empty and inbox has items" },
+  {
+    id: "focus_empty",
+    label: "Focus Reminder",
+    description: "When focus is empty and inbox has items",
+  },
   { id: "pattern_surface", label: "Pattern Alerts", description: "When new patterns are detected" },
   { id: "rest_permission", label: "Rest Permission", description: "After 5+ active days" },
 ];
@@ -53,10 +65,7 @@ export function NotificationSettings({ onClose }: NotificationSettingsProps) {
         <Text className="text-foreground font-medium mb-3">Quiet Hours</Text>
         <View className="flex-row items-center justify-between mb-3">
           <Text className="text-muted">Enable quiet hours</Text>
-          <Switch
-            value={quietHoursEnabled}
-            onValueChange={setQuietHoursEnabled}
-          />
+          <Switch value={quietHoursEnabled} onValueChange={setQuietHoursEnabled} />
         </View>
         {quietHoursEnabled && (
           <View className="flex-row gap-4">
@@ -81,7 +90,7 @@ export function NotificationSettings({ onClose }: NotificationSettingsProps) {
           <Text className="text-foreground font-medium">Policy Notifications</Text>
           <Text className="text-muted text-sm">{activeCount} active</Text>
         </View>
-        
+
         <Text className="text-muted text-xs mb-4">
           Choose which suggestions can notify you. All messages use neutral, non-urgent language.
         </Text>

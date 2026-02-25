@@ -10,10 +10,7 @@ const disallowedFragments = [
   "shame",
 ];
 
-export function passesPatternTonePolicy(input: {
-  headline: string;
-  subtext: string;
-}) {
+export function passesPatternTonePolicy(input: { headline: string; subtext: string }) {
   const combined = `${input.headline} ${input.subtext}`.toLowerCase();
 
   for (const fragment of disallowedFragments) {

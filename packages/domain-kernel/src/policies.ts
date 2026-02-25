@@ -1,13 +1,29 @@
-import type { CheckinState } from "./checkin";
-import type { HabitState } from "./habits";
-import type { TaskState } from "./tasks";
+import type { CheckinState } from "./checkin.js";
+import type { HabitState } from "./habits.js";
+import type { TaskState } from "./tasks.js";
 
 export type SuggestionPriority = 1 | 2 | 3 | 4 | 5;
+
+export type SuggestionPayloadValue =
+  | string
+  | number
+  | boolean
+  | null
+  | string[]
+  | number[]
+  | boolean[]
+  | null[]
+  | Record<string, string>
+  | Record<string, number>
+  | Record<string, boolean>
+  | Record<string, null>
+  | {}
+  | {}[];
 
 export type SuggestionAction = {
   type: "open_screen" | "run_command";
   label: string;
-  payload?: Record<string, unknown>;
+  payload?: Record<string, SuggestionPayloadValue>;
 };
 
 export type Suggestion = {
@@ -90,9 +106,7 @@ export const morningHabitPromptPolicy: PolicyFn = (state) => {
 };
 
 export const checkinPromptPolicy: PolicyFn = (state) => {
-  const latest = state.checkins.checkins
-    .slice()
-    .sort((a, b) => b.occurredAt - a.occurredAt)[0];
+  const latest = state.checkins.checkins.slice().sort((a, b) => b.occurredAt - a.occurredAt)[0];
 
   if (latest && state.now - latest.occurredAt < 24 * HOUR_MS) {
     return [];

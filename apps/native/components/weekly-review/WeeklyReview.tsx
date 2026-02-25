@@ -1,7 +1,8 @@
 import { api } from "@seila/backend/convex/_generated/api";
 import type { Id } from "@seila/backend/convex/_generated/dataModel";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
-import { Button, Surface, useToast } from "heroui-native";
+import { Button, useToast } from "heroui-native";
+import { SpicedCard } from "@/components/ui/SpicedCard";
 import { useState } from "react";
 import { Text, TextInput, View } from "react-native";
 
@@ -37,20 +38,21 @@ export function WeeklyReview() {
   const [intention3, setIntention3] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const summary: WeeklySummary | null = currentReview?.summaryGenerated &&
+  const summary: WeeklySummary | null =
+    currentReview?.summaryGenerated &&
     currentReview.summary &&
     currentReview.brightSpot &&
     currentReview.worthNoticing
-    ? {
-        bullets: currentReview.summary
-          .split("\n")
-          .map((line) => line.trim())
-          .filter(Boolean)
-          .slice(0, 5),
-        brightSpot: currentReview.brightSpot,
-        worthNoticing: currentReview.worthNoticing,
-      }
-    : null;
+      ? {
+          bullets: currentReview.summary
+            .split("\n")
+            .map((line) => line.trim())
+            .filter(Boolean)
+            .slice(0, 5),
+          brightSpot: currentReview.brightSpot,
+          worthNoticing: currentReview.worthNoticing,
+        }
+      : null;
 
   if (!isAuthenticated) {
     return null;
@@ -58,7 +60,7 @@ export function WeeklyReview() {
 
   if (!currentReview && phase === "closed") {
     return (
-      <Surface variant="secondary" className="p-4 rounded-xl">
+      <SpicedCard>
         <Text className="text-foreground font-medium mb-2">Weekly Review</Text>
         <Text className="text-muted text-sm mb-4">
           Time to reflect on your week. Set intentions for the week ahead.
@@ -96,27 +98,27 @@ export function WeeklyReview() {
             Skip
           </Button>
         </View>
-      </Surface>
+      </SpicedCard>
     );
   }
 
   if (phase === "lookback" || currentReview?.phase === "lookback") {
     return (
-      <Surface variant="secondary" className="p-4 rounded-xl">
+      <SpicedCard>
         <Text className="text-foreground font-medium mb-4">Looking Back</Text>
-        
+
         <View className="mb-4">
           <Text className="text-muted text-sm mb-2">Week Summary</Text>
           {summary ? (
             <View className="gap-1">
               {summary.bullets.map((bullet, i) => (
-                <Text key={i} className="text-foreground text-sm">• {bullet}</Text>
+                <Text key={i} className="text-foreground text-sm">
+                  • {bullet}
+                </Text>
               ))}
             </View>
           ) : (
-            <Text className="text-muted text-sm">
-              Generating your weekly summary...
-            </Text>
+            <Text className="text-muted text-sm">Generating your weekly summary...</Text>
           )}
         </View>
 
@@ -134,21 +136,18 @@ export function WeeklyReview() {
           </Text>
         </View>
 
-        <Button
-          variant="primary"
-          onPress={() => setPhase("reflect")}
-        >
+        <Button variant="primary" onPress={() => setPhase("reflect")}>
           Continue to Reflection
         </Button>
-      </Surface>
+      </SpicedCard>
     );
   }
 
   if (phase === "reflect" || currentReview?.phase === "reflect") {
     return (
-      <Surface variant="secondary" className="p-4 rounded-xl">
+      <SpicedCard>
         <Text className="text-foreground font-medium mb-4">Reflection</Text>
-        
+
         <View className="mb-4">
           <Text className="text-muted text-sm mb-2">What felt good this week?</Text>
           <TextInput
@@ -214,13 +213,13 @@ export function WeeklyReview() {
             }
             setIsSubmitting(true);
             try {
-                const id = currentReview?._id ?? reviewId;
-                if (!id) {
-                  toast.show({ variant: "danger", label: "No active review found" });
-                  return;
-                }
-                await submitReflection({
-                  reviewId: id,
+              const id = currentReview?._id ?? reviewId;
+              if (!id) {
+                toast.show({ variant: "danger", label: "No active review found" });
+                return;
+              }
+              await submitReflection({
+                reviewId: id,
                 idempotencyKey: getIdempotencyKey("review.reflection"),
                 feltGood: feltGood.trim(),
                 feltHard: feltHard.trim(),
@@ -238,18 +237,18 @@ export function WeeklyReview() {
         >
           Continue to Intentions
         </Button>
-      </Surface>
+      </SpicedCard>
     );
   }
 
   if (phase === "intentions" || currentReview?.phase === "intentions") {
     return (
-      <Surface variant="secondary" className="p-4 rounded-xl">
+      <SpicedCard>
         <Text className="text-foreground font-medium mb-4">Intentions for Next Week</Text>
         <Text className="text-muted text-sm mb-4">
           Set 1-3 loose intentions. Not commitments—just directions.
         </Text>
-        
+
         <View className="mb-3">
           <TextInput
             placeholder="Intention 1..."
@@ -284,14 +283,14 @@ export function WeeklyReview() {
           variant="primary"
           onPress={async () => {
             const intentions = [intention1, intention2, intention3]
-              .filter(i => i.trim())
+              .filter((i) => i.trim())
               .slice(0, 3);
-            
+
             if (intentions.length === 0) {
               toast.show({ variant: "warning", label: "Please add at least one intention" });
               return;
             }
-            
+
             setIsSubmitting(true);
             try {
               const id = currentReview?._id ?? reviewId;
@@ -323,7 +322,7 @@ export function WeeklyReview() {
         >
           Complete Review
         </Button>
-      </Surface>
+      </SpicedCard>
     );
   }
 
