@@ -27,6 +27,8 @@ export default function AddTaskScreen() {
   const [recurrence, setRecurrence] = React.useState<"none" | "daily" | "weekly" | "monthly">("none");
   const [blockedReason, setBlockedReason] = React.useState("");
   const [subtasks, setSubtasks] = React.useState<Array<{ id: string; title: string; completed: boolean }>>([]);
+  const [remindersEnabled, setRemindersEnabled] = React.useState(false);
+  const [reminderOffsetMinutes, setReminderOffsetMinutes] = React.useState("30");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const validationError = React.useMemo(() => {
@@ -50,6 +52,10 @@ export default function AddTaskScreen() {
           recurrence: recurrence === "none" ? undefined : recurrence,
           blockedReason: blockedReason.trim() || undefined,
           subtasks: subtasks.length ? subtasks : undefined,
+          remindersEnabled,
+          reminderOffsetMinutes: reminderOffsetMinutes.trim()
+            ? Number(reminderOffsetMinutes)
+            : undefined,
           priority,
           dueAt: dueDayKeyToTimestamp(dueDayKey),
         });
@@ -81,6 +87,8 @@ export default function AddTaskScreen() {
         recurrence={recurrence}
         blockedReason={blockedReason}
         subtasks={subtasks}
+        remindersEnabled={remindersEnabled}
+        reminderOffsetMinutes={reminderOffsetMinutes}
         validationError={validationError}
         isSubmitting={isSubmitting}
         submitLabel="Add Task"
@@ -92,6 +100,8 @@ export default function AddTaskScreen() {
         onRecurrenceChange={setRecurrence}
         onBlockedReasonChange={setBlockedReason}
         onSubtasksChange={setSubtasks}
+        onRemindersEnabledChange={setRemindersEnabled}
+        onReminderOffsetMinutesChange={setReminderOffsetMinutes}
         onSubmit={handleSubmit}
       />
     </ScrollView>

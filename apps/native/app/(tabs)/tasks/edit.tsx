@@ -54,6 +54,8 @@ export default function EditTaskScreen() {
   const [blockedByTaskId, setBlockedByTaskId] = React.useState<Id<"tasks"> | undefined>();
   const [blockedReason, setBlockedReason] = React.useState("");
   const [subtasks, setSubtasks] = React.useState<Array<{ id: string; title: string; completed: boolean }>>([]);
+  const [remindersEnabled, setRemindersEnabled] = React.useState(false);
+  const [reminderOffsetMinutes, setReminderOffsetMinutes] = React.useState("30");
   const [hydratedTaskId, setHydratedTaskId] = React.useState<Id<"tasks"> | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
@@ -70,6 +72,8 @@ export default function EditTaskScreen() {
     setBlockedByTaskId(task.blockedByTaskId);
     setBlockedReason(task.blockedReason || "");
     setSubtasks(task.subtasks || []);
+    setRemindersEnabled(task.remindersEnabled || false);
+    setReminderOffsetMinutes(task.reminderOffsetMinutes ? String(task.reminderOffsetMinutes) : "30");
     setHydratedTaskId(task._id);
   }, [task, hydratedTaskId]);
 
@@ -104,6 +108,10 @@ export default function EditTaskScreen() {
         blockedByTaskId,
         blockedReason: blockedReason.trim() || undefined,
         subtasks: subtasks.length ? subtasks : undefined,
+        remindersEnabled,
+        reminderOffsetMinutes: reminderOffsetMinutes.trim()
+          ? Number(reminderOffsetMinutes)
+          : undefined,
         priority,
         dueAt: dueDayKeyToTimestamp(dueDayKey),
       });
@@ -150,6 +158,8 @@ export default function EditTaskScreen() {
             recurrence={recurrence}
             blockedReason={blockedReason}
             subtasks={subtasks}
+            remindersEnabled={remindersEnabled}
+            reminderOffsetMinutes={reminderOffsetMinutes}
             helperText={`Current status: ${task.status}`}
             validationError={validationError}
             isSubmitting={isSubmitting}
@@ -162,6 +172,8 @@ export default function EditTaskScreen() {
             onRecurrenceChange={setRecurrence}
             onBlockedReasonChange={setBlockedReason}
             onSubtasksChange={setSubtasks}
+            onRemindersEnabledChange={setRemindersEnabled}
+            onReminderOffsetMinutesChange={setReminderOffsetMinutes}
             onSubmit={handleSubmit}
             onCancel={() => router.back()}
           />

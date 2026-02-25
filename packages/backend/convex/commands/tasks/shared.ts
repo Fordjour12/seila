@@ -1,6 +1,6 @@
 import { ConvexError } from "convex/values";
 import type { MutationCtx } from "../../_generated/server";
-import type { Id } from "../../_generated/dataModel";
+import type { Doc, Id } from "../../_generated/dataModel";
 
 export async function assertNoTaskDependencyCycle(
   ctx: MutationCtx,
@@ -23,7 +23,7 @@ export async function assertNoTaskDependencyCycle(
       throw new ConvexError("Dependency cycle detected");
     }
     visited.add(key);
-    const doc = await ctx.db.get(cursor);
+    const doc: Doc<"tasks"> | null = await ctx.db.get(cursor);
     if (!doc) break;
     cursor = doc.blockedByTaskId;
   }

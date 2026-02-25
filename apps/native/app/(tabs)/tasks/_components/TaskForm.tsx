@@ -15,6 +15,8 @@ type Props = {
   recurrence: "none" | "daily" | "weekly" | "monthly";
   blockedReason: string;
   subtasks: Array<{ id: string; title: string; completed: boolean }>;
+  remindersEnabled: boolean;
+  reminderOffsetMinutes: string;
   helperText?: string;
   validationError: string | null;
   isSubmitting: boolean;
@@ -27,6 +29,8 @@ type Props = {
   onRecurrenceChange: (value: "none" | "daily" | "weekly" | "monthly") => void;
   onBlockedReasonChange: (value: string) => void;
   onSubtasksChange: (value: Array<{ id: string; title: string; completed: boolean }>) => void;
+  onRemindersEnabledChange: (value: boolean) => void;
+  onReminderOffsetMinutesChange: (value: string) => void;
   onSubmit: () => void;
   onCancel?: () => void;
 };
@@ -41,6 +45,8 @@ export function TaskForm({
   recurrence,
   blockedReason,
   subtasks,
+  remindersEnabled,
+  reminderOffsetMinutes,
   helperText,
   validationError,
   isSubmitting,
@@ -53,6 +59,8 @@ export function TaskForm({
   onRecurrenceChange,
   onBlockedReasonChange,
   onSubtasksChange,
+  onRemindersEnabledChange,
+  onReminderOffsetMinutesChange,
   onSubmit,
   onCancel,
 }: Props) {
@@ -105,6 +113,28 @@ export function TaskForm({
                 </Pressable>
               );
             })}
+          </View>
+        </View>
+
+        <View className="gap-2">
+          <Text className="text-xs text-muted-foreground uppercase tracking-wider">Reminder</Text>
+          <View className="flex-row gap-2">
+            <Pressable
+              className={`rounded-full border px-3 py-2 ${remindersEnabled ? "bg-primary/10 border-primary/30" : "bg-background border-border"}`}
+              onPress={() => onRemindersEnabledChange(!remindersEnabled)}
+            >
+              <Text className={`text-xs ${remindersEnabled ? "text-primary" : "text-muted-foreground"}`}>
+                {remindersEnabled ? "Enabled" : "Disabled"}
+              </Text>
+            </Pressable>
+            <TextInput
+              className="flex-1 bg-background border border-border rounded-xl px-3 py-2 text-sm text-foreground"
+              placeholder="Offset before due (minutes)"
+              placeholderTextColor="#6b7280"
+              keyboardType="number-pad"
+              value={reminderOffsetMinutes}
+              onChangeText={onReminderOffsetMinutesChange}
+            />
           </View>
         </View>
 

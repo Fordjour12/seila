@@ -12,7 +12,14 @@ import {
   completeTaskRef,
   deferTaskRef,
   focusTaskRef,
+  backfillTaskDefaultsRef,
+  pauseTaskRecurrenceRef,
   reopenTaskRef,
+  skipNextRecurrenceRef,
+  snoozeTaskReminderRef,
+  taskDataHealthRef,
+  taskOnTimeMetricsRef,
+  updateTaskSeriesRef,
   taskTimeBlockSuggestionsRef,
   tasksFilteredRef,
   tasksConsistencyRef,
@@ -31,6 +38,10 @@ function TaskCard({
   dueAt,
   estimateMinutes,
   recurrence,
+  recurrenceEnabled,
+  skipNextRecurrence,
+  remindersEnabled,
+  reminderOffsetMinutes,
   subtasks,
   blockedReason,
   status,
@@ -40,6 +51,11 @@ function TaskCard({
   onDefer,
   onComplete,
   onReopen,
+  onSkipNextRecurrence,
+  onPauseRecurrence,
+  onResumeRecurrence,
+  onSnoozeReminder,
+  onUpdateFutureSeries,
   onAbandon,
   focusDisabled,
   isSubmitting,
@@ -50,6 +66,10 @@ function TaskCard({
   dueAt?: number;
   estimateMinutes?: number;
   recurrence?: "daily" | "weekly" | "monthly";
+  recurrenceEnabled?: boolean;
+  skipNextRecurrence?: boolean;
+  remindersEnabled?: boolean;
+  reminderOffsetMinutes?: number;
   subtasks?: Array<{ id: string; title: string; completed: boolean }>;
   blockedReason?: string;
   status: string;
@@ -59,6 +79,11 @@ function TaskCard({
   onDefer: () => void;
   onComplete: () => void;
   onReopen: () => void;
+  onSkipNextRecurrence: () => void;
+  onPauseRecurrence: () => void;
+  onResumeRecurrence: () => void;
+  onSnoozeReminder: () => void;
+  onUpdateFutureSeries: () => void;
   onAbandon: () => void;
   focusDisabled: boolean;
   isSubmitting: boolean;
@@ -157,6 +182,48 @@ function TaskCard({
           </Pressable>
         ) : null}
 
+        {recurrence ? (
+          <>
+            <Pressable
+              className="bg-warning/10 border border-warning/20 rounded-lg px-3 py-2"
+              onPress={onSkipNextRecurrence}
+              disabled={isSubmitting}
+            >
+              <Text className="text-xs font-medium text-warning">
+                {skipNextRecurrence ? "Skip Armed" : "Skip Next"}
+              </Text>
+            </Pressable>
+            <Pressable
+              className="bg-primary/10 border border-primary/20 rounded-lg px-3 py-2"
+              onPress={recurrenceEnabled === false ? onResumeRecurrence : onPauseRecurrence}
+              disabled={isSubmitting}
+            >
+              <Text className="text-xs font-medium text-primary">
+                {recurrenceEnabled === false ? "Resume Series" : "Pause Series"}
+              </Text>
+            </Pressable>
+            <Pressable
+              className="bg-primary/10 border border-primary/20 rounded-lg px-3 py-2"
+              onPress={onUpdateFutureSeries}
+              disabled={isSubmitting}
+            >
+              <Text className="text-xs font-medium text-primary">Apply to Future</Text>
+            </Pressable>
+          </>
+        ) : null}
+
+        {remindersEnabled ? (
+          <Pressable
+            className="bg-primary/10 border border-primary/20 rounded-lg px-3 py-2"
+            onPress={onSnoozeReminder}
+            disabled={isSubmitting}
+          >
+            <Text className="text-xs font-medium text-primary">
+              Snooze Reminder {reminderOffsetMinutes ? `(${reminderOffsetMinutes}m)` : ""}
+            </Text>
+          </Pressable>
+        ) : null}
+
         {status !== "abandoned" ? (
           <Pressable
             className="bg-danger/10 border border-danger/20 rounded-lg px-3 py-2"
@@ -212,6 +279,8 @@ export default function TasksScreen() {
   }) || [];
   const suggestions = useQuery(taskTimeBlockSuggestionsRef, { horizonMinutes: 180 }) || [];
   const consistency = useQuery(tasksConsistencyRef, { dayKey, windowDays: 30, trendDays: 14 });
+  const onTimeMetrics = useQuery(taskOnTimeMetricsRef, { windowDays: 30 });
+  const dataHealth = useQuery(taskDataHealthRef, {});
 
   const captureTask = useMutation(captureTaskRef);
   const focusTask = useMutation(focusTaskRef);
@@ -220,6 +289,11 @@ export default function TasksScreen() {
   const abandonTask = useMutation(abandonTaskRef);
   const reopenTask = useMutation(reopenTaskRef);
   const bulkUpdate = useMutation(bulkUpdateTasksRef);
+  const skipNextRecurrence = useMutation(skipNextRecurrenceRef);
+  const pauseTaskRecurrence = useMutation(pauseTaskRecurrenceRef);
+  const updateTaskSeries = useMutation(updateTaskSeriesRef);
+  const snoozeTaskReminder = useMutation(snoozeTaskReminderRef);
+  const backfillTaskDefaults = useMutation(backfillTaskDefaultsRef);
 
   const [captureTitle, setCaptureTitle] = React.useState("");
   const [selectedTaskIds, setSelectedTaskIds] = React.useState<string[]>([]);
@@ -327,6 +401,57 @@ export default function TasksScreen() {
       "Bulk update failed",
     );
 
+  const doSkipNextRecurrence = (taskId: Id<"tasks">) =>
+    runTaskAction(
+      async () => {
+        await skipNextRecurrence({
+          idempotencyKey: `tasks.recurrence.skipNext:${taskId}:${Date.now()}`,
+          taskId,
+        });
+      },
+      "Next recurrence skipped",
+      "Failed to skip next recurrence",
+    );
+
+  const doPauseRecurrence = (taskId: Id<"tasks">, paused: boolean) =>
+    runTaskAction(
+      async () => {
+        await pauseTaskRecurrence({
+          idempotencyKey: `tasks.recurrence.pause:${taskId}:${Date.now()}`,
+          taskId,
+          paused,
+        });
+      },
+      paused ? "Recurrence paused" : "Recurrence resumed",
+      "Failed to update recurrence",
+    );
+
+  const doSnoozeReminder = (taskId: Id<"tasks">) =>
+    runTaskAction(
+      async () => {
+        await snoozeTaskReminder({
+          idempotencyKey: `tasks.reminder.snooze:${taskId}:${Date.now()}`,
+          taskId,
+          snoozeMinutes: 60,
+        });
+      },
+      "Reminder snoozed by 60m",
+      "Failed to snooze reminder",
+    );
+
+  const doUpdateFutureSeries = (taskId: Id<"tasks">) =>
+    runTaskAction(
+      async () => {
+        await updateTaskSeries({
+          idempotencyKey: `tasks.series.update:${taskId}:${Date.now()}`,
+          taskId,
+          applyTo: "future",
+        });
+      },
+      "Future series updated",
+      "Failed to update future series",
+    );
+
   const renderTask = (task: (typeof inboxTasks)[number], inFocusSection = false) => (
     <Pressable key={task._id} onLongPress={() => toggleSelection(String(task._id))}>
       <View className={selectedTaskIds.includes(String(task._id)) ? "border border-primary/40 rounded-xl" : ""}>
@@ -337,6 +462,10 @@ export default function TasksScreen() {
           dueAt={task.dueAt}
           estimateMinutes={task.estimateMinutes}
           recurrence={task.recurrence as "daily" | "weekly" | "monthly" | undefined}
+          recurrenceEnabled={task.recurrenceEnabled}
+          skipNextRecurrence={task.skipNextRecurrence}
+          remindersEnabled={task.remindersEnabled}
+          reminderOffsetMinutes={task.reminderOffsetMinutes}
           subtasks={task.subtasks as Array<{ id: string; title: string; completed: boolean }> | undefined}
           blockedReason={task.blockedReason}
           status={task.status}
@@ -348,6 +477,11 @@ export default function TasksScreen() {
           onDefer={() => doDefer(task._id)}
           onComplete={() => doComplete(task._id)}
           onReopen={() => doReopen(task._id)}
+          onSkipNextRecurrence={() => doSkipNextRecurrence(task._id)}
+          onPauseRecurrence={() => doPauseRecurrence(task._id, true)}
+          onResumeRecurrence={() => doPauseRecurrence(task._id, false)}
+          onSnoozeReminder={() => doSnoozeReminder(task._id)}
+          onUpdateFutureSeries={() => doUpdateFutureSeries(task._id)}
           onAbandon={() => doAbandon(task._id)}
           focusDisabled={inFocusSection || focusFull}
           isSubmitting={isSubmitting}
@@ -381,6 +515,37 @@ export default function TasksScreen() {
           label="View Details"
           variant="ghost"
           onPress={() => router.push("/(tabs)/tasks/consistency" as any)}
+        />
+      </View>
+
+      <View className="bg-surface rounded-2xl border border-border p-4 gap-3 shadow-sm">
+        <SectionLabel>On-Time SLA (30d)</SectionLabel>
+        <Text className="text-3xl font-serif text-foreground">{onTimeMetrics?.onTimeRatePct ?? 0}%</Text>
+        <Text className="text-xs text-muted-foreground">
+          On time {onTimeMetrics?.onTimeCompleted ?? 0}/{onTimeMetrics?.completedWithDue ?? 0} with due dates
+        </Text>
+      </View>
+
+      <View className="bg-surface rounded-2xl border border-border p-4 gap-3 shadow-sm">
+        <SectionLabel>Data Health</SectionLabel>
+        <Text className="text-xs text-muted-foreground">
+          Missing updatedAt: {dataHealth?.missingUpdatedAt ?? 0} · Missing priority: {dataHealth?.missingPriority ?? 0}
+        </Text>
+        <Text className="text-xs text-muted-foreground">
+          Recurring without series: {dataHealth?.recurringWithoutSeries ?? 0} · Invalid deps: {dataHealth?.invalidDependencies ?? 0}
+        </Text>
+        <Button
+          label="Backfill Defaults"
+          variant="ghost"
+          onPress={() =>
+            runTaskAction(
+              async () => {
+                await backfillTaskDefaults({ idempotencyKey: `tasks.backfill:${Date.now()}` });
+              },
+              "Backfill completed",
+              "Backfill failed",
+            )
+          }
         />
       </View>
 

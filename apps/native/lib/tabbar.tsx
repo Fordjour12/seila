@@ -10,6 +10,7 @@ import {
   Animated,
   Platform,
   useWindowDimensions,
+  BackHandler,
 } from "react-native";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
@@ -71,6 +72,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   const router = useRouter();
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fullScreenOpenRef = useRef(false);
   const searchRoutes = useMemo(
     () =>
       Object.entries(TAB_CONFIG).map(([name, config]) => ({
@@ -117,6 +119,10 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   useEffect(() => {
     setExpandedGroups({});
   }, [searchQuery]);
+
+  useEffect(() => {
+    fullScreenOpenRef.current = isFullScreenOpen;
+  }, [isFullScreenOpen]);
 
   const handlePress = (
     routeName: string,
@@ -269,6 +275,10 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
     handleSelectResult(result);
   };
 
+  const dismissFullScreenSearch = () => {
+    setIsSearchFocused(false);
+  };
+
   const groupedResults = useMemo(
     () => [
       { key: "navigate", title: "Navigate", items: results.filter((r) => r.type === "route") },
@@ -316,6 +326,15 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
       </TouchableOpacity>
     );
   };
+
+  useEffect(() => {
+    if (!isFullScreenOpen) return;
+    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+      dismissFullScreenSearch();
+      return true;
+    });
+    return () => sub.remove();
+  }, [isFullScreenOpen]);
 
   return (
     <KeyboardAvoidingView pointerEvents="box-none" behavior="padding">
@@ -371,6 +390,9 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
             }}
             onBlur={() => {
               blurTimeoutRef.current = setTimeout(() => {
+                if (fullScreenOpenRef.current) {
+                  return;
+                }
                 setIsSearchFocused(false);
               }, 120);
             }}
@@ -404,7 +426,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
             <Pressable
               className="absolute inset-0"
               style={{ backgroundColor: "rgba(12, 13, 15, 0.42)" }}
-              onPress={() => setIsSearchFocused(false)}
+              onPress={dismissFullScreenSearch}
             />
             <View className="absolute inset-0 px-2.5 pt-2.5 pb-2">
               <View
@@ -444,7 +466,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
                       }}
                     />
                     <TouchableOpacity
-                      onPress={() => setIsSearchFocused(false)}
+                      onPress={dismissFullScreenSearch}
                       className="size-5 rounded-full items-center justify-center"
                       style={{ backgroundColor: colors.muted }}
                     >
@@ -464,7 +486,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
                       </View>
                     </View>
                     <TouchableOpacity
-                      onPress={() => setIsSearchFocused(false)}
+                      onPress={dismissFullScreenSearch}
                       className="rounded-md px-2 py-1 border"
                       style={{ borderColor: colors.border, backgroundColor: colors.background }}
                     >
@@ -520,6 +542,15 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
                       </View>
                     );
                   })}
+                  <TouchableOpacity
+                    className="mb-2 rounded-xl border px-3.5 py-3 items-center"
+                    style={{ borderColor: colors.border, backgroundColor: colors.background }}
+                    onPress={dismissFullScreenSearch}
+                  >
+                    <Text className="text-sm" style={{ color: colors.muted }}>
+                      Done
+                    </Text>
+                  </TouchableOpacity>
                 </ScrollView>
               </View>
             </View>
