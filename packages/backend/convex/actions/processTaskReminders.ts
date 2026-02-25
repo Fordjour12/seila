@@ -37,7 +37,7 @@ export const processTaskReminders = internalAction({
   handler: async (ctx) => {
     const now = Date.now();
     const quietToday = await ctx.runQuery(quietTodayRef, {});
-    const candidates = await ctx.runQuery(tasksFilteredRef, { dueBucket: "today" });
+    const candidates = await ctx.runQuery(tasksFilteredRef, { dueBucket: "all" });
     let sent = 0;
     let suppressed = 0;
 

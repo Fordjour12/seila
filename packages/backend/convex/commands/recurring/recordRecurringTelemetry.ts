@@ -1,8 +1,8 @@
 import { v } from "convex/values";
 
-import { internalMutation } from "../../_generated/server";
+import { mutation } from "../../_generated/server";
 
-export const recordRecurringTelemetry = internalMutation({
+export const recordRecurringTelemetry = mutation({
   args: {
     processed: v.number(),
     skippedDueToLimit: v.number(),

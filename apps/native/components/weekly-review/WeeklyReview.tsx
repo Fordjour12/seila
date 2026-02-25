@@ -21,11 +21,11 @@ export function WeeklyReview() {
   const { toast } = useToast();
 
   const currentReview = useQuery(api.queries.reviewQueries.currentReview);
-  const startReview = useMutation(api.commands.reviewCommands.startReview);
-  const submitReflection = useMutation(api.commands.reviewCommands.submitReflection);
-  const setIntentions = useMutation(api.commands.reviewCommands.setIntentions);
-  const closeReview = useMutation(api.commands.reviewCommands.closeReview);
-  const skipReview = useMutation(api.commands.reviewCommands.skipReview);
+  const startReview = useMutation(api.commands.misc.reviewCommands.startReview);
+  const submitReflection = useMutation(api.commands.misc.reviewCommands.submitReflection);
+  const setIntentions = useMutation(api.commands.misc.reviewCommands.setIntentions);
+  const closeReview = useMutation(api.commands.misc.reviewCommands.closeReview);
+  const skipReview = useMutation(api.commands.misc.reviewCommands.skipReview);
 
   const [phase, setPhase] = useState<"closed" | "lookback" | "reflect" | "intentions">("closed");
   const [reviewId, setReviewId] = useState<Id<"reviews"> | null>(null);
