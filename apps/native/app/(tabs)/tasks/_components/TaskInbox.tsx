@@ -1,6 +1,6 @@
 import { api } from "@seila/backend/convex/_generated/api";
 import type { Id } from "@seila/backend/convex/_generated/dataModel";
-import { useConvexAuth, useMutation, useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { Button, useToast } from "heroui-native";
 import { Text, View } from "react-native";
 import { SpicedCard } from "@/components/ui/SpicedCard";
@@ -10,7 +10,6 @@ function getIdempotencyKey(prefix: string) {
 }
 
 export function TaskInbox() {
-  const { isAuthenticated } = useConvexAuth();
   const { toast } = useToast();
   const inboxTasks = useQuery(api.queries.taskQueries.inbox);
   const focusTask = useMutation(api.commands.tasks.focusTask.focusTask);

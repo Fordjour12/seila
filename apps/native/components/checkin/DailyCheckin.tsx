@@ -1,4 +1,4 @@
-import { useConvexAuth, useMutation } from "convex/react";
+import { useMutation } from "convex/react";
 import { Button, useToast } from "heroui-native";
 import { useState } from "react";
 import { Text, TextInput, View } from "react-native";
@@ -51,7 +51,6 @@ interface DailyCheckinProps {
 }
 
 export function DailyCheckin({ onComplete }: DailyCheckinProps) {
-  const { isAuthenticated } = useConvexAuth();
   const { toast } = useToast();
   const submitCheckin = useMutation(api.commands.checkins.submitCheckin.submitCheckin);
 
@@ -66,14 +65,6 @@ export function DailyCheckin({ onComplete }: DailyCheckinProps) {
   };
 
   const handleSubmit = async () => {
-    if (!isAuthenticated) {
-      toast.show({
-        variant: "warning",
-        label: "Please sign in to save check-ins",
-      });
-      return;
-    }
-
     setIsSubmitting(true);
     try {
       await submitCheckin({
@@ -173,7 +164,7 @@ export function DailyCheckin({ onComplete }: DailyCheckinProps) {
         variant="primary"
         size="lg"
         onPress={handleSubmit}
-        isDisabled={!isAuthenticated || isSubmitting}
+        isDisabled={isSubmitting}
       >
         {isSubmitting ? "Saving..." : "Save Check-in"}
       </Button>

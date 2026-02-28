@@ -11,6 +11,7 @@ import {
   Platform,
   useWindowDimensions,
   BackHandler,
+  Image,
 } from "react-native";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
@@ -33,7 +34,9 @@ const TAB_CONFIG: Record<string, { label: string; icon: IconName }> = {
   finance: { label: "Finance", icon: "wallet-outline" },
   "patterns/index": { label: "Patterns", icon: "analytics-outline" },
   "review/index": { label: "Review", icon: "document-text-outline" },
+  settings: { label: "Settings", icon: "settings-outline" },
 };
+const SETTINGS_TAB_AVATAR = require("../assets/bba8b6ac6c886a26604e0b8f74964127.jpg");
 
 function getTabIconName(icon: IconName, isFocused: boolean): IconName {
   if (isFocused && icon.endsWith("-outline")) {
@@ -72,10 +75,18 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   const colors = useModeThemeColors();
   const reviewWindowOpen = isReviewWindowOpen();
   const router = useRouter();
-  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
+    {},
+  );
   const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fullScreenOpenRef = useRef(false);
-  const isTabVisible = (routeName: string) => routeName !== "review/index" || reviewWindowOpen;
+  const isTabVisible = (routeName: string) =>
+    routeName !== "review/index" || reviewWindowOpen;
+  const activeRouteName = state.routes[state.index]?.name ?? "";
+  const isSettingsRoute =
+    activeRouteName === "settings" ||
+    activeRouteName === "settings/index" ||
+    activeRouteName.startsWith("settings/");
 
   const searchRoutes = useMemo(
     () =>
@@ -170,11 +181,27 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
             { transform: [{ scale: scaleAnims[globalIdx] }] },
           ]}
         >
-          <Ionicons
-            name={getTabIconName(icon, isActive)}
-            size={20}
-            color={isActive ? colors.foreground : colors.muted}
-          />
+          {route.name === "settings" ? (
+            <View
+              className="h-5 w-5 overflow-hidden rounded-full border"
+              style={{
+                borderColor: isActive ? colors.accent : colors.border,
+                borderWidth: isActive ? 1.5 : 1,
+              }}
+            >
+              <Image
+                source={SETTINGS_TAB_AVATAR}
+                className="h-full w-full"
+                resizeMode="cover"
+              />
+            </View>
+          ) : (
+            <Ionicons
+              name={getTabIconName(icon, isActive)}
+              size={20}
+              color={isActive ? colors.foreground : colors.muted}
+            />
+          )}
           {label ? (
             <Text
               numberOfLines={1}
@@ -287,9 +314,21 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
 
   const groupedResults = useMemo(
     () => [
-      { key: "navigate", title: "Navigate", items: results.filter((r) => r.type === "route") },
-      { key: "habits", title: "Habits", items: results.filter((r) => r.type === "habit") },
-      { key: "tasks", title: "Tasks", items: results.filter((r) => r.type === "task") },
+      {
+        key: "navigate",
+        title: "Navigate",
+        items: results.filter((r) => r.type === "route"),
+      },
+      {
+        key: "habits",
+        title: "Habits",
+        items: results.filter((r) => r.type === "habit"),
+      },
+      {
+        key: "tasks",
+        title: "Tasks",
+        items: results.filter((r) => r.type === "task"),
+      },
       {
         key: "finance",
         title: "Finance",
@@ -301,7 +340,11 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
             r.type === "savingsGoal",
         ),
       },
-      { key: "suggestions", title: "Suggestions", items: results.filter((r) => r.type === "suggestion") },
+      {
+        key: "suggestions",
+        title: "Suggestions",
+        items: results.filter((r) => r.type === "suggestion"),
+      },
     ],
     [results],
   );
@@ -324,7 +367,10 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
             {result.label}
           </Text>
           {result.subtitle ? (
-            <Text className="text-[11px] text-muted-foreground" numberOfLines={1}>
+            <Text
+              className="text-[11px] text-muted-foreground"
+              numberOfLines={1}
+            >
               {result.subtitle}
             </Text>
           ) : null}
@@ -341,6 +387,10 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
     });
     return () => sub.remove();
   }, [isFullScreenOpen]);
+
+  if (isSettingsRoute) {
+    return null;
+  }
 
   return (
     <KeyboardAvoidingView pointerEvents="box-none" behavior="padding">
@@ -409,10 +459,14 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
           <View className="mt-1.5 bg-surface border border-border rounded-2xl overflow-hidden max-h-56">
             {results.length === 0 ? (
               <View className="px-3 py-2.5">
-                <Text className="text-xs text-muted-foreground">No results</Text>
+                <Text className="text-xs text-muted-foreground">
+                  No results
+                </Text>
               </View>
             ) : (
-              <ScrollView keyboardShouldPersistTaps="handled">{results.map(renderResultRow)}</ScrollView>
+              <ScrollView keyboardShouldPersistTaps="handled">
+                {results.map(renderResultRow)}
+              </ScrollView>
             )}
           </View>
         ) : null}
@@ -447,7 +501,10 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
                   elevation: 18,
                 }}
               >
-                <View className="px-3 py-2.5 border-b" style={{ borderColor: colors.border }}>
+                <View
+                  className="px-3 py-2.5 border-b"
+                  style={{ borderColor: colors.border }}
+                >
                   <View
                     className="flex-row items-center border rounded-xl px-3 py-2 gap-2.5"
                     style={{
@@ -455,7 +512,11 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
                       backgroundColor: colors.background,
                     }}
                   >
-                    <Ionicons name="search-outline" size={18} color={colors.warning} />
+                    <Ionicons
+                      name="search-outline"
+                      size={18}
+                      color={colors.warning}
+                    />
                     <TextInput
                       className="text-sm flex-1"
                       style={{ color: colors.foreground }}
@@ -476,17 +537,30 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
                       className="size-5 rounded-full items-center justify-center"
                       style={{ backgroundColor: colors.muted }}
                     >
-                      <Ionicons name="close" size={12} color={colors.foreground} />
+                      <Ionicons
+                        name="close"
+                        size={12}
+                        color={colors.foreground}
+                      />
                     </TouchableOpacity>
                   </View>
                   <View className="mt-2 flex-row items-center justify-between">
                     <View className="flex-row items-center gap-2">
-                      <Text className="text-xs text-muted-foreground uppercase tracking-wide">Navigate</Text>
+                      <Text className="text-xs text-muted-foreground uppercase tracking-wide">
+                        Navigate
+                      </Text>
                       <View
                         className="rounded-md px-1.5 py-0.5"
-                        style={{ backgroundColor: colors.background, borderColor: colors.border, borderWidth: 1 }}
+                        style={{
+                          backgroundColor: colors.background,
+                          borderColor: colors.border,
+                          borderWidth: 1,
+                        }}
                       >
-                        <Text className="text-[10px]" style={{ color: colors.muted }}>
+                        <Text
+                          className="text-[10px]"
+                          style={{ color: colors.muted }}
+                        >
                           Tap
                         </Text>
                       </View>
@@ -494,7 +568,10 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
                     <TouchableOpacity
                       onPress={dismissFullScreenSearch}
                       className="rounded-md px-2 py-1 border"
-                      style={{ borderColor: colors.border, backgroundColor: colors.background }}
+                      style={{
+                        borderColor: colors.border,
+                        backgroundColor: colors.background,
+                      }}
                     >
                       <Text className="text-xs" style={{ color: colors.muted }}>
                         Close
@@ -511,21 +588,31 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
                   {groupedResults.map((group) => {
                     if (group.items.length === 0) return null;
                     const isExpanded = expandedGroups[group.key] ?? false;
-                    const visibleItems = isExpanded ? group.items : group.items.slice(0, 4);
+                    const visibleItems = isExpanded
+                      ? group.items
+                      : group.items.slice(0, 4);
                     return (
                       <View
                         key={group.key}
                         className="mb-3 rounded-xl overflow-hidden border"
-                        style={{ borderColor: colors.border, backgroundColor: colors.background }}
+                        style={{
+                          borderColor: colors.border,
+                          backgroundColor: colors.background,
+                        }}
                       >
                         <View
                           className="px-3.5 py-2 border-b"
-                          style={{ borderColor: colors.border, backgroundColor: colors.surface }}
+                          style={{
+                            borderColor: colors.border,
+                            backgroundColor: colors.surface,
+                          }}
                         >
                           <Text className="text-xs uppercase tracking-wide text-muted-foreground">
                             {group.title}
                             {"  "}
-                            <Text style={{ color: colors.warning }}>{group.items.length}</Text>
+                            <Text style={{ color: colors.warning }}>
+                              {group.items.length}
+                            </Text>
                           </Text>
                         </View>
                         {visibleItems.map(renderResultRow)}
@@ -550,7 +637,10 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
                   })}
                   <TouchableOpacity
                     className="mb-2 rounded-xl border px-3.5 py-3 items-center"
-                    style={{ borderColor: colors.border, backgroundColor: colors.background }}
+                    style={{
+                      borderColor: colors.border,
+                      backgroundColor: colors.background,
+                    }}
                     onPress={dismissFullScreenSearch}
                   >
                     <Text className="text-sm" style={{ color: colors.muted }}>
@@ -565,7 +655,9 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
 
         <View className="flex-row items-center pb-0.5 mt-1.5">
           <View className="flex-1 flex-row justify-between">
-            {state.routes.filter((route) => isTabVisible(route.name)).map(renderTab)}
+            {state.routes
+              .filter((route) => isTabVisible(route.name))
+              .map(renderTab)}
           </View>
         </View>
       </View>

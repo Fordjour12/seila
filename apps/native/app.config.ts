@@ -42,7 +42,6 @@ const config: ExpoConfig = {
          backgroundImage: "./assets/images/android-icon-background.png",
          monochromeImage: "./assets/images/android-icon-monochrome.png",
       },
-      edgeToEdgeEnabled: true,
       softwareKeyboardLayoutMode: "resize",
       package: getBundleIdentifier(),
    },

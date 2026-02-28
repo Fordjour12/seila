@@ -1,5 +1,5 @@
 import { api } from "@seila/backend/convex/_generated/api";
-import { useConvexAuth, useMutation, useQuery } from "convex/react";
+import { useMutation } from "convex/react";
 import { Button, useToast } from "heroui-native";
 import { useState } from "react";
 import { Text, TextInput, View } from "react-native";
@@ -13,7 +13,6 @@ interface QuickCaptureProps {
 }
 
 export function QuickCapture({ onCapture }: QuickCaptureProps) {
-  const { isAuthenticated } = useConvexAuth();
   const { toast } = useToast();
   const captureTask = useMutation(api.commands.tasks.captureTask.captureTask);
 
@@ -23,14 +22,6 @@ export function QuickCapture({ onCapture }: QuickCaptureProps) {
   const handleSubmit = async () => {
     const trimmedTitle = title.trim();
     if (!trimmedTitle) return;
-
-    if (!isAuthenticated) {
-      toast.show({
-        variant: "warning",
-        label: "Please sign in to capture tasks",
-      });
-      return;
-    }
 
     setIsSubmitting(true);
     try {

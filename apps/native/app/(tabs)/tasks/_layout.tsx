@@ -1,11 +1,11 @@
 import { Stack } from "expo-router";
-import { Colors } from "../../../constants/theme";
 
 export default function TasksLayout() {
   return (
     <Stack
       screenOptions={{
         animation: "slide_from_right",
+        headerShown: false,
       }}
     >
       <Stack.Screen
@@ -13,10 +13,6 @@ export default function TasksLayout() {
         options={{
           headerShown: false,
           title: "Tasks",
-          headerStyle: { backgroundColor: Colors.bgRaised },
-          headerTintColor: Colors.textPrimary,
-          headerShadowVisible: false,
-          contentStyle: { backgroundColor: Colors.bg },
         }}
       />
       <Stack.Screen
@@ -24,11 +20,6 @@ export default function TasksLayout() {
         options={{
           headerShown: true,
           title: "Add Task",
-          headerBackVisible: true,
-          headerStyle: { backgroundColor: Colors.bgRaised },
-          headerTintColor: Colors.textPrimary,
-          headerShadowVisible: false,
-          contentStyle: { backgroundColor: Colors.bg },
         }}
       />
       <Stack.Screen
@@ -37,22 +28,15 @@ export default function TasksLayout() {
           headerShown: true,
           title: "Edit Task",
           headerBackVisible: true,
-          headerStyle: { backgroundColor: Colors.bgRaised },
-          headerTintColor: Colors.textPrimary,
-          headerShadowVisible: false,
-          contentStyle: { backgroundColor: Colors.bg },
         }}
       />
+
+      <Stack.Screen name="details" />
       <Stack.Screen
         name="consistency"
         options={{
-          headerShown: true,
-          title: "Task Consistency",
-          headerBackVisible: true,
-          headerStyle: { backgroundColor: Colors.bgRaised },
-          headerTintColor: Colors.textPrimary,
-          headerShadowVisible: false,
-          contentStyle: { backgroundColor: Colors.bg },
+          headerShown: false,
+          title: "Task History",
         }}
       />
       <Stack.Screen
@@ -60,11 +44,6 @@ export default function TasksLayout() {
         options={{
           headerShown: true,
           title: "Task Details",
-          headerBackVisible: true,
-          headerStyle: { backgroundColor: Colors.bgRaised },
-          headerTintColor: Colors.textPrimary,
-          headerShadowVisible: false,
-          contentStyle: { backgroundColor: Colors.bg },
         }}
       />
     </Stack>

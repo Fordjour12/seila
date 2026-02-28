@@ -1,9 +1,16 @@
 import { api } from "@seila/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import { router } from "expo-router";
-import { useToast } from "heroui-native";
+import {
+  useToast,
+  Card,
+  Button,
+  Chip,
+  Separator,
+  Surface,
+} from "heroui-native";
 import React, { useMemo } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View, Pressable } from "react-native";
 
 import { getLocalDayKey } from "@/lib/date";
 import {
@@ -17,6 +24,7 @@ import {
   todayScratchpadRef,
 } from "@/lib/recovery-refs";
 
+// ─── TYPES ────────────────────────────────────────────────────────────────────
 type SuggestionItem = {
   _id: string;
   headline: string;
@@ -37,6 +45,7 @@ type ActionCard = {
   onPress: () => void;
 };
 
+// ─── UTILS ────────────────────────────────────────────────────────────────────
 function idempotencyKey(prefix: string) {
   return `${prefix}:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -44,7 +53,7 @@ function idempotencyKey(prefix: string) {
 function formatDateHeading(date: Date) {
   return date.toLocaleDateString(undefined, {
     weekday: "long",
-    month: "long",
+    month: "short",
     day: "numeric",
   });
 }
@@ -67,6 +76,157 @@ function mapSuggestionRoute(screen?: string) {
   return undefined;
 }
 
+// ─── STAT CARD WITH THEME COLORS ──────────────────────────────────────────────
+function StatCard({
+  label,
+  value,
+  accentColor,
+}: {
+  label: string;
+  value: string;
+  accentColor: string;
+}) {
+  return (
+    <Surface className="flex-1 rounded-3xl p-4 bg-muted border border-border">
+      <Text className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+        {label}
+      </Text>
+      <Text className="text-2xl font-semibold text-foreground mt-1">
+        {value}
+      </Text>
+    </Surface>
+  );
+}
+
+// ─── FLOATING ACTION CARD ─────────────────────────────────────────────────────
+function FloatingActionCard({
+  action,
+  index,
+}: {
+  action: ActionCard;
+  index: number;
+}) {
+  const accentStyles = [
+    "border-l-4 border-l-warning",
+    "border-l-4 border-l-success",
+    "border-l-4 border-l-accent",
+  ];
+
+  return (
+    <Card
+      className={`mb-3 rounded-2xl overflow-hidden ${accentStyles[index] || accentStyles[0]}`}
+    >
+      <Card.Body className="p-4 bg-surface">
+        <View className="flex-row items-start justify-between">
+          <View className="flex-1 pr-4">
+            <Text className="text-base font-semibold text-foreground">
+              {action.title}
+            </Text>
+            <Text className="text-sm text-muted-foreground mt-1 leading-5">
+              {action.detail}
+            </Text>
+          </View>
+          <Button
+            size="sm"
+            variant="primary"
+            onPress={action.onPress}
+            className="self-center"
+          >
+            <Button.Label>{action.cta}</Button.Label>
+          </Button>
+        </View>
+      </Card.Body>
+    </Card>
+  );
+}
+
+// ─── TASK CHIP ────────────────────────────────────────────────────────────────
+function TaskChip({
+  task,
+  isFocus,
+  onPress,
+}: {
+  task: { _id: string; title: string; dueAt?: number; priority?: string };
+  isFocus?: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable onPress={onPress}>
+      <Surface
+        variant="secondary"
+        className={`rounded-2xl p-4 mb-2 ${isFocus ? "border-2 border-warning bg-warning/5" : ""}`}
+      >
+        <View className="flex-row items-center justify-between">
+          <View className="flex-1 pr-3">
+            {isFocus && (
+              <Chip size="sm" variant="soft" color="warning" className="mb-2">
+                <Chip.Label>FOCUS</Chip.Label>
+              </Chip>
+            )}
+            <Text
+              className="text-sm font-medium text-foreground"
+              numberOfLines={1}
+            >
+              {task.title}
+            </Text>
+            <Text className="text-xs text-muted-foreground mt-1">
+              {getTaskUrgency(task)}
+            </Text>
+          </View>
+          <View className="bg-accent/10 rounded-full px-3 py-1">
+            <Text className="text-xs font-medium text-accent uppercase">
+              {task.priority || "medium"}
+            </Text>
+          </View>
+        </View>
+      </Surface>
+    </Pressable>
+  );
+}
+
+// ─── SUGGESTION ORB ───────────────────────────────────────────────────────────
+function SuggestionOrb({
+  suggestion,
+  isPrimary,
+}: {
+  suggestion: {
+    id: string;
+    title: string;
+    detail: string;
+    cta: string;
+    onPress: () => void;
+  };
+  isPrimary?: boolean;
+}) {
+  return (
+    <Pressable onPress={suggestion.onPress}>
+      <Surface
+        variant={isPrimary ? "secondary" : "tertiary"}
+        className={`rounded-3xl p-4 mb-3 ${isPrimary ? "bg-accent/5 border border-accent/20" : ""}`}
+      >
+        <View className="flex-row items-center justify-between">
+          <View className="flex-1 pr-3">
+            <Text
+              className={`font-medium ${isPrimary ? "text-accent" : "text-foreground"}`}
+            >
+              {suggestion.title}
+            </Text>
+            <Text className="text-xs text-muted-foreground mt-1 leading-4">
+              {suggestion.detail}
+            </Text>
+          </View>
+          <Button size="sm" variant="ghost" onPress={suggestion.onPress}>
+            <Button.Label className="text-accent">
+              {suggestion.cta}
+            </Button.Label>
+          </Button>
+        </View>
+      </Surface>
+    </Pressable>
+  );
+}
+
+// ─── MAIN SCREEN ──────────────────────────────────────────────────────────────
 export default function TodayScreen() {
   const { toast } = useToast();
   const dayKey = getLocalDayKey();
@@ -76,12 +236,15 @@ export default function TodayScreen() {
   const inboxTasks = useQuery(tasksInboxRef, {}) ?? [];
   const habits = useQuery(todayHabitsRef, { dayKey }) ?? [];
   const lastCheckin = useQuery(api.queries.lastCheckin.lastCheckin, {});
-  const suggestions = useQuery(api.queries.activeSuggestions.activeSuggestions, {}) as
-    | SuggestionItem[]
-    | undefined;
+  const suggestions = useQuery(
+    api.queries.activeSuggestions.activeSuggestions,
+    {},
+  ) as SuggestionItem[] | undefined;
   const setQuietToday = useMutation(setQuietTodayRef);
 
-  const completedHabits = habits.filter((habit) => habit.todayStatus === "completed").length;
+  const completedHabits = habits.filter(
+    (habit) => habit.todayStatus === "completed",
+  ).length;
   const pendingHabits = habits.filter((habit) => !habit.todayStatus).length;
   const overdueTasks = inboxTasks.filter(
     (task) => typeof task.dueAt === "number" && task.dueAt < Date.now(),
@@ -97,7 +260,7 @@ export default function TodayScreen() {
         id: "resume_day",
         title: "Quiet Day is on",
         detail: "Prompts are paused. Resume when you are ready to re-engage.",
-        cta: "Resume day",
+        cta: "Resume",
         score: 140,
         onPress: () => {
           void setQuietToday({
@@ -112,10 +275,11 @@ export default function TodayScreen() {
       candidates.push({
         id: "checkin",
         title: "Start with a quick check-in",
-        detail: "A 20-second check-in improves recommendation quality for today.",
-        cta: "Open check-in",
+        detail:
+          "A 20-second check-in improves recommendation quality for today.",
+        cta: "Check-in",
         score: 130,
-        onPress: () => router.push("/(tabs)/checkin" as any),
+        onPress: () => router.push("/(tabs)/checkin"),
       });
     }
 
@@ -124,7 +288,7 @@ export default function TodayScreen() {
         id: "quiet_mode",
         title: "Protect capacity for today",
         detail: "Low mood or energy detected. Quiet mode can reduce overwhelm.",
-        cta: "Set not today",
+        cta: "Activate",
         score: 120,
         onPress: () => {
           void setQuietToday({
@@ -140,9 +304,9 @@ export default function TodayScreen() {
         id: "overdue_tasks",
         title: "Resolve overdue tasks first",
         detail: `${overdueTasks.length} overdue item${overdueTasks.length > 1 ? "s" : ""} blocking momentum.`,
-        cta: "Review tasks",
+        cta: "Review",
         score: 116,
-        onPress: () => router.push("/(tabs)/tasks" as any),
+        onPress: () => router.push("/(tabs)/tasks"),
       });
     }
 
@@ -150,10 +314,11 @@ export default function TodayScreen() {
       candidates.push({
         id: "set_focus",
         title: "Set one focus task",
-        detail: "Pick one high-impact item for this session and ignore the rest.",
-        cta: "Open focus",
+        detail:
+          "Pick one high-impact item for this session and ignore the rest.",
+        cta: "Set Focus",
         score: 108,
-        onPress: () => router.push("/(tabs)/tasks" as any),
+        onPress: () => router.push("/(tabs)/tasks"),
       });
     }
 
@@ -162,9 +327,9 @@ export default function TodayScreen() {
         id: "log_habit",
         title: "Log one habit to protect streak",
         detail: `${pendingHabits} habit${pendingHabits > 1 ? "s" : ""} are still pending today.`,
-        cta: "Open habits",
+        cta: "Log",
         score: 96,
-        onPress: () => router.push("/(tabs)/habits" as any),
+        onPress: () => router.push("/(tabs)/habits"),
       });
     }
 
@@ -173,9 +338,9 @@ export default function TodayScreen() {
         id: "triage_note",
         title: "Triage one scratchpad note",
         detail: `${scratchpad.length} quick capture${scratchpad.length > 1 ? "s" : ""} can be processed into action.`,
-        cta: "Open notes",
+        cta: "Triage",
         score: 92,
-        onPress: () => router.push("/(tabs)/review" as any),
+        onPress: () => router.push("/(tabs)/review"),
       });
     }
 
@@ -204,10 +369,10 @@ export default function TodayScreen() {
         title: item.headline,
         detail: item.subtext,
         score: item.priority * 100,
-        cta: route ? "Open" : "Keep in view",
+        cta: route ? "Open" : "Keep",
         onPress: () => {
           if (route) {
-            router.push(route as any);
+            router.push(route);
           }
         },
       };
@@ -239,179 +404,147 @@ export default function TodayScreen() {
     });
   };
 
+  const hour = new Date().getHours();
+  const greeting =
+    hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+
   return (
     <ScrollView
       className="flex-1 bg-background"
-      contentContainerClassName="px-5 pt-6 pb-24 gap-5"
+      contentContainerClassName="px-5 pt-12 pb-24"
       showsVerticalScrollIndicator={false}
     >
-      <View className="rounded-3xl border border-border bg-surface p-5">
-        <Text className="text-xs uppercase tracking-[1px] text-muted-foreground">
-          {formatDateHeading(new Date())}
+      {/* ── HERO ──────────────────────────────────────────────── */}
+      <Surface className="rounded-4xl bg-accent p-6 mb-6">
+        <View className="flex-row items-center justify-between mb-4">
+          <Text className="text-accent-foreground/80 text-sm font-medium uppercase tracking-wider">
+            {formatDateHeading(new Date())}
+          </Text>
+          <Chip variant="soft" size="sm" className="bg-accent-foreground/20">
+            <Chip.Label className="text-accent-foreground">Today</Chip.Label>
+          </Chip>
+        </View>
+        <Text className="text-3xl font-bold text-accent-foreground mb-2">
+          {greeting}
         </Text>
-        <Text className="mt-2 text-3xl text-foreground font-serif tracking-tight">
-          Today Brief
-        </Text>
-        <Text className="mt-2 text-sm text-muted-foreground leading-5">
+        <Text className="text-base text-accent-foreground/90 leading-6">
           {quietToday?.isQuiet
             ? "Quiet day is active. Keep the day intentionally light."
-            : prioritizedActions[0]?.detail ??
-              "You are clear. Pick one meaningful action and protect momentum."}
+            : (prioritizedActions[0]?.detail ??
+              "You are clear. Pick one meaningful action and protect momentum.")}
         </Text>
+      </Surface>
+
+      {/* ── STATS ROW ─────────────────────────────────────────── */}
+      <View className="flex-row gap-3 mb-8">
+        <StatCard
+          label="Focus"
+          value={`${focusTasks.length}/3`}
+          accentColor="warning"
+        />
+        <StatCard
+          label="Habits"
+          value={`${completedHabits}/${habits.length || 0}`}
+          accentColor="success"
+        />
+        <StatCard
+          label="Mood"
+          value={lastCheckin ? `${lastCheckin.mood}/5` : "—"}
+          accentColor="accent"
+        />
       </View>
 
-      <View className="flex-row gap-2">
-        <View className="flex-1 rounded-2xl border border-border bg-surface p-3">
-          <Text className="text-[11px] uppercase text-muted-foreground">Focus</Text>
-          <Text className="text-xl font-semibold text-foreground mt-1">
-            {focusTasks.length}/3
+      {/* ── PRIMARY ACTIONS ───────────────────────────────────── */}
+      <View className="mb-8">
+        <View className="flex-row items-center justify-between mb-4">
+          <Text className="text-lg font-semibold text-foreground">
+            Primary Actions
           </Text>
-        </View>
-        <View className="flex-1 rounded-2xl border border-border bg-surface p-3">
-          <Text className="text-[11px] uppercase text-muted-foreground">Habits</Text>
-          <Text className="text-xl font-semibold text-foreground mt-1">
-            {completedHabits}/{habits.length || 0}
-          </Text>
-        </View>
-        <View className="flex-1 rounded-2xl border border-border bg-surface p-3">
-          <Text className="text-[11px] uppercase text-muted-foreground">Mood</Text>
-          <Text className="text-xl font-semibold text-foreground mt-1">
-            {lastCheckin ? `${lastCheckin.mood}/5` : "N/A"}
-          </Text>
-        </View>
-      </View>
-
-      <View className="rounded-2xl border border-border bg-surface p-4">
-        <View className="flex-row items-center justify-between mb-3">
-          <Text className="text-lg text-foreground font-semibold">Primary Actions</Text>
-          <Pressable
-            className="rounded-full border border-border px-3 py-1"
-            onPress={handleToggleQuiet}
-          >
-            <Text className="text-xs text-warning">
+          <Button size="sm" variant="ghost" onPress={handleToggleQuiet}>
+            <Button.Label className="text-accent">
               {quietToday?.isQuiet ? "Resume day" : "Not today"}
-            </Text>
-          </Pressable>
+            </Button.Label>
+          </Button>
         </View>
         {prioritizedActions.length === 0 ? (
-          <Text className="text-sm text-muted-foreground">
-            No urgent actions. Keep focus narrow and continue with your current plan.
-          </Text>
+          <Surface variant="tertiary" className="rounded-2xl p-6">
+            <Text className="text-sm text-muted-foreground text-center">
+              No urgent actions. Keep focus narrow and continue with your
+              current plan.
+            </Text>
+          </Surface>
         ) : (
-          <View className="gap-2">
-            {prioritizedActions.map((action) => (
-              <Pressable
-                key={action.id}
-                className="rounded-xl border border-border bg-background px-3.5 py-3"
-                onPress={action.onPress}
-              >
-                <View className="flex-row items-center justify-between">
-                  <Text className="text-base text-foreground font-medium flex-1 pr-2">
-                    {action.title}
-                  </Text>
-                  <Text className="text-xs text-warning">{action.cta}</Text>
-                </View>
-                <Text className="text-xs text-muted-foreground mt-1 leading-4">
-                  {action.detail}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
+          prioritizedActions.map((action, index) => (
+            <FloatingActionCard key={action.id} action={action} index={index} />
+          ))
         )}
       </View>
 
-      <View className="rounded-2xl border border-border bg-surface p-4">
-        <View className="flex-row items-center justify-between mb-3">
-          <Text className="text-lg text-foreground font-semibold">Today's Tasks</Text>
-          <Pressable onPress={() => router.push("/(tabs)/tasks" as any)}>
-            <Text className="text-xs text-warning">Open tasks</Text>
-          </Pressable>
+      <Separator className="my-6" />
+
+      {/* ── TODAY'S TASKS ─────────────────────────────────────── */}
+      <View className="mb-8">
+        <View className="flex-row items-center justify-between mb-4">
+          <Text className="text-lg font-semibold text-foreground">
+            Today's Tasks
+          </Text>
+          <Button
+            size="sm"
+            variant="ghost"
+            onPress={() => router.push("/(tabs)/tasks")}
+          >
+            <Button.Label className="text-accent">View all</Button.Label>
+          </Button>
         </View>
         {focusTasks.length === 0 && inboxTasks.length === 0 ? (
-          <Text className="text-sm text-muted-foreground">
-            No tasks captured. Add one action to anchor the day.
-          </Text>
+          <Surface variant="tertiary" className="rounded-2xl p-6">
+            <Text className="text-sm text-muted-foreground text-center">
+              No tasks captured. Add one action to anchor the day.
+            </Text>
+          </Surface>
         ) : (
-          <View className="gap-2">
+          <View>
             {focusTasks.slice(0, 2).map((task) => (
-              <Pressable
+              <TaskChip
                 key={task._id}
-                className="rounded-xl border border-warning/30 bg-warning/10 px-3.5 py-3"
-                onPress={() =>
-                  router.push({
-                    pathname: "/(tabs)/tasks/edit",
-                    params: { id: task._id },
-                  } as any)
-                }
-              >
-                <Text className="text-[11px] uppercase text-warning">Focus now</Text>
-                <Text className="text-sm text-foreground font-medium mt-1">{task.title}</Text>
-                <Text className="text-xs text-muted-foreground mt-1">
-                  {getTaskUrgency(task)}
-                </Text>
-              </Pressable>
+                task={task}
+                isFocus
+                onPress={() => router.push(`/(tabs)/tasks/edit?id=${task._id}`)}
+              />
             ))}
             {inboxTasks.slice(0, 3).map((task) => (
-              <Pressable
+              <TaskChip
                 key={task._id}
-                className="rounded-xl border border-border bg-background px-3.5 py-3"
-                onPress={() =>
-                  router.push({
-                    pathname: "/(tabs)/tasks/edit",
-                    params: { id: task._id },
-                  } as any)
-                }
-              >
-                <View className="flex-row items-center justify-between gap-2">
-                  <Text className="text-sm text-foreground flex-1" numberOfLines={1}>
-                    {task.title}
-                  </Text>
-                  <Text className="text-[10px] uppercase text-muted-foreground">
-                    {task.priority || "medium"}
-                  </Text>
-                </View>
-                <Text className="text-xs text-muted-foreground mt-1">
-                  {getTaskUrgency(task)}
-                </Text>
-              </Pressable>
+                task={task}
+                onPress={() => router.push(`/(tabs)/tasks/edit?id=${task._id}`)}
+              />
             ))}
           </View>
         )}
       </View>
 
-      <View className="rounded-2xl border border-border bg-surface p-4">
-        <Text className="text-lg text-foreground font-semibold mb-3">
+      <Separator className="my-6" />
+
+      {/* ── SUGGESTION STUDIO ─────────────────────────────────── */}
+      <View>
+        <Text className="text-lg font-semibold text-foreground mb-4">
           Suggestion Studio
         </Text>
-        <View className="gap-2.5">
-          {rankedSuggestions.length === 0 ? (
-            <Text className="text-sm text-muted-foreground">
+        {rankedSuggestions.length === 0 ? (
+          <Surface variant="tertiary" className="rounded-2xl p-6">
+            <Text className="text-sm text-muted-foreground text-center">
               Suggestions will appear as new patterns are detected.
             </Text>
-          ) : (
-            rankedSuggestions.map((suggestion, index) => (
-              <Pressable
-                key={suggestion.id}
-                className={`rounded-xl border px-3.5 py-3 ${
-                  index === 0
-                    ? "bg-primary/10 border-primary/30"
-                    : "bg-background border-border"
-                }`}
-                onPress={suggestion.onPress}
-              >
-                <View className="flex-row items-center justify-between gap-2">
-                  <Text className="text-sm text-foreground font-medium flex-1">
-                    {suggestion.title}
-                  </Text>
-                  <Text className="text-xs text-warning">{suggestion.cta}</Text>
-                </View>
-                <Text className="text-xs text-muted-foreground mt-1 leading-4">
-                  {suggestion.detail}
-                </Text>
-              </Pressable>
-            ))
-          )}
-        </View>
+          </Surface>
+        ) : (
+          rankedSuggestions.map((suggestion, index) => (
+            <SuggestionOrb
+              key={suggestion.id}
+              suggestion={suggestion}
+              isPrimary={index === 0}
+            />
+          ))
+        )}
       </View>
     </ScrollView>
   );
