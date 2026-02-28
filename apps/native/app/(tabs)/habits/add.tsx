@@ -5,8 +5,7 @@ import { useMutation } from "convex/react";
 import { useToast } from "heroui-native";
 
 import { createHabitRef } from "../../../lib/productivity-refs";
-import { buildCadenceFromForm } from "./_components/HabitForm";
-import { HabitAddPremiumCardVariant } from "./_components/AddHabitVariants";
+import { HabitForm, buildCadenceFromForm } from "./_components/HabitForm";
 import { getLocalDayKey } from "../../../lib/date";
 
 export default function AddHabitScreen() {
@@ -84,7 +83,8 @@ export default function AddHabitScreen() {
         </Text>
       </View>
 
-      <HabitAddPremiumCardVariant
+      <HabitForm
+        title="Habit Composer"
         name={name}
         anchor={anchor}
         difficulty={difficulty}
@@ -98,6 +98,7 @@ export default function AddHabitScreen() {
         timezone={timezone}
         validationError={validationError}
         isSubmitting={isSubmitting}
+        submitLabel="Create Habit"
         onNameChange={setName}
         onAnchorChange={setAnchor}
         onDifficultyChange={setDifficulty}
@@ -110,6 +111,7 @@ export default function AddHabitScreen() {
         onTargetUnitChange={setTargetUnit}
         onTimezoneChange={setTimezone}
         onSubmit={handleSubmit}
+        onCancel={() => router.back()}
       />
     </ScrollView>
   );
