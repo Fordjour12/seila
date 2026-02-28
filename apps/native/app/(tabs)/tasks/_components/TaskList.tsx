@@ -13,6 +13,7 @@ import {
 import { isSameDay } from "@/lib/task-utils";
 import { Container } from "@/components/container";
 import { Ionicons } from "@expo/vector-icons";
+import { useModeThemeColors } from "@/lib/theme";
 
 function getIdempotencyKey(prefix: string) {
   return `${prefix}:${Date.now()}:${Math.random().toString(36).slice(2, 10)}`;
@@ -105,6 +106,55 @@ export function TaskList() {
     });
   };
 
+  const handleCompleteTask = async (task: Task) => {
+    try {
+      await completeTaskMutation({
+        idempotencyKey: getIdempotencyKey("task.complete"),
+        taskId: task._id,
+      });
+      toast.show({ variant: "success", label: "Task completed" });
+    } catch {
+      toast.show({ variant: "danger", label: "Failed to complete task" });
+    }
+  };
+
+  const handleFocusTask = async (task: Task) => {
+    try {
+      await focusTaskMutation({
+        idempotencyKey: getIdempotencyKey("task.focus"),
+        taskId: task._id,
+      });
+      toast.show({ variant: "success", label: "Task moved to focus" });
+    } catch {
+      toast.show({ variant: "warning", label: "Could not focus task" });
+    }
+  };
+
+  const handleDeferTask = async (task: Task) => {
+    try {
+      await deferTaskMutation({
+        idempotencyKey: getIdempotencyKey("task.defer"),
+        taskId: task._id,
+        deferUntil: Date.now() + 24 * 60 * 60 * 1000,
+      });
+      toast.show({ variant: "success", label: "Task deferred to tomorrow" });
+    } catch {
+      toast.show({ variant: "danger", label: "Failed to defer task" });
+    }
+  };
+
+  const handleAbandonTask = async (task: Task) => {
+    try {
+      await abandonTaskMutation({
+        idempotencyKey: getIdempotencyKey("task.abandon"),
+        taskId: task._id,
+      });
+      toast.show({ variant: "default", label: "Task abandoned" });
+    } catch {
+      toast.show({ variant: "danger", label: "Failed to abandon task" });
+    }
+  };
+
   const handleAddTask = () => {
     router.push("/(tabs)/tasks/add");
   };
@@ -115,6 +165,8 @@ export function TaskList() {
 
   const isFocusFull = (focusTasks?.length ?? 0) >= 3;
 
+  const Colors = useModeThemeColors();
+
   return (
     <Container className="flex-1 bg-background">
       {/* Header */}
@@ -122,11 +174,11 @@ export function TaskList() {
         <Text className="text-3xl font-bold text-foreground">Today</Text>
         <View className="flex-row">
           <Button variant="ghost" onPress={handleAddTask} isIconOnly>
-            <Ionicons name="add" size={24} color="white" />
+            <Ionicons name="add" size={24} color={Colors.foreground} />
           </Button>
 
           <Button variant="ghost" onPress={handleHistoryTask} isIconOnly>
-            <Ionicons name="menu" size={24} color="white" />
+            <Ionicons name="menu" size={24} color={Colors.foreground} />
           </Button>
         </View>
       </View>
@@ -168,6 +220,7 @@ export function TaskList() {
             {filteredTasks.map((task: Task, index: number) => (
               <React.Fragment key={task._id}>
                 <TaskCard
+                  disabled={true}
                   task={{
                     _id: task._id.toString(),
                     title: task.title,
@@ -179,7 +232,10 @@ export function TaskList() {
                     tags: task.tags,
                   }}
                   onPress={() => handleTaskPress(task._id.toString())}
-                  onMenuPress={() => handleMenuPress(task)}
+                  onCompletePress={() => handleCompleteTask(task)}
+                  onFocusPress={() => handleFocusTask(task)}
+                  onDeferPress={() => handleDeferTask(task)}
+                  onAbandonPress={() => handleAbandonTask(task)}
                 />
                 {index < filteredTasks.length - 1 && (
                   <Separator className="my-1" />

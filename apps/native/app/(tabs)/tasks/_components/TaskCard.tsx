@@ -1,7 +1,9 @@
-import { Card, Chip, Button, Separator } from "heroui-native";
+import { Card, Chip, Button, Popover, Separator } from "heroui-native";
 import React from "react";
 import { Text, View, Pressable } from "react-native";
 import { formatRelativeDate, getTaskStatusColor } from "@/lib/task-utils";
+import { Ionicons } from "@expo/vector-icons";
+import { useModeThemeColors } from "@/lib/theme";
 
 interface TaskCardProps {
   task: {
@@ -15,23 +17,81 @@ interface TaskCardProps {
     tags?: string[];
   };
   onPress?: () => void;
-  onMenuPress?: () => void;
+  onFocusPress?: () => void;
+  onDeferPress?: () => void;
+  onCompletePress?: () => void;
+  onAbandonPress?: () => void;
   showMenu?: boolean;
+  disabled?: boolean;
 }
 
 export function TaskCard({
   task,
   onPress,
-  onMenuPress,
+  onFocusPress,
+  onDeferPress,
+  onCompletePress,
+  onAbandonPress,
   showMenu = true,
+  disabled = false,
 }: TaskCardProps) {
+  const [menuOpen, setMenuOpen] = React.useState(false);
   const hasDescription = task.description && task.description.length > 0;
   const relativeDate = task.dueAt
     ? formatRelativeDate(new Date(task.dueAt))
     : null;
 
+  const Colors = useModeThemeColors();
+
+  const actionItems: Array<{
+    key: string;
+    label: string;
+    hint: string;
+    icon: React.ComponentProps<typeof Ionicons>["name"];
+    toneClass: string;
+    labelClass: string;
+    onPress?: () => void;
+  }> = [
+    {
+      key: "complete",
+      label: "Complete",
+      hint: "Mark done and move out of active lists",
+      icon: "checkmark-circle-outline",
+      toneClass: "bg-success/10 border-success/30",
+      labelClass: "text-foreground",
+      onPress: onCompletePress,
+    },
+    {
+      key: "focus",
+      label: "Focus",
+      hint: "Move into your active focus list",
+      icon: "flash-outline",
+      toneClass: "bg-primary/10 border-primary/30",
+      labelClass: "text-foreground",
+      onPress: onFocusPress,
+    },
+    {
+      key: "defer",
+      label: "Defer",
+      hint: "Push this task to tomorrow",
+      icon: "time-outline",
+      toneClass: "bg-warning/10 border-warning/30",
+      labelClass: "text-foreground",
+      onPress: onDeferPress,
+    },
+    {
+      key: "abandon",
+      label: "Abandon",
+      hint: "Archive this task as no longer needed",
+      icon: "close-circle-outline",
+      toneClass: "bg-danger/10 border-danger/30",
+      labelClass: "text-danger",
+      onPress: onAbandonPress,
+    },
+  ];
+
   return (
-    <Pressable onPress={onPress}>
+    <Pressable onPress={onPress} disabled={disabled}>
       <Card className="mb-3 rounded-2xl overflow-hidden bg-surface">
         <Card.Body className="p-4">
           {/* Task Title */}
@@ -64,7 +124,14 @@ export function TaskCard({
                 <Chip
                   size="sm"
                   variant="soft"
-                  color={getTaskStatusColor(task.status) as "success" | "warning" | "default" | "danger" | "accent"}
+                  color={
+                    getTaskStatusColor(task.status) as
+                      | "success"
+                      | "warning"
+                      | "default"
+                      | "danger"
+                      | "accent"
+                  }
                 >
                   <Chip.Label className="text-xs capitalize">
                     {task.status.replace("_", " ")}
@@ -84,18 +151,100 @@ export function TaskCard({
 
             {/* Menu Button */}
             {showMenu && (
-              <Button
-                size="sm"
-                variant="ghost"
-                isIconOnly
-                onPress={(e) => {
-                  e.stopPropagation();
-                  onMenuPress?.();
-                }}
-                className="w-8 h-8"
+              <Popover
+                presentation="bottom-sheet"
+                isOpen={menuOpen}
+                onOpenChange={setMenuOpen}
               >
-                <Text className="text-muted-foreground text-lg">⋯</Text>
-              </Button>
+                <Popover.Trigger asChild>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    isIconOnly
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      setMenuOpen(true);
+                    }}
+                  >
+                    <Ionicons
+                      name="ellipsis-horizontal-outline"
+                      size={16}
+                      color={Colors.foreground}
+                    />
+                  </Button>
+                </Popover.Trigger>
+
+                <Popover.Portal>
+                  <Popover.Overlay className="bg-black/40" />
+                  <Popover.Content
+                    presentation="bottom-sheet"
+                    className="rounded-t-3xl border border-border bg-surface px-4 pt-4 pb-6"
+                  >
+                    <Text className="text-base font-semibold text-foreground">
+                      Task Options
+                    </Text>
+                    <Text className="text-sm text-foreground mt-1">
+                      {task.title}
+                    </Text>
+                    <Text className="text-xs text-muted-foreground mt-1 mb-3">
+                      Choose an action
+                    </Text>
+
+                    <View className="gap-2">
+                      {actionItems.map((item) => (
+                        <Pressable
+                          key={item.key}
+                          className={`flex-row items-center rounded-2xl border px-3 py-3 ${item.toneClass}`}
+                          onPress={() => {
+                            setMenuOpen(false);
+                            item.onPress?.();
+                          }}
+                        >
+                          <View className="h-9 w-9 rounded-full bg-background/70 items-center justify-center">
+                            <Ionicons
+                              name={item.icon}
+                              size={18}
+                              color={
+                                item.key === "complete"
+                                  ? "#22c55e"
+                                  : item.key === "focus"
+                                    ? "#3b82f6"
+                                    : item.key === "defer"
+                                      ? "#f59e0b"
+                                      : "#ef4444"
+                              }
+                            />
+                          </View>
+                          <View className="flex-1 ml-3">
+                            <Text
+                              className={`text-sm font-medium ${item.labelClass}`}
+                            >
+                              {item.label}
+                            </Text>
+                            <Text className="text-xs text-muted-foreground mt-0.5">
+                              {item.hint}
+                            </Text>
+                          </View>
+                          <Ionicons
+                            name="chevron-forward"
+                            size={16}
+                            color={Colors.foreground}
+                          />
+                        </Pressable>
+                      ))}
+                    </View>
+
+                    <Pressable
+                      className="items-center justify-center py-4 mt-3 border-t border-border"
+                      onPress={() => setMenuOpen(false)}
+                    >
+                      <Text className="text-sm text-muted-foreground">
+                        Cancel
+                      </Text>
+                    </Pressable>
+                  </Popover.Content>
+                </Popover.Portal>
+              </Popover>
             )}
           </View>
         </Card.Body>

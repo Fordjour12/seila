@@ -113,7 +113,7 @@ export function WeekHeroCard({
   return (
     <Surface className="rounded-3xl overflow-hidden mb-4 mx-4 bg-muted">
       {/* Background gradient effect using overlay */}
-      <View className="absolute inset-0 bg-gradient-to-br from-accent/10 to-warning/10" />
+      <View className="absolute inset-0 bg-gradient-to-br from-accent/40 to-warning/10" />
 
       <View className="p-5">
         {/* Header with stats */}

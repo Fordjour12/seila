@@ -18,7 +18,6 @@ export default function TasksLayout() {
       <Stack.Screen
         name="add"
         options={{
-          headerShown: true,
           title: "Add Task",
         }}
       />
