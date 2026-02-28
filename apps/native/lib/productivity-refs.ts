@@ -441,27 +441,6 @@ export const tasksConsistencyRef = makeFunctionReference<
   }
 >("queries/consistencyQueries:tasksConsistency");
 
-export const taskConsistencyByIdRef = makeFunctionReference<
-  "query",
-  { taskId: Id<"tasks">; dayKey: string; windowDays?: number },
-  {
-    taskId: Id<"tasks">;
-    title: string;
-    status: Doc<"tasks">["status"];
-    createdAt: number;
-    completedAt?: number;
-    focusedAt?: number;
-    deferredUntil?: number;
-    windowDays: number;
-    completionRatePct: number;
-    createdInWindow: number;
-    completedInWindow: number;
-    currentStreak: number;
-    bestStreak: number;
-    trend: Array<{ dayKey: string; completed: number }>;
-  } | null
->("queries/consistencyQueries:taskConsistencyById");
-
 export const taskDayDetailsRef = makeFunctionReference<
   "query",
   { dayKey: string },

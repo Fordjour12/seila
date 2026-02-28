@@ -136,7 +136,7 @@ export default function EditTaskScreen() {
   return (
     <ScrollView className="flex-1 bg-background" contentContainerClassName="p-6 pb-24 gap-6">
       <View className="mb-2">
-        <Text className="text-3xl font-serif text-foreground tracking-tight">Edit Task</Text>
+          <Text className="text-3xl font-serif text-foreground tracking-tight">Edit Task Composer</Text>
         <Text className="text-sm text-muted-foreground mt-1">
           Update task text without changing its current status.
         </Text>
@@ -149,7 +149,7 @@ export default function EditTaskScreen() {
       ) : (
         <>
           <TaskForm
-            title="Task Details"
+            showHeader={false}
             taskTitle={taskTitle}
             note={note}
             priority={priority}
