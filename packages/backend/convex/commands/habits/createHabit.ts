@@ -6,13 +6,24 @@ import {
   anchorValidator,
   appendHabitEvent,
   assertValidCustomCadence,
+  breakGoalValidator,
+  breakMetricValidator,
   cadenceValidator,
   difficultyValidator,
+  energyLevelValidator,
+  frequencyConfigValidator,
+  frequencyTypeValidator,
   getDedupedEventByIdempotencyKey,
+  identityTagsValidator,
   kindValidator,
   dayKeyValidator,
   assertValidHabitWindow,
   assertValidHabitTarget,
+  assertValidFrequencyConfig,
+  inferBreakGoal,
+  inferBreakMetric,
+  targetTypeValidator,
+  timePreferenceValidator,
   syncHabitProjection,
 } from "../../habits/shared";
 
@@ -24,8 +35,16 @@ export const createHabit = mutation({
     anchor: v.optional(anchorValidator),
     difficulty: v.optional(difficultyValidator),
     kind: v.optional(kindValidator),
+    breakGoal: v.optional(breakGoalValidator),
+    breakMetric: v.optional(breakMetricValidator),
     targetValue: v.optional(v.number()),
     targetUnit: v.optional(v.string()),
+    targetType: v.optional(targetTypeValidator),
+    frequencyType: v.optional(frequencyTypeValidator),
+    frequencyConfig: v.optional(frequencyConfigValidator),
+    identityTags: v.optional(identityTagsValidator),
+    energyLevel: v.optional(energyLevelValidator),
+    timePreference: v.optional(timePreferenceValidator),
     timezone: v.optional(v.string()),
     startDayKey: v.optional(dayKeyValidator),
     endDayKey: v.optional(dayKeyValidator),
@@ -55,10 +74,66 @@ export const createHabit = mutation({
       startDayKey: args.startDayKey,
       endDayKey: args.endDayKey,
     });
-    assertValidHabitTarget({
-      targetValue: args.targetValue,
-      targetUnit: args.targetUnit,
+    assertValidFrequencyConfig({
+      frequencyType: args.frequencyType,
+      frequencyConfig: args.frequencyConfig,
     });
+    const kind = args.kind ?? "build";
+    let targetType = args.targetType;
+    let targetValue = args.targetValue;
+    let targetUnit = args.targetUnit;
+    let breakGoal = args.breakGoal;
+    let breakMetric = args.breakMetric;
+
+    if (kind === "break") {
+      breakGoal = inferBreakGoal({ kind, breakGoal, targetValue });
+      if (!breakGoal) {
+        throw new ConvexError("breakGoal is required for break habits");
+      }
+
+      if (breakGoal === "quit") {
+        targetType = "quantity";
+        targetValue = 0;
+        targetUnit = "times";
+        breakMetric = "times";
+      } else {
+        assertValidHabitTarget({
+          targetValue,
+          targetUnit,
+        });
+        breakMetric = inferBreakMetric({ breakMetric, targetType, targetUnit });
+        if (!breakMetric) {
+          throw new ConvexError("breakMetric is required for break limit habits");
+        }
+        if (typeof targetValue !== "number" || targetValue < 1) {
+          throw new ConvexError("Break limit value must be at least 1");
+        }
+        targetType = breakMetric === "minutes" ? "duration" : "quantity";
+        targetUnit = breakMetric === "minutes" ? "minutes" : "times";
+      }
+    } else {
+      assertValidHabitTarget({
+        targetValue,
+        targetUnit,
+      });
+      if ((targetType === "quantity" || targetType === "duration") && targetValue === undefined) {
+        throw new ConvexError("targetValue is required for quantity and duration habits");
+      }
+      if (targetType === "duration" && targetUnit && targetUnit !== "minutes") {
+        throw new ConvexError("Duration habits must use minutes in V1");
+      }
+    }
+    const activeHabits = (await ctx.db.query("habits").collect()).filter((habit) => !habit.archivedAt);
+    if (activeHabits.length >= 15) {
+      throw new ConvexError("V1 limit reached: maximum 15 active habits");
+    }
+    const desiredEnergy = args.energyLevel ?? "low";
+    const highEnergyCount = activeHabits.filter(
+      (habit) => (habit.energyLevel ?? habit.difficulty ?? "low") === "high",
+    ).length;
+    if (desiredEnergy === "high" && highEnergyCount >= 3) {
+      throw new ConvexError("V1 limit reached: maximum 3 high-energy habits");
+    }
 
     const now = Date.now();
     const habitId = await ctx.db.insert("habits", {
@@ -66,9 +141,17 @@ export const createHabit = mutation({
       cadence: args.cadence,
       anchor: args.anchor,
       difficulty: args.difficulty,
-      kind: args.kind,
-      targetValue: args.targetValue,
-      targetUnit: args.targetUnit,
+      kind,
+      breakGoal,
+      breakMetric,
+      targetValue,
+      targetUnit,
+      targetType,
+      frequencyType: args.frequencyType,
+      frequencyConfig: args.frequencyConfig,
+      identityTags: args.identityTags ?? [],
+      energyLevel: args.energyLevel ?? "low",
+      timePreference: args.timePreference ?? "flexible",
       timezone: args.timezone,
       startDayKey: args.startDayKey,
       endDayKey: args.endDayKey,
@@ -87,9 +170,9 @@ export const createHabit = mutation({
         cadence: args.cadence,
         anchor: args.anchor,
         difficulty: args.difficulty,
-        kind: args.kind,
-        targetValue: args.targetValue,
-        targetUnit: args.targetUnit,
+        kind,
+        targetValue,
+        targetUnit,
         timezone: args.timezone,
         startDayKey: args.startDayKey,
         endDayKey: args.endDayKey,
@@ -98,6 +181,16 @@ export const createHabit = mutation({
     });
 
     await syncHabitProjection(ctx, habitId);
+    await ctx.db.patch(habitId, {
+      targetType,
+      breakGoal,
+      breakMetric,
+      frequencyType: args.frequencyType,
+      frequencyConfig: args.frequencyConfig,
+      identityTags: args.identityTags ?? [],
+      energyLevel: args.energyLevel ?? "low",
+      timePreference: args.timePreference ?? "flexible",
+    });
 
     return {
       habitId: habitIdString,

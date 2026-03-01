@@ -50,6 +50,7 @@
         "expo-status-bar": "~55.0.4",
         "expo-updates": "~55.0.12",
         "heroui-native": "^1.0.0-rc.3",
+        "iconoir-react-native": "^7.11.0",
         "react": "19.2.0",
         "react-dom": "19.2.0",
         "react-native": "0.83.2",
@@ -1141,6 +1142,8 @@
     "https-proxy-agent": ["https-proxy-agent@7.0.6", "", { "dependencies": { "agent-base": "^7.1.2", "debug": "4" } }, "sha512-vK9P5/iUfdl95AI+JVyUuIcVtd4ofvtrOr3HNtM2yxC9bnMbEdp3x01OhQNnjb8IJYi38VlTE3mBXwcfvywuSw=="],
 
     "hyphenate-style-name": ["hyphenate-style-name@1.1.0", "", {}, "sha512-WDC/ui2VVRrz3jOVi+XtjqkDjiVjTtFaAGiW37k6b+ohyQ5wYDOGkvCZa8+H0nx3gyvv0+BST9xuOgIyGQ00gw=="],
+
+    "iconoir-react-native": ["iconoir-react-native@7.11.0", "", { "peerDependencies": { "react": "18", "react-native": ">=0.73.0", "react-native-svg": "^15.8.0" } }, "sha512-e7y0lJvvo1POP1ZdSBDheRHD5j59YZ1vApNNW9CQSyWqhc41QYlswd6//KjUglSIV12kgzQnLJ1Fuvd/SvIPlw=="],
 
     "ieee754": ["ieee754@1.2.1", "", {}, "sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA=="],
 

@@ -13,6 +13,7 @@ import React, { useMemo } from "react";
 import { ScrollView, Text, View, Pressable } from "react-native";
 
 import { getLocalDayKey } from "@/lib/date";
+import { HABITS_ENABLED } from "@/lib/features";
 import {
   tasksFocusRef,
   tasksInboxRef,
@@ -23,6 +24,7 @@ import {
   setQuietTodayRef,
   todayScratchpadRef,
 } from "@/lib/recovery-refs";
+import { WeekCalendar } from "./tasks/_components";
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 type SuggestionItem = {
@@ -69,7 +71,7 @@ function getTaskUrgency(task: { dueAt?: number; priority?: string }) {
 
 function mapSuggestionRoute(screen?: string) {
   if (screen === "checkin") return "/(tabs)/checkin";
-  if (screen === "tasks") return "/(tabs)/tasks";
+  if (screen === "tasks") return "/(tabs)/tasks/index";
   if (screen === "finance") return "/(tabs)/finance";
   if (screen === "patterns") return "/(tabs)/patterns";
   if (screen === "weekly-review") return "/(tabs)/review";
@@ -234,7 +236,8 @@ export default function TodayScreen() {
   const scratchpad = useQuery(todayScratchpadRef, {}) ?? [];
   const focusTasks = useQuery(tasksFocusRef, {}) ?? [];
   const inboxTasks = useQuery(tasksInboxRef, {}) ?? [];
-  const habits = useQuery(todayHabitsRef, { dayKey }) ?? [];
+  const habits =
+    useQuery(todayHabitsRef, HABITS_ENABLED ? { dayKey } : "skip") ?? [];
   const lastCheckin = useQuery(api.queries.lastCheckin.lastCheckin, {});
   const suggestions = useQuery(
     api.queries.activeSuggestions.activeSuggestions,
@@ -242,10 +245,12 @@ export default function TodayScreen() {
   ) as SuggestionItem[] | undefined;
   const setQuietToday = useMutation(setQuietTodayRef);
 
-  const completedHabits = habits.filter(
-    (habit) => habit.todayStatus === "completed",
-  ).length;
-  const pendingHabits = habits.filter((habit) => !habit.todayStatus).length;
+  const completedHabits = HABITS_ENABLED
+    ? habits.filter((habit) => habit.todayStatus === "completed").length
+    : 0;
+  const pendingHabits = HABITS_ENABLED
+    ? habits.filter((habit) => !habit.todayStatus).length
+    : 0;
   const overdueTasks = inboxTasks.filter(
     (task) => typeof task.dueAt === "number" && task.dueAt < Date.now(),
   );
@@ -306,7 +311,7 @@ export default function TodayScreen() {
         detail: `${overdueTasks.length} overdue item${overdueTasks.length > 1 ? "s" : ""} blocking momentum.`,
         cta: "Review",
         score: 116,
-        onPress: () => router.push("/(tabs)/tasks"),
+        onPress: () => router.push("/(tabs)/tasks/index" as never),
       });
     }
 
@@ -318,14 +323,14 @@ export default function TodayScreen() {
           "Pick one high-impact item for this session and ignore the rest.",
         cta: "Set Focus",
         score: 108,
-        onPress: () => router.push("/(tabs)/tasks"),
+        onPress: () => router.push("/(tabs)/tasks/index" as never),
       });
     }
 
-    if (pendingHabits > 0) {
+    if (HABITS_ENABLED && pendingHabits > 0) {
       candidates.push({
         id: "log_habit",
-        title: "Log one habit to protect streak",
+        title: "Log one habit for momentum",
         detail: `${pendingHabits} habit${pendingHabits > 1 ? "s" : ""} are still pending today.`,
         cta: "Log",
         score: 96,
@@ -352,6 +357,7 @@ export default function TodayScreen() {
     lowCapacity,
     overdueTasks.length,
     pendingHabits,
+    HABITS_ENABLED,
     quietToday?.isQuiet,
     scratchpad.length,
     setQuietToday,
@@ -372,7 +378,7 @@ export default function TodayScreen() {
         cta: route ? "Open" : "Keep",
         onPress: () => {
           if (route) {
-            router.push(route);
+            router.push(route as never);
           }
         },
       };
@@ -411,11 +417,18 @@ export default function TodayScreen() {
   return (
     <ScrollView
       className="flex-1 bg-background"
-      contentContainerClassName="px-5 pt-12 pb-24"
+      contentContainerClassName="px-3 pt-12 pb-24"
       showsVerticalScrollIndicator={false}
     >
       {/* ── HERO ──────────────────────────────────────────────── */}
-      <Surface className="rounded-4xl bg-accent p-6 mb-6">
+      <Surface className="rounded-4xl bg-accent mb-6">
+        {/* Week Calendar Strip */}
+        <WeekCalendar
+          selectedDate={new Date()}
+          onSelectDate={() => { }}
+          highlightDates={[]}
+        />
+
         <View className="flex-row items-center justify-between mb-4">
           <Text className="text-accent-foreground/80 text-sm font-medium uppercase tracking-wider">
             {formatDateHeading(new Date())}
@@ -434,6 +447,11 @@ export default function TodayScreen() {
               "You are clear. Pick one meaningful action and protect momentum.")}
         </Text>
       </Surface>
+      <View>
+        <Button onPress={() => { router.push("/hardmode") }}>
+          <Text> hard mode</Text>
+        </Button>
+      </View>
 
       {/* ── STATS ROW ─────────────────────────────────────────── */}
       <View className="flex-row gap-3 mb-8">
@@ -443,8 +461,12 @@ export default function TodayScreen() {
           accentColor="warning"
         />
         <StatCard
-          label="Habits"
-          value={`${completedHabits}/${habits.length || 0}`}
+          label={HABITS_ENABLED ? "Habits" : "Inbox"}
+          value={
+            HABITS_ENABLED
+              ? `${completedHabits}/${habits.length || 0}`
+              : `${inboxTasks.length}`
+          }
           accentColor="success"
         />
         <StatCard
@@ -491,7 +513,7 @@ export default function TodayScreen() {
           <Button
             size="sm"
             variant="ghost"
-            onPress={() => router.push("/(tabs)/tasks")}
+            onPress={() => router.push("/(tabs)/tasks/index" as never)}
           >
             <Button.Label className="text-accent">View all</Button.Label>
           </Button>

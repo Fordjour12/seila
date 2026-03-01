@@ -1,6 +1,7 @@
 import { query } from "../_generated/server";
 import { v } from "convex/values";
-import { dayKeyValidator, isHabitActiveOnDay } from "../habits/shared";
+import { dayKeyValidator, isHabitActiveOnDay, isHabitScheduledOnDay } from "../habits/shared";
+import type { Doc } from "../_generated/dataModel";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -22,10 +23,6 @@ function dayRangeUtc(dayKey: string) {
   return { start, end: start + DAY_MS - 1 };
 }
 
-function weekdayFromDayKey(dayKey: string) {
-  return new Date(parseDayKeyUtc(dayKey)).getUTCDay();
-}
-
 function buildDayKeys(endDayKey: string, days: number) {
   const endUtc = parseDayKeyUtc(endDayKey);
   const keys: string[] = [];
@@ -35,17 +32,18 @@ function buildDayKeys(endDayKey: string, days: number) {
   return keys;
 }
 
-function isScheduledOnWeekday(
-  cadence: "daily" | "weekdays" | { customDays: number[] },
-  weekday: number,
-) {
-  if (cadence === "daily") {
-    return true;
+function isCompletedForDay(habit: Doc<"habits">, log?: Doc<"habitLogs">) {
+  const kind = habit.kind ?? "build";
+  if (kind === "break") {
+    const breakGoal = habit.breakGoal ?? (habit.targetValue === 0 ? "quit" : "limit");
+    const limit = breakGoal === "quit" ? 0 : (habit.targetValue ?? 0);
+    const value = log?.value ?? 0;
+    return value <= limit;
   }
-  if (cadence === "weekdays") {
-    return weekday >= 1 && weekday <= 5;
+  if ((habit.targetType ?? "binary") === "binary") {
+    return log?.status === "completed";
   }
-  return cadence.customDays.includes(weekday);
+  return log?.status === "completed";
 }
 
 export const habitsConsistency = query({
@@ -70,11 +68,7 @@ export const habitsConsistency = query({
     ]);
 
     const activeHabits = habits.filter((habit) => !habit.archivedAt);
-    const completedByHabitDay = new Set(
-      logs
-        .filter((log) => log.status === "completed")
-        .map((log) => `${String(log.habitId)}:${log.dayKey}`),
-    );
+    const logByHabitDay = new Map(logs.map((log) => [`${String(log.habitId)}:${log.dayKey}`, log]));
 
     let scheduledDays = 0;
     let completedScheduledDays = 0;
@@ -83,7 +77,6 @@ export const habitsConsistency = query({
     let runningStreak = 0;
 
     const dayBreakdown = windowKeys.map((dayKey) => {
-      const weekday = weekdayFromDayKey(dayKey);
       let scheduled = 0;
       let completed = 0;
 
@@ -94,12 +87,22 @@ export const habitsConsistency = query({
           endDayKey: habit.endDayKey,
           pausedUntilDayKey: habit.pausedUntilDayKey,
         });
-        if (!isActive || !isScheduledOnWeekday(habit.cadence, weekday)) {
+        if (
+          !isActive ||
+          !isHabitScheduledOnDay({
+            dayKey,
+            cadence: habit.cadence,
+            frequencyType: habit.frequencyType,
+            frequencyConfig: habit.frequencyConfig,
+            startDayKey: habit.startDayKey,
+          })
+        ) {
           continue;
         }
 
         scheduled += 1;
-        if (completedByHabitDay.has(`${String(habit._id)}:${dayKey}`)) {
+        const log = logByHabitDay.get(`${String(habit._id)}:${dayKey}`);
+        if (isCompletedForDay(habit, log)) {
           completed += 1;
         }
       }
@@ -279,16 +282,23 @@ export const habitConsistencyById = query({
     let runningStreak = 0;
 
     const trend = windowKeys.map((dayKey) => {
-      const weekday = weekdayFromDayKey(dayKey);
       const active = isHabitActiveOnDay({
         dayKey,
         startDayKey: habit.startDayKey,
         endDayKey: habit.endDayKey,
         pausedUntilDayKey: habit.pausedUntilDayKey,
       });
-      const scheduled = active && isScheduledOnWeekday(habit.cadence, weekday);
+      const scheduled =
+        active &&
+        isHabitScheduledOnDay({
+          dayKey,
+          cadence: habit.cadence,
+          frequencyType: habit.frequencyType,
+          frequencyConfig: habit.frequencyConfig,
+          startDayKey: habit.startDayKey,
+        });
       const log = logByDayKey.get(dayKey);
-      const completed = scheduled && log?.status === "completed";
+      const completed = scheduled && isCompletedForDay(habit, log);
       const skipped = scheduled && log?.status === "skipped";
       const snoozed = scheduled && log?.status === "snoozed";
       const missed = scheduled && log?.status === "missed";
@@ -437,7 +447,6 @@ export const habitDayDetails = query({
     dayKey: dayKeyValidator,
   },
   handler: async (ctx, args) => {
-    const weekday = weekdayFromDayKey(args.dayKey);
     const [habits, logs] = await Promise.all([
       ctx.db.query("habits").collect(),
       ctx.db
@@ -476,7 +485,15 @@ export const habitDayDetails = query({
           pausedUntilDayKey: habit.pausedUntilDayKey,
         }),
       )
-      .filter((habit) => isScheduledOnWeekday(habit.cadence, weekday))
+      .filter((habit) =>
+        isHabitScheduledOnDay({
+          dayKey: args.dayKey,
+          cadence: habit.cadence,
+          frequencyType: habit.frequencyType,
+          frequencyConfig: habit.frequencyConfig,
+          startDayKey: habit.startDayKey,
+        }),
+      )
       .map((habit) => ({
         habitId: habit._id,
         name: habit.name,

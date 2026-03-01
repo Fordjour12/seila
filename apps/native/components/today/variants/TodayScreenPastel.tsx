@@ -642,7 +642,7 @@ export function TodayScreenPastel() {
         {/* ── NEXT ACTION ──────────────────────────────────────── */}
         <View style={s.section}>
           <SoftSectionHeader label="Next action" />
-          <NextActionCard task={focus[0]} onPress={() => router.push("/(tabs)/tasks")} />
+          <NextActionCard task={focus[0]} onPress={() => router.push("/(tabs)/tasks/index" as never)} />
         </View>
 
         {/* ── HABITS ───────────────────────────────────────────── */}

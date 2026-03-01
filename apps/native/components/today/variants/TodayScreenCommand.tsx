@@ -69,7 +69,7 @@ export function TodayScreenCommand() {
 
         <View style={styles.quickRow}>
           <QuickAction label="Check-in" onPress={() => router.push("/(tabs)/checkin")} />
-          <QuickAction label="Tasks" onPress={() => router.push("/(tabs)/tasks")} />
+          <QuickAction label="Tasks" onPress={() => router.push("/(tabs)/tasks/index" as never)} />
           <QuickAction label="Patterns" onPress={() => router.push("/(tabs)/patterns")} />
         </View>
 

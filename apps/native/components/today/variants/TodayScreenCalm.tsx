@@ -72,7 +72,7 @@ export function TodayScreenCalm() {
             <Text style={styles.featureValue}>
               {nextFocus ? nextFocus.text : "No focus task set"}
             </Text>
-            <Pressable style={styles.featureAction} onPress={() => router.push("/(tabs)/tasks")}>
+            <Pressable style={styles.featureAction} onPress={() => router.push("/(tabs)/tasks/index" as never)}>
               <Text style={styles.featureActionText}>Open Tasks</Text>
             </Pressable>
           </View>

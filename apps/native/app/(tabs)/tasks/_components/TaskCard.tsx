@@ -41,7 +41,7 @@ export function TaskCard({
     ? formatRelativeDate(new Date(task.dueAt))
     : null;
 
-  const Colors = useModeThemeColors();
+  const colors = useModeThemeColors();
 
   const actionItems: Array<{
     key: string;
@@ -50,6 +50,7 @@ export function TaskCard({
     icon: React.ComponentProps<typeof Ionicons>["name"];
     toneClass: string;
     labelClass: string;
+    iconColor: string;
     onPress?: () => void;
   }> = [
     {
@@ -59,6 +60,7 @@ export function TaskCard({
       icon: "checkmark-circle-outline",
       toneClass: "bg-success/10 border-success/30",
       labelClass: "text-foreground",
+      iconColor: colors.success,
       onPress: onCompletePress,
     },
     {
@@ -68,6 +70,7 @@ export function TaskCard({
       icon: "flash-outline",
       toneClass: "bg-primary/10 border-primary/30",
       labelClass: "text-foreground",
+      iconColor: colors.accent,
       onPress: onFocusPress,
     },
     {
@@ -77,6 +80,7 @@ export function TaskCard({
       icon: "time-outline",
       toneClass: "bg-warning/10 border-warning/30",
       labelClass: "text-foreground",
+      iconColor: colors.warning,
       onPress: onDeferPress,
     },
     {
@@ -86,9 +90,17 @@ export function TaskCard({
       icon: "close-circle-outline",
       toneClass: "bg-danger/10 border-danger/30",
       labelClass: "text-danger",
+      iconColor: colors.danger,
       onPress: onAbandonPress,
     },
   ];
+  const availableActions = actionItems.filter((item) => Boolean(item.onPress));
+  const hasActions = availableActions.length > 0;
+
+  const handleActionPress = (action?: () => void) => {
+    setMenuOpen(false);
+    action?.();
+  };
 
   return (
     <Pressable onPress={onPress} disabled={disabled}>
@@ -161,15 +173,17 @@ export function TaskCard({
                     size="sm"
                     variant="ghost"
                     isIconOnly
+                    isDisabled={!hasActions}
                     onPress={(e) => {
                       e.stopPropagation();
+                      if (!hasActions) return;
                       setMenuOpen(true);
                     }}
                   >
                     <Ionicons
                       name="ellipsis-horizontal-outline"
                       size={16}
-                      color={Colors.foreground}
+                      color={colors.foreground}
                     />
                   </Button>
                 </Popover.Trigger>
@@ -191,28 +205,19 @@ export function TaskCard({
                     </Text>
 
                     <View className="gap-2">
-                      {actionItems.map((item) => (
+                      {availableActions.map((item) => (
                         <Pressable
                           key={item.key}
                           className={`flex-row items-center rounded-2xl border px-3 py-3 ${item.toneClass}`}
                           onPress={() => {
-                            setMenuOpen(false);
-                            item.onPress?.();
+                            handleActionPress(item.onPress);
                           }}
                         >
                           <View className="h-9 w-9 rounded-full bg-background/70 items-center justify-center">
                             <Ionicons
                               name={item.icon}
                               size={18}
-                              color={
-                                item.key === "complete"
-                                  ? "#22c55e"
-                                  : item.key === "focus"
-                                    ? "#3b82f6"
-                                    : item.key === "defer"
-                                      ? "#f59e0b"
-                                      : "#ef4444"
-                              }
+                              color={item.iconColor}
                             />
                           </View>
                           <View className="flex-1 ml-3">
@@ -228,7 +233,7 @@ export function TaskCard({
                           <Ionicons
                             name="chevron-forward"
                             size={16}
-                            color={Colors.foreground}
+                            color={colors.foreground}
                           />
                         </Pressable>
                       ))}

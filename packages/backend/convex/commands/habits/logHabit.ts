@@ -3,6 +3,8 @@ import { ConvexError, v } from "convex/values";
 import { mutation } from "../../_generated/server";
 import {
   appendHabitEvent,
+  inferBreakGoal,
+  inferBreakMetric,
   getDedupedEventByIdempotencyKey,
   syncHabitProjection,
   upsertHabitLog,
@@ -15,6 +17,7 @@ export const logHabit = mutation({
     idempotencyKey: v.string(),
     habitId: v.id("habits"),
     dayKey: dayKeyValidator,
+    value: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const existing = await getDedupedEventByIdempotencyKey(ctx, args.idempotencyKey);
@@ -41,9 +44,57 @@ export const logHabit = mutation({
     }
 
     const occurredAt = Date.now();
+    const kind = habit.kind ?? "build";
+    const targetType = habit.targetType ?? (typeof habit.targetValue === "number" ? "quantity" : "binary");
+    const targetValue = habit.targetValue;
+    const loggedValue = args.value;
+    let completed = true;
+    let nextValue = loggedValue;
+    let status: "completed" | "skipped" = "completed";
+
+    if (kind === "break") {
+      const breakGoal = inferBreakGoal({ kind, breakGoal: habit.breakGoal, targetValue: habit.targetValue });
+      const breakMetric = inferBreakMetric({
+        breakMetric: habit.breakMetric,
+        targetType,
+        targetUnit: habit.targetUnit,
+      });
+
+      const currentLog = await ctx.db
+        .query("habitLogs")
+        .withIndex("by_habit_day", (q) => q.eq("habitId", args.habitId).eq("dayKey", args.dayKey))
+        .first();
+
+      const increment =
+        typeof loggedValue === "number"
+          ? loggedValue
+          : breakMetric === "minutes"
+            ? undefined
+            : 1;
+      if (increment === undefined || increment <= 0) {
+        throw new ConvexError("A positive value is required for break logging");
+      }
+
+      const currentTotal = currentLog?.value ?? 0;
+      nextValue = currentTotal + increment;
+      const allowedLimit = breakGoal === "quit" ? 0 : (targetValue ?? 0);
+      completed = nextValue <= allowedLimit;
+      status = completed ? "completed" : "skipped";
+    }
+
+    if (kind === "build" && (targetType === "quantity" || targetType === "duration")) {
+      if (typeof loggedValue !== "number") {
+        throw new ConvexError("A value is required for quantity and duration habits");
+      }
+      if (typeof targetValue !== "number" || targetValue <= 0) {
+        throw new ConvexError("Habit targetValue must be set for quantity and duration habits");
+      }
+      completed = loggedValue >= targetValue;
+      status = completed ? "completed" : "skipped";
+    }
 
     await appendHabitEvent(ctx, {
-      type: "habit.completed",
+      type: completed ? "habit.completed" : "habit.skipped",
       occurredAt,
       idempotencyKey: args.idempotencyKey,
       payload: {
@@ -55,8 +106,10 @@ export const logHabit = mutation({
     await upsertHabitLog(ctx, {
       habitId: args.habitId,
       dayKey: args.dayKey,
-      status: "completed",
+      status,
       occurredAt,
+      value: nextValue,
+      completed,
     });
 
     await ctx.db.patch(args.habitId, {

@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useModeThemeColors } from "@/lib/theme";
 import { isReviewWindowOpen } from "@/lib/review-window";
+import { HABITS_ENABLED } from "@/lib/features";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useTabSearchController } from "@/hooks/useTabSearchController";
 import { SearchBar } from "./SearchBar";
@@ -33,7 +34,8 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   const [isFullScreenOpen, setIsFullScreenOpen] = useState(false);
 
   const isTabVisible = (routeName: string) =>
-    routeName !== "review/index" || reviewWindowOpen;
+    (routeName !== "review/index" || reviewWindowOpen) &&
+    (HABITS_ENABLED || routeName !== "habits");
 
   const activeRouteName = state.routes[state.index]?.name ?? "";
   const isSettingsRoute =

@@ -1,7 +1,11 @@
-import { Stack } from "expo-router";
-import { Colors } from "../../../constants/theme";
+import { Redirect, Stack } from "expo-router";
+import { HABITS_ENABLED } from "@/lib/features";
 
 export default function HabitsLayout() {
+  if (!HABITS_ENABLED) {
+    return <Redirect href="/(tabs)" />;
+  }
+
   return (
     <Stack
       screenOptions={{
@@ -11,72 +15,23 @@ export default function HabitsLayout() {
     >
       <Stack.Screen
         name="index"
-        options={{
-          headerShown: false,
-          title: "Habits",
-          headerStyle: { backgroundColor: Colors.bgRaised },
-          headerTintColor: Colors.textPrimary,
-          headerShadowVisible: false,
-          contentStyle: { backgroundColor: Colors.bg },
-        }}
+
       />
       <Stack.Screen
         name="add"
-        options={{
-          title: "Add Habit",
-          headerBackVisible: true,
-          headerStyle: { backgroundColor: Colors.bgRaised },
-          headerTintColor: Colors.textPrimary,
-          headerShadowVisible: false,
-          contentStyle: { backgroundColor: Colors.bg },
-        }}
+
       />
       <Stack.Screen
         name="edit"
-        options={{
-          title: "Edit Habit",
-          headerBackVisible: true,
-          headerStyle: { backgroundColor: Colors.bgRaised },
-          headerTintColor: Colors.textPrimary,
-          headerShadowVisible: false,
-          contentStyle: { backgroundColor: Colors.bg },
-        }}
+
       />
       <Stack.Screen
         name="consistency"
-        options={{
-          title: "Habit Consistency",
-          headerShown: true,
-          headerBackVisible: true,
-          headerStyle: { backgroundColor: Colors.bgRaised },
-          headerTintColor: Colors.textPrimary,
-          headerShadowVisible: false,
-          contentStyle: { backgroundColor: Colors.bg },
-        }}
-      />
-      <Stack.Screen
-        name="habit-consistency"
-        options={{
-          title: "Habit Details",
-          headerShown: true,
-          headerBackVisible: true,
-          headerStyle: { backgroundColor: Colors.bgRaised },
-          headerTintColor: Colors.textPrimary,
-          headerShadowVisible: false,
-          contentStyle: { backgroundColor: Colors.bg },
-        }}
+
       />
       <Stack.Screen
         name="manage"
-        options={{
-          title: "Manage Habits",
-          headerShown: true,
-          headerBackVisible: true,
-          headerStyle: { backgroundColor: Colors.bgRaised },
-          headerTintColor: Colors.textPrimary,
-          headerShadowVisible: false,
-          contentStyle: { backgroundColor: Colors.bg },
-        }}
+
       />
     </Stack>
   );

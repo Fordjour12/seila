@@ -5,10 +5,17 @@ export type HabitCadence = "daily" | "weekdays" | { customDays: number[] };
 export type HabitAnchor = "morning" | "afternoon" | "evening" | "anytime";
 export type HabitDifficulty = "low" | "medium" | "high";
 export type HabitKind = "build" | "break";
+export type HabitTargetType = "binary" | "quantity" | "duration";
+export type HabitBreakGoal = "quit" | "limit";
+export type HabitBreakMetric = "times" | "minutes";
+export type HabitFrequencyType = "daily" | "weekly";
+export type HabitFrequencyConfig = { everyXDays?: number; weekdays?: number[] };
+export type HabitTimePreference = "morning" | "afternoon" | "evening" | "flexible";
+export type HabitEnergyLevel = "low" | "medium" | "high";
 
 export const todayHabitsRef = makeFunctionReference<
   "query",
-  { dayKey: string },
+  { dayKey: string; lowEnergyMode?: boolean },
   Array<{
     habitId: Id<"habits">;
     name: string;
@@ -16,13 +23,23 @@ export const todayHabitsRef = makeFunctionReference<
     anchor?: HabitAnchor;
     difficulty?: HabitDifficulty;
     kind?: HabitKind;
+    breakGoal?: HabitBreakGoal;
+    breakMetric?: HabitBreakMetric;
     targetValue?: number;
     targetUnit?: string;
+    targetType?: HabitTargetType;
+    frequencyType?: HabitFrequencyType;
+    frequencyConfig?: HabitFrequencyConfig;
+    identityTags?: string[];
+    energyLevel?: HabitEnergyLevel;
+    timePreference?: HabitTimePreference;
     timezone?: string;
     startDayKey?: string;
     endDayKey?: string;
     todayStatus?: "completed" | "skipped" | "snoozed" | "missed" | "relapsed";
     todayOccurredAt?: number;
+    todayValue?: number;
+    completed?: boolean;
     snoozedUntil?: number;
   }>
 >("queries/todayHabits:todayHabits");
@@ -36,8 +53,16 @@ export const createHabitRef = makeFunctionReference<
     anchor?: HabitAnchor;
     difficulty?: HabitDifficulty;
     kind?: HabitKind;
+    breakGoal?: HabitBreakGoal;
+    breakMetric?: HabitBreakMetric;
     targetValue?: number;
     targetUnit?: string;
+    targetType?: HabitTargetType;
+    frequencyType?: HabitFrequencyType;
+    frequencyConfig?: HabitFrequencyConfig;
+    identityTags?: string[];
+    energyLevel?: HabitEnergyLevel;
+    timePreference?: HabitTimePreference;
     timezone?: string;
     startDayKey?: string;
     endDayKey?: string;
@@ -55,8 +80,16 @@ export const updateHabitRef = makeFunctionReference<
     anchor?: HabitAnchor;
     difficulty?: HabitDifficulty;
     kind?: HabitKind;
+    breakGoal?: HabitBreakGoal;
+    breakMetric?: HabitBreakMetric;
     targetValue?: number;
     targetUnit?: string;
+    targetType?: HabitTargetType;
+    frequencyType?: HabitFrequencyType;
+    frequencyConfig?: HabitFrequencyConfig;
+    identityTags?: string[];
+    energyLevel?: HabitEnergyLevel;
+    timePreference?: HabitTimePreference;
     timezone?: string;
     startDayKey?: string;
     endDayKey?: string;
@@ -66,9 +99,34 @@ export const updateHabitRef = makeFunctionReference<
 
 export const logHabitRef = makeFunctionReference<
   "mutation",
-  { idempotencyKey: string; habitId: Id<"habits">; dayKey: string },
+  { idempotencyKey: string; habitId: Id<"habits">; dayKey: string; value?: number },
   { habitId?: Id<"habits">; deduplicated: boolean }
 >("commands/habits/logHabit:logHabit");
+
+export const gentleReturnSuggestionRef = makeFunctionReference<
+  "query",
+  { dayKey: string },
+  { habitId: Id<"habits">; name: string; energyLevel: HabitEnergyLevel; targetType: HabitTargetType } | null
+>("queries/habitInsights:gentleReturnSuggestion");
+
+export const habitAnalyticsRef = makeFunctionReference<
+  "query",
+  { dayKey: string },
+  {
+    completion7d: { scheduled: number; completed: number; ratePct: number };
+    completion30d: { scheduled: number; completed: number; ratePct: number };
+    energyCompletion: Record<HabitEnergyLevel, number>;
+    identityBreakdown: Array<{ tag: string; scheduled: number; completed: number; ratePct: number }>;
+    identityImbalance:
+      | {
+          strongestTag: string;
+          strongestRatePct: number;
+          weakestTag: string;
+          weakestRatePct: number;
+        }
+      | null;
+  }
+>("queries/habitInsights:habitAnalytics");
 
 export const skipHabitRef = makeFunctionReference<
   "mutation",

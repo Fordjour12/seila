@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 
+import { HABITS_ENABLED } from "../../../lib/features";
 import { useModeThemeColors } from "../../../lib/theme";
 import { TAB_ICON_MAP, getSuggestionRouteName, IconName } from "./config";
 import type { SearchResult } from "../../../hooks/useSearch";
@@ -89,17 +90,12 @@ export function SearchResults({
     return () => sub.remove();
   }, [isFullScreenOpen, handleDismiss]);
 
-  const groupedResults = useMemo(
-    () => [
+  const groupedResults = useMemo(() => {
+    const groups: Array<{ key: string; title: string; items: SearchResult[] }> = [
       {
         key: "navigate",
         title: "Navigate",
         items: results.filter((r) => r.type === "route"),
-      },
-      {
-        key: "habits",
-        title: "Habits",
-        items: results.filter((r) => r.type === "habit"),
       },
       {
         key: "tasks",
@@ -117,11 +113,24 @@ export function SearchResults({
             r.type === "savingsGoal",
         ),
       },
-    ],
-    [results],
-  );
+    ];
+    if (HABITS_ENABLED) {
+      groups.splice(1, 0, {
+        key: "habits",
+        title: "Habits",
+        items: results.filter((r) => r.type === "habit"),
+      });
+    }
+    return groups;
+  }, [results]);
 
-  const suggestions = query.length === 0 ? getTimeBasedSuggestions() : [];
+  const suggestions = useMemo(() => {
+    if (query.length > 0) return [];
+    const next = getTimeBasedSuggestions();
+    return HABITS_ENABLED
+      ? next
+      : next.filter((item) => item.route !== "habits/index");
+  }, [query.length]);
 
   const handleSelectResult = (result: SearchResult) => {
     void Haptics.selectionAsync().catch(() => undefined);
@@ -134,6 +143,10 @@ export function SearchResults({
     }
 
     if (result.type === "habit") {
+      if (!HABITS_ENABLED) {
+        handleDismiss();
+        return;
+      }
       router.push({ pathname: "/(tabs)/habits/edit", params: { id: result.id } } as never);
       handleDismiss();
       return;

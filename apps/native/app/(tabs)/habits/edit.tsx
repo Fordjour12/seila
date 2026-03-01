@@ -7,7 +7,7 @@ import { useToast } from "heroui-native";
 
 import { todayHabitsRef, updateHabitRef } from "../../../lib/productivity-refs";
 import { Button } from "../../../components/ui";
-import { HabitForm, buildCadenceFromForm } from "./_components/HabitForm";
+import { HabitForm } from "./_components/HabitForm";
 import { getLocalDayKey } from "../../../lib/date";
 
 export default function EditHabitScreen() {
@@ -25,18 +25,20 @@ export default function EditHabitScreen() {
   );
 
   const [name, setName] = React.useState("");
-  const [anchor, setAnchor] = React.useState<"morning" | "afternoon" | "evening" | "anytime">(
-    "morning",
-  );
-  const [difficulty, setDifficulty] = React.useState<"low" | "medium" | "high">("low");
   const [kind, setKind] = React.useState<"build" | "break">("build");
-  const [cadenceType, setCadenceType] = React.useState<"daily" | "weekdays" | "custom">("daily");
-  const [customDays, setCustomDays] = React.useState<number[]>([1, 2, 3, 4, 5]);
-  const [startDayKey, setStartDayKey] = React.useState<string | undefined>();
-  const [endDayKey, setEndDayKey] = React.useState<string | undefined>();
-  const [targetValue, setTargetValue] = React.useState("1");
-  const [targetUnit, setTargetUnit] = React.useState("session");
-  const [timezone, setTimezone] = React.useState("UTC");
+  const [targetType, setTargetType] = React.useState<"binary" | "quantity" | "duration">("binary");
+  const [breakGoal, setBreakGoal] = React.useState<"quit" | "limit">("quit");
+  const [breakMetric, setBreakMetric] = React.useState<"times" | "minutes">("times");
+  const [frequencyType, setFrequencyType] = React.useState<"daily" | "weekly">("daily");
+  const [frequencyEveryXDays, setFrequencyEveryXDays] = React.useState("");
+  const [frequencyWeekdays, setFrequencyWeekdays] = React.useState<number[]>([1, 2, 3, 4, 5]);
+  const [targetValue, setTargetValue] = React.useState("");
+  const [targetUnit, setTargetUnit] = React.useState("");
+  const [identityTags, setIdentityTags] = React.useState<string[]>([]);
+  const [energyLevel, setEnergyLevel] = React.useState<"low" | "medium" | "high">("low");
+  const [timePreference, setTimePreference] = React.useState<
+    "morning" | "afternoon" | "evening" | "flexible"
+  >("flexible");
   const [hydratedHabitId, setHydratedHabitId] = React.useState<Id<"habits"> | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
@@ -45,21 +47,30 @@ export default function EditHabitScreen() {
     if (hydratedHabitId === habit.habitId) return;
 
     setName(habit.name);
-    setAnchor(habit.anchor || "morning");
-    setDifficulty(habit.difficulty || "low");
     setKind(habit.kind || "build");
-    setTargetValue(habit.targetValue ? String(habit.targetValue) : "1");
-    setTargetUnit(habit.targetUnit || "session");
-    setTimezone(habit.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC");
-    setStartDayKey(habit.startDayKey);
-    setEndDayKey(habit.endDayKey);
+    setTargetType(habit.targetType || "binary");
+    setTargetValue(typeof habit.targetValue === "number" ? String(habit.targetValue) : "");
+    setTargetUnit(habit.targetType === "duration" ? "minutes" : habit.targetUnit || "");
+    setIdentityTags(habit.identityTags || []);
+    setEnergyLevel(habit.energyLevel || "low");
+    setTimePreference(habit.timePreference || "flexible");
+    setBreakGoal(habit.breakGoal || (habit.kind === "break" && habit.targetValue === 0 ? "quit" : "limit"));
+    setBreakMetric(habit.breakMetric || (habit.targetType === "duration" ? "minutes" : "times"));
 
-    if (habit.cadence === "daily" || habit.cadence === "weekdays") {
-      setCadenceType(habit.cadence);
-      setCustomDays([1, 2, 3, 4, 5]);
+    if (habit.frequencyType === "weekly") {
+      setFrequencyType("weekly");
+      setFrequencyWeekdays(habit.frequencyConfig?.weekdays || [1, 2, 3, 4, 5]);
+      setFrequencyEveryXDays("");
     } else {
-      setCadenceType("custom");
-      setCustomDays(habit.cadence.customDays);
+      setFrequencyType("daily");
+      setFrequencyEveryXDays(
+        typeof habit.frequencyConfig?.everyXDays === "number"
+          ? String(habit.frequencyConfig.everyXDays)
+          : "",
+      );
+      if (habit.cadence !== "daily" && habit.cadence !== "weekdays") {
+        setFrequencyWeekdays(habit.cadence.customDays);
+      }
     }
 
     setHydratedHabitId(habit.habitId);
@@ -68,17 +79,41 @@ export default function EditHabitScreen() {
   const validationError = React.useMemo(() => {
     if (!habit) return "Habit not found";
     if (!name.trim()) return "Habit name is required";
-    if (cadenceType === "custom" && customDays.length === 0) {
-      return "Choose at least one day for custom cadence";
+    if (frequencyType === "weekly" && frequencyWeekdays.length === 0) {
+      return "Choose at least one weekday";
     }
-    if (startDayKey && endDayKey && endDayKey < startDayKey) {
-      return "End date must be on or after start date";
+    if (frequencyType === "daily" && frequencyEveryXDays.trim()) {
+      const everyX = Number(frequencyEveryXDays);
+      if (!Number.isInteger(everyX) || everyX <= 0) {
+        return "Every X days must be a positive integer";
+      }
     }
-    if (targetValue.trim() && Number(targetValue) <= 0) {
+    if ((targetType === "quantity" || targetType === "duration") && !targetValue.trim()) {
+      return "Target value is required for quantity and duration habits";
+    }
+    if ((targetType === "quantity" || targetType === "duration") && Number(targetValue) <= 0) {
       return "Target value must be greater than 0";
     }
+    if (targetType === "duration" && targetUnit.trim()) {
+      return "Duration unit is fixed to minutes in V1";
+    }
+    if (kind === "break" && breakGoal === "limit") {
+      if (!targetValue.trim()) return "Limit value is required";
+      if (Number(targetValue) < 1) return "Limit value must be at least 1";
+    }
     return null;
-  }, [cadenceType, customDays.length, endDayKey, habit, name, startDayKey, targetValue]);
+  }, [
+    breakGoal,
+    frequencyEveryXDays,
+    frequencyType,
+    frequencyWeekdays.length,
+    habit,
+    kind,
+    name,
+    targetType,
+    targetUnit,
+    targetValue,
+  ]);
 
   const isLoading = habits === undefined;
 
@@ -99,15 +134,57 @@ export default function EditHabitScreen() {
         idempotencyKey: `habits.update:${habit.habitId}:${Date.now()}`,
         habitId: habit.habitId as Id<"habits">,
         name: name.trim(),
-        cadence: buildCadenceFromForm(cadenceType, customDays),
-        anchor,
-        difficulty,
+        cadence:
+          frequencyType === "weekly"
+            ? { customDays: frequencyWeekdays }
+            : "daily",
+        anchor: timePreference === "flexible" ? "anytime" : timePreference,
+        difficulty: energyLevel,
         kind,
-        targetValue: targetValue.trim() ? Number(targetValue) : undefined,
-        targetUnit: targetUnit.trim() || undefined,
-        timezone: timezone.trim() || undefined,
-        startDayKey,
-        endDayKey,
+        breakGoal: kind === "break" ? breakGoal : undefined,
+        breakMetric: kind === "break" ? breakMetric : undefined,
+        targetType:
+          kind === "break"
+            ? breakGoal === "quit"
+              ? "quantity"
+              : breakMetric === "minutes"
+                ? "duration"
+                : "quantity"
+            : targetType,
+        targetValue:
+          kind === "break"
+            ? breakGoal === "quit"
+              ? 0
+              : Number(targetValue)
+            : targetType === "quantity" || targetType === "duration"
+              ? Number(targetValue)
+              : undefined,
+        targetUnit:
+          kind === "break"
+            ? breakMetric === "minutes"
+              ? "minutes"
+              : "times"
+            : targetType === "duration"
+              ? "minutes"
+              : targetType === "quantity"
+                ? targetUnit.trim() || undefined
+                : undefined,
+        frequencyType,
+        frequencyConfig:
+          frequencyType === "daily"
+            ? {
+                everyXDays: frequencyEveryXDays.trim()
+                  ? Number(frequencyEveryXDays)
+                  : undefined,
+              }
+            : {
+                weekdays: frequencyWeekdays,
+              },
+        identityTags,
+        energyLevel,
+        timePreference,
+        startDayKey: habit.startDayKey,
+        endDayKey: habit.endDayKey,
       });
       toast.show({ variant: "success", label: "Habit updated" });
       router.back();
@@ -132,7 +209,7 @@ export default function EditHabitScreen() {
       <View className="mb-2">
         <Text className="text-3xl font-serif text-foreground tracking-tight">Edit Habit</Text>
         <Text className="text-sm text-muted-foreground mt-1">
-          Update cadence, anchor, and difficulty for this habit.
+          Update target, frequency, and optional preference fields.
         </Text>
       </View>
 
@@ -144,30 +221,34 @@ export default function EditHabitScreen() {
         <HabitForm
           title="Habit Details"
           name={name}
-          anchor={anchor}
-          difficulty={difficulty}
           kind={kind}
-          cadenceType={cadenceType}
-          customDays={customDays}
-          startDayKey={startDayKey}
-          endDayKey={endDayKey}
+          targetType={targetType}
+          breakGoal={breakGoal}
+          breakMetric={breakMetric}
+          frequencyType={frequencyType}
+          frequencyEveryXDays={frequencyEveryXDays}
+          frequencyWeekdays={frequencyWeekdays}
           targetValue={targetValue}
           targetUnit={targetUnit}
-          timezone={timezone}
+          identityTags={identityTags}
+          energyLevel={energyLevel}
+          timePreference={timePreference}
           validationError={validationError}
           isSubmitting={isSubmitting}
           submitLabel="Save Habit"
           onNameChange={setName}
-          onAnchorChange={setAnchor}
-          onDifficultyChange={setDifficulty}
           onKindChange={setKind}
-          onCadenceTypeChange={setCadenceType}
-          onCustomDaysChange={setCustomDays}
-          onStartDayKeyChange={setStartDayKey}
-          onEndDayKeyChange={setEndDayKey}
+          onTargetTypeChange={setTargetType}
+          onBreakGoalChange={setBreakGoal}
+          onBreakMetricChange={setBreakMetric}
+          onFrequencyTypeChange={setFrequencyType}
+          onFrequencyEveryXDaysChange={setFrequencyEveryXDays}
+          onFrequencyWeekdaysChange={setFrequencyWeekdays}
           onTargetValueChange={setTargetValue}
           onTargetUnitChange={setTargetUnit}
-          onTimezoneChange={setTimezone}
+          onIdentityTagsChange={setIdentityTags}
+          onEnergyLevelChange={setEnergyLevel}
+          onTimePreferenceChange={setTimePreference}
           onSubmit={handleSubmit}
           onCancel={() => router.back()}
         />

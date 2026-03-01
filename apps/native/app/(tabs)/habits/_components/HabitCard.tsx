@@ -1,196 +1,359 @@
-import React, { useRef } from "react";
-import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { GestureDetector, Gesture } from "react-native-gesture-handler";
-import Animated, {
-	useAnimatedStyle,
-	useSharedValue,
-	withSpring,
-	withTiming,
-	runOnJS,
-} from "react-native-reanimated";
+import { Button, Card, Popover, Separator } from "heroui-native";
+import React from "react";
+import { Pressable, Text, View } from "react-native";
+import { type HabitCadence } from "@/lib/productivity-refs";
+import { useModeThemeColors } from "@/lib/theme";
+
+type HabitStatus = "completed" | "skipped" | "snoozed" | "missed" | "relapsed";
+type HabitKind = "build" | "break";
+
+export interface HabitCardData {
+  habitId: string;
+  name: string;
+  cadence: HabitCadence;
+  kind?: HabitKind;
+  breakGoal?: "quit" | "limit";
+  breakMetric?: "times" | "minutes";
+  targetType?: "binary" | "quantity" | "duration";
+  energyLevel?: "low" | "medium" | "high";
+  timePreference?: "morning" | "afternoon" | "evening" | "flexible";
+  anchor?: string;
+  difficulty?: string;
+  targetValue?: number;
+  targetUnit?: string;
+  completed?: boolean;
+  todayStatus?: HabitStatus;
+}
 
 interface HabitCardProps {
-	habit: any;
-	status: string;
-	hasTodayStatus: boolean;
-	resolved: boolean;
-	isTodayView: boolean;
-	isSubmitting: boolean;
-	onLog: () => void;
-	onSkip: () => void;
-	onSnooze: () => void;
-	onRelapse: () => void;
-	onUndo: () => void;
-	onArchive: () => void;
-	onEdit: () => void;
-	onStats: () => void;
+  habit: HabitCardData;
+  onPress?: () => void;
+  onEditPress?: () => void;
+  onStatsPress?: () => void;
+  onCompletePress?: () => void;
+  onSkipPress?: () => void;
+  onSnoozePress?: () => void;
+  onRelapsePress?: () => void;
+  showMenu?: boolean;
+  disabled?: boolean;
 }
-
-const SWIPE_THRESHOLD = -150;
-
-function formatCadence(cadence: any) {
-	if (cadence === "daily" || cadence === "weekdays") {
-		return (
-			cadence.charAt(0).toUpperCase() + cadence.slice(1)
-		);
-	}
-
-	const map = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-	if (cadence?.customDays) {
-		return cadence.customDays.map((day: number) => map[day] || "?").join(", ");
-	}
-	return "Custom";
-}
-
 
 function toTitleCase(value: string) {
-	return value
-		.split(/[\s_-]+/)
-		.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-		.join(" ");
+  return value
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function formatCadence(cadence: HabitCadence) {
+  if (cadence === "daily" || cadence === "weekdays") {
+    return toTitleCase(cadence);
+  }
+
+  const map = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  return cadence.customDays.map((day) => map[day] || "?").join(", ");
+}
+
+function formatStatus(status?: HabitStatus) {
+  if (status === "completed") return "Done Today";
+  if (status === "skipped") return "Skipped Today";
+  if (status === "snoozed") return "Snoozed Today";
+  if (status === "missed") return "Missed";
+  if (status === "relapsed") return "Relapsed";
+  return "Pending";
+}
+
+function statusToneClass(status: ReturnType<typeof formatStatus>) {
+  if (status === "Done Today") return "text-success bg-success/10 border-success/20";
+  if (status === "Skipped Today") return "text-warning bg-warning/10 border-warning/20";
+  if (status === "Snoozed Today") return "text-primary bg-primary/10 border-primary/20";
+  if (status === "Relapsed") {
+    return "text-danger bg-danger/10 border-danger/20";
+  }
+  if (status === "Missed") return "text-muted-foreground bg-muted/30 border-border";
+  return "text-muted-foreground bg-muted/30 border-border";
+}
+
+function targetSummary(habit: HabitCardData) {
+  if (habit.targetType === "duration") {
+    return `${habit.targetValue || 0} min`;
+  }
+  if (habit.targetType === "quantity") {
+    return `${habit.targetValue || 0} ${habit.targetUnit || "units"}`;
+  }
+  return "Binary";
 }
 
 export function HabitCard({
-	habit,
-	status,
-	hasTodayStatus,
-	resolved,
-	isTodayView,
-	isSubmitting,
-	onLog,
-	onSkip,
-	onSnooze,
-	onUndo,
-	onArchive,
-	onEdit,
-	onStats,
+  habit,
+  onPress,
+  onEditPress,
+  onStatsPress,
+  onCompletePress,
+  onSkipPress,
+  onSnoozePress,
+  onRelapsePress,
+  showMenu = true,
+  disabled = false,
 }: HabitCardProps) {
-	const translateX = useSharedValue(0);
-	const scaleLogBtn = useSharedValue(1);
+  const [menuOpen, setMenuOpen] = React.useState(false);
+  const colors = useModeThemeColors();
+  const status = formatStatus(habit.todayStatus);
+  const isCompleted = habit.todayStatus === "completed";
+  const isBreakHabit = (habit.kind ?? "build") === "break";
+  const primaryLabel = (() => {
+    if (isBreakHabit) {
+      const goal = habit.breakGoal ?? (habit.targetValue === 0 ? "quit" : "limit");
+      const metric = habit.breakMetric ?? (habit.targetType === "duration" ? "minutes" : "times");
+      if (goal === "quit") return "Slip +1";
+      if (metric === "minutes") return "Log minutes";
+      return "+1";
+    }
+    if (habit.targetType === "quantity" || habit.targetType === "duration") {
+      return isCompleted ? "Update value" : "Log value";
+    }
+    return isCompleted ? "Completed" : "Complete";
+  })();
 
-	const panGesture = Gesture.Pan()
-		.onChange((event) => {
-			let nextX = event.translationX;
-			// Only allow swiping left
-			if (nextX > 0) nextX = 0;
-			// Cap at roughly 180px
-			if (nextX < -180) nextX = -180 + (nextX + 180) * 0.2;
-			translateX.value = nextX;
-		})
-		.onEnd((event) => {
-			if (translateX.value < SWIPE_THRESHOLD || event.velocityX < -500) {
-				translateX.value = withSpring(-180);
-			} else {
-				translateX.value = withSpring(0);
-			}
-		});
+  const actionItems: Array<{
+    key: string;
+    label: string;
+    hint: string;
+    icon: React.ComponentProps<typeof Ionicons>["name"];
+    toneClass: string;
+    labelClass: string;
+    onPress?: () => void;
+  }> = [
+    {
+      key: "complete",
+      label: "Complete",
+      hint: "Mark this habit done for today",
+      icon: "checkmark-circle-outline",
+      toneClass: "bg-success/10 border-success/30",
+      labelClass: "text-foreground",
+      onPress: onCompletePress,
+    },
+    {
+      key: "skip",
+      label: "Skip",
+      hint: "Skip this habit without breaking flow",
+      icon: "play-skip-forward-outline",
+      toneClass: "bg-warning/10 border-warning/30",
+      labelClass: "text-foreground",
+      onPress: onSkipPress,
+    },
+    {
+      key: "snooze",
+      label: "Snooze",
+      hint: "Remind me later today",
+      icon: "alarm-outline",
+      toneClass: "bg-primary/10 border-primary/30",
+      labelClass: "text-foreground",
+      onPress: onSnoozePress,
+    },
+    {
+      key: "relapse",
+      label: "Relapse",
+      hint: "Mark a relapse or miss event",
+      icon: "refresh-circle-outline",
+      toneClass: "bg-danger/10 border-danger/30",
+      labelClass: "text-danger",
+      onPress: onRelapsePress,
+    },
+  ];
 
-	const cardStyle = useAnimatedStyle(() => {
-		return {
-			transform: [{ translateX: translateX.value }],
-		};
-	});
+  return (
+    <Pressable onPress={onPress} disabled={disabled}>
+      <Card className="mb-3 rounded-3xl overflow-hidden bg-surface border border-border">
+        <Card.Body className="p-4">
+          <View className="absolute -right-10 -top-12 h-28 w-28 rounded-full bg-primary/10" />
 
-	const handlePressLog = () => {
-		scaleLogBtn.value = withTiming(0.8, { duration: 100 }, () => {
-			scaleLogBtn.value = withSpring(1);
-		});
-		if (hasTodayStatus) {
-			onUndo();
-		} else {
-			onLog();
-		}
-	};
+          <View className="flex-row items-start justify-between gap-3">
+            <View className="flex-1">
+              <Text className="text-base font-sans-bold text-foreground">{habit.name}</Text>
+              <View className="mt-2 flex-row flex-wrap gap-1.5">
+                <View className="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1">
+                  <Text className="text-[10px] uppercase font-sans-bold text-primary">
+                    {toTitleCase(habit.kind || "build")}
+                  </Text>
+                </View>
+                <View className="rounded-full border border-border bg-background px-2.5 py-1">
+                  <Text className="text-[10px] uppercase font-sans-bold text-foreground/80">
+                    {toTitleCase(habit.energyLevel || habit.difficulty || "low")}
+                  </Text>
+                </View>
+              </View>
+            </View>
+            <View className={`rounded-full border px-2.5 py-1 ${statusToneClass(status)}`}>
+              <Text className="text-[10px] uppercase font-sans-bold">{status}</Text>
+            </View>
+          </View>
 
-	const handleAction = (action: () => void) => {
-		translateX.value = withSpring(0);
-		action();
-	};
+          <View className="mt-3 rounded-2xl border border-border bg-background/80 px-3 py-2 gap-1.5">
+            <View className="flex-row items-center gap-2">
+              <Ionicons name="calendar-outline" size={13} color={colors.foreground} />
+              <Text className="text-xs text-muted-foreground font-sans-medium flex-1">
+                {formatCadence(habit.cadence)}
+              </Text>
+            </View>
+            <View className="flex-row items-center gap-2">
+              <Ionicons name="time-outline" size={13} color={colors.foreground} />
+              <Text className="text-xs text-muted-foreground font-sans-medium flex-1">
+                {toTitleCase(habit.timePreference || habit.anchor || "flexible")}
+              </Text>
+            </View>
+            <View className="flex-row items-center gap-2">
+              <Ionicons name="flag-outline" size={13} color={colors.foreground} />
+              <Text className="text-xs text-muted-foreground font-sans-medium flex-1">
+                {targetSummary(habit)}
+              </Text>
+            </View>
+          </View>
 
-	const isDone = status === "Done Today";
+          <View className="mt-3 flex-row items-center gap-2">
+            <Pressable
+              className={`flex-1 rounded-xl border px-3 py-2.5 ${
+                isCompleted ? "bg-success/10 border-success/30" : "bg-primary border-primary"
+              }`}
+              onPress={(e) => {
+                e.stopPropagation();
+                onCompletePress?.();
+              }}
+            >
+              <Text
+                className={`text-center text-xs font-sans-bold uppercase ${
+                  isCompleted ? "text-success" : "text-primary-foreground"
+                }`}
+              >
+                {primaryLabel}
+              </Text>
+            </Pressable>
 
-	// Status Colors
-	const borderColor = isDone ? "border-success/40" : status === "Skipped Today" || status === "Snoozed Today" ? "border-warning/40" : "border-border";
-	const bgGlowClass = isDone ? "bg-success/5" : status === "Skipped Today" || status === "Snoozed Today" ? "bg-warning/5" : "bg-transparent";
+            <View className="flex-row gap-1.5">
+              {!isBreakHabit ? (
+                <>
+                  <Pressable
+                    className="rounded-xl bg-warning/10 border border-warning/20 px-2.5 py-2.5"
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      onSkipPress?.();
+                    }}
+                  >
+                    <Ionicons name="play-skip-forward-outline" size={14} color="#f59e0b" />
+                  </Pressable>
+                  <Pressable
+                    className="rounded-xl bg-primary/10 border border-primary/20 px-2.5 py-2.5"
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      onSnoozePress?.();
+                    }}
+                  >
+                    <Ionicons name="alarm-outline" size={14} color="#3b82f6" />
+                  </Pressable>
+                </>
+              ) : null}
+              {showMenu && (
+                <Popover presentation="bottom-sheet" isOpen={menuOpen} onOpenChange={setMenuOpen}>
+                  <Popover.Trigger asChild>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      isIconOnly
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        setMenuOpen(true);
+                      }}
+                    >
+                      <Ionicons name="ellipsis-horizontal-outline" size={16} color={colors.foreground} />
+                    </Button>
+                  </Popover.Trigger>
 
-	// When done, it's green. When pending, it's a dotted circle or empty circle
-	const iconColor = isDone ? "#10b981" : hasTodayStatus ? "#f59e0b" : "#71717a";
+                  <Popover.Portal>
+                    <Popover.Overlay className="bg-black/45" />
+                    <Popover.Content
+                      presentation="bottom-sheet"
+                      className="rounded-t-3xl border border-border bg-surface px-4 pt-4 pb-6"
+                    >
+                      <Text className="text-base font-sans-semibold text-foreground">Habit Actions</Text>
+                      <Text className="text-sm text-muted-foreground mt-1 mb-3">{habit.name}</Text>
 
-	return (
-		<View className="mb-3 rounded-2xl bg-surface border border-border overflow-hidden relative shadow-sm">
-			{/* Background Actions (Revealed on Swipe) */}
-			<View className="absolute right-0 top-0 bottom-0 w-[180px] flex-row p-2 gap-2 justify-end items-center">
-				<Pressable
-					className="w-12 h-12 rounded-xl bg-primary/10 items-center justify-center border border-primary/20"
-					onPress={() => handleAction(onSnooze)}
-					disabled={isSubmitting || !isTodayView || resolved}
-				>
-					<Ionicons name="moon-outline" size={18} color="#3b82f6" />
-					<Text className="text-[9px] text-primary font-sans-medium mt-1 uppercase">Snooze</Text>
-				</Pressable>
+                      <View className="gap-2">
+                        {actionItems.map((item) => (
+                          <Pressable
+                            key={item.key}
+                            className={`flex-row items-center rounded-2xl border px-3 py-3 ${item.toneClass}`}
+                            onPress={() => {
+                              setMenuOpen(false);
+                              item.onPress?.();
+                            }}
+                          >
+                            <View className="h-9 w-9 rounded-full bg-background/70 items-center justify-center">
+                              <Ionicons
+                                name={item.icon}
+                                size={18}
+                                color={
+                                  item.key === "complete"
+                                    ? "#22c55e"
+                                    : item.key === "skip"
+                                      ? "#f59e0b"
+                                      : item.key === "snooze"
+                                        ? "#3b82f6"
+                                        : "#ef4444"
+                                }
+                              />
+                            </View>
+                            <View className="flex-1 ml-3">
+                              <Text className={`text-sm font-sans-semibold ${item.labelClass}`}>
+                                {item.label}
+                              </Text>
+                              <Text className="text-xs text-muted-foreground mt-0.5">{item.hint}</Text>
+                            </View>
+                            <Ionicons name="chevron-forward" size={16} color={colors.foreground} />
+                          </Pressable>
+                        ))}
+                      </View>
 
-				<Pressable
-					className="w-12 h-12 rounded-xl bg-warning/10 items-center justify-center border border-warning/20"
-					onPress={() => handleAction(onSkip)}
-					disabled={isSubmitting || !isTodayView || resolved}
-				>
-					<Ionicons name="play-skip-forward-outline" size={18} color="#f59e0b" />
-					<Text className="text-[9px] text-warning font-sans-medium mt-1 uppercase">Skip</Text>
-				</Pressable>
+                      <Pressable
+                        className="items-center justify-center py-4 mt-3 border-t border-border"
+                        onPress={() => setMenuOpen(false)}
+                      >
+                        <Text className="text-sm text-muted-foreground">Cancel</Text>
+                      </Pressable>
+                    </Popover.Content>
+                  </Popover.Portal>
+                </Popover>
+              )}
+            </View>
+          </View>
 
-				<Pressable
-					className="w-12 h-12 rounded-xl bg-muted/30 items-center justify-center border border-border"
-					onPress={() => handleAction(onEdit)}
-				>
-					<Ionicons name="ellipsis-horizontal-circle-outline" size={18} color="#71717a" />
-					<Text className="text-[9px] text-muted-foreground font-sans-medium mt-1 uppercase">More</Text>
-				</Pressable>
-			</View>
+          <View className="mt-3 flex-row gap-2">
+            <Pressable
+              className="rounded-lg bg-warning/10 border border-warning/20 px-3 py-1.5"
+              onPress={(e) => {
+                e.stopPropagation();
+                onEditPress?.();
+              }}
+            >
+              <Text className="text-[11px] font-sans-semibold text-warning uppercase">Edit</Text>
+            </Pressable>
+            <Pressable
+              className="rounded-lg bg-primary/10 border border-primary/20 px-3 py-1.5"
+              onPress={(e) => {
+                e.stopPropagation();
+                onStatsPress?.();
+              }}
+            >
+              <Text className="text-[11px] font-sans-semibold text-primary uppercase">Stats</Text>
+            </Pressable>
+          </View>
+        </Card.Body>
+      </Card>
+    </Pressable>
+  );
+}
 
-			{/* Foreground Draggable Card */}
-			<GestureDetector gesture={panGesture}>
-				<Animated.View className={`flex-row p-4 min-h-[80px] bg-background border-l-4 rounded-xl ${borderColor} ${bgGlowClass}`} style={cardStyle}>
-
-					<View className="flex-1 justify-center gap-1.5 pl-1 pr-3">
-						<Text className="text-[15px] font-sans-semibold text-foreground tracking-tight shadow-sm leading-tight">
-							{habit.name}
-						</Text>
-
-						<View className="flex-row items-center gap-1.5 mt-0.5">
-							<View className="bg-primary/10 rounded px-1.5 py-0.5 border border-primary/20">
-								<Text className="text-[9px] text-primary font-sans-bold uppercase tracking-widest">{toTitleCase(habit.kind || "build")}</Text>
-							</View>
-							<Text className="text-xs text-muted-foreground font-sans-medium mt-0.5">
-								{formatCadence(habit.cadence)}
-								{habit.targetValue ? ` · ${habit.targetValue} ${habit.targetUnit || "units"}` : ""}
-							</Text>
-						</View>
-					</View>
-
-					{/* Large Log Button */}
-					<View className="justify-center items-center -mr-1">
-						<Pressable
-							onPress={handlePressLog}
-							disabled={isSubmitting || !isTodayView}
-							hitSlop={15}
-						>
-							<Animated.View
-								className={`w-[44px] h-[44px] rounded-full border-[1.5px] items-center justify-center ${isDone ? 'bg-success/15 border-success/40' : hasTodayStatus ? 'bg-warning/15 border-warning/40' : 'bg-surface border-muted-foreground/30'}`}
-								style={useAnimatedStyle(() => ({ transform: [{ scale: scaleLogBtn.value }] }))}
-							>
-								{isDone ? (
-									<Ionicons name="checkmark-sharp" size={24} color={iconColor} />
-								) : hasTodayStatus ? (
-									<Ionicons name="arrow-undo-outline" size={20} color={iconColor} />
-								) : (
-									<View className="w-5 h-5 rounded-full border-[2px] border-muted-foreground/40 border-dashed" />
-								)}
-							</Animated.View>
-						</Pressable>
-					</View>
-				</Animated.View>
-			</GestureDetector>
-		</View>
-	);
+export function HabitCardSeparator() {
+  return <Separator className="my-1" />;
 }

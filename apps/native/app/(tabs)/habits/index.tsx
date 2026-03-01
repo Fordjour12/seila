@@ -1,459 +1,298 @@
-import React from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
-import { useRouter } from "expo-router";
-import type { Id } from "@seila/backend/convex/_generated/dataModel";
-import { useMutation, useQuery } from "convex/react";
-import { useToast } from "heroui-native";
-
+import { Container } from "@/components/container";
+import { getLocalDayKey } from "@/lib/date";
 import {
-  archiveHabitRef,
-  clearHabitTodayStatusRef,
-  habitLifecycleRef,
-  habitsConsistencyRef,
-  habitStalePromptsRef,
+  gentleReturnSuggestionRef,
+  habitAnalyticsRef,
   logHabitRef,
-  relapseHabitRef,
-  resolveMissedHabitsRef,
-  respondStaleHabitPromptRef,
   skipHabitRef,
   snoozeHabitRef,
   todayHabitsRef,
-  type HabitCadence,
-} from "../../../lib/productivity-refs";
-import { Button, SectionLabel } from "../../../components/ui";
-import { getLocalDayKey } from "../../../lib/date";
-import { BentoDashboard } from "./_components/BentoDashboard";
-import { DaySelector } from "./_components/DaySelector";
+} from "@/lib/productivity-refs";
+import { useModeThemeColors } from "@/lib/theme";
+import { Ionicons } from "@expo/vector-icons";
+import type { Id } from "@seila/backend/convex/_generated/dataModel";
+import { useMutation, useQuery } from "convex/react";
+import { useRouter } from "expo-router";
+import { Button, useToast } from "heroui-native";
+import React from "react";
+import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { HabitCard } from "./_components/HabitCard";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
 
-const ANCHOR_ORDER = ["morning", "afternoon", "evening", "anytime"] as const;
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-function toTitleCase(value: string) {
-  return value
-    .split(/[\s_-]+/)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-}
-
-function toDayKey(date: Date) {
-  const year = date.getFullYear();
-  const month = `${date.getMonth() + 1}`.padStart(2, "0");
-  const day = `${date.getDate()}`.padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function startOfDay(date: Date) {
-  const value = new Date(date);
-  value.setHours(0, 0, 0, 0);
-  return value;
-}
-
-function buildWeekDays(centerDate: Date) {
-  const center = startOfDay(centerDate);
-  const weekday = center.getDay();
-  const mondayOffset = weekday === 0 ? -6 : 1 - weekday;
-  const monday = new Date(center.getTime() + mondayOffset * DAY_MS);
-
-  return Array.from({ length: 7 }, (_, index) => {
-    const date = new Date(monday.getTime() + index * DAY_MS);
-    return {
-      key: toDayKey(date),
-      label: date.toLocaleDateString(undefined, { weekday: "short" }),
-      dayNumber: date.getDate(),
-    };
-  });
-}
-
-function formatCadence(cadence: HabitCadence) {
-  if (cadence === "daily" || cadence === "weekdays") {
-    return toTitleCase(cadence);
-  }
-
-  const map = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  return cadence.customDays.map((day) => map[day] || "?").join(", ");
-}
-
-function formatStatus(status?: "completed" | "skipped" | "snoozed" | "missed" | "relapsed") {
-  if (status === "completed") return "Done Today";
-  if (status === "skipped") return "Skipped Today";
-  if (status === "snoozed") return "Snoozed Today";
-  if (status === "missed") return "Missed";
-  if (status === "relapsed") return "Relapsed";
-  return "Pending";
-}
-
-function statusToneClass(status: ReturnType<typeof formatStatus>) {
-  if (status === "Done Today") return "text-success bg-success/10 border-success/20";
-  if (status === "Skipped Today") return "text-warning bg-warning/10 border-warning/20";
-  if (status === "Snoozed Today") return "text-primary bg-primary/10 border-primary/20";
-  if (status === "Relapsed" || status === "Missed") {
-    return "text-danger bg-danger/10 border-danger/20";
-  }
-  return "text-muted-foreground bg-muted/30 border-border";
-}
-
-
-
-function ActionPill({
-  label,
-  tone,
-  onPress,
-  disabled,
-}: {
-  label: string;
-  tone: "success" | "warning" | "primary" | "danger";
-  onPress: () => void;
-  disabled?: boolean;
-}) {
-  const className =
-    tone === "success"
-      ? "bg-success/10 border-success/20 text-success"
-      : tone === "warning"
-        ? "bg-warning/10 border-warning/20 text-warning"
-        : tone === "danger"
-          ? "bg-danger/10 border-danger/20 text-danger"
-          : "bg-primary/10 border-primary/20 text-primary";
-
-  return (
-    <Pressable
-      className={`rounded-lg border px-3 py-2 ${className} ${disabled ? "opacity-50" : ""}`}
-      onPress={onPress}
-      disabled={disabled}
-    >
-      <Text className="text-xs font-sans-semibold">{label}</Text>
-    </Pressable>
-  );
+function idempotencyKey(prefix: string) {
+  return `${prefix}:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`;
 }
 
 export default function HabitsScreen() {
+  const colors = useModeThemeColors();
   const router = useRouter();
+  const dayKey = getLocalDayKey();
   const { toast } = useToast();
 
-  const localTodayKey = getLocalDayKey();
-  const [selectedDayKey, setSelectedDayKey] = React.useState(localTodayKey);
-  const dayKey = selectedDayKey;
-  const isTodayView = selectedDayKey === localTodayKey;
+  const [lowEnergyMode, setLowEnergyMode] = React.useState(false);
+  const [pendingValueHabit, setPendingValueHabit] = React.useState<
+    | {
+        habitId: Id<"habits">;
+        name: string;
+        targetType?: "binary" | "quantity" | "duration";
+        targetValue?: number;
+        targetUnit?: string;
+      }
+    | null
+  >(null);
+  const [pendingValue, setPendingValue] = React.useState("");
 
-  const weekDays = React.useMemo(() => buildWeekDays(new Date()), []);
-
-  const habits = useQuery(todayHabitsRef, { dayKey });
-  const consistency = useQuery(habitsConsistencyRef, {
-    dayKey,
-    windowDays: 30,
-    trendDays: 14,
-  });
-  const lifecycle = useQuery(habitLifecycleRef, { dayKey });
-  const stalePrompts = useQuery(habitStalePromptsRef, { dayKey });
+  const habits = useQuery(todayHabitsRef, { dayKey, lowEnergyMode }) ?? [];
+  const gentleReturn = useQuery(gentleReturnSuggestionRef, { dayKey });
+  const analytics = useQuery(habitAnalyticsRef, { dayKey });
 
   const logHabit = useMutation(logHabitRef);
   const skipHabit = useMutation(skipHabitRef);
   const snoozeHabit = useMutation(snoozeHabitRef);
-  const relapseHabit = useMutation(relapseHabitRef);
-  const archiveHabit = useMutation(archiveHabitRef);
-  const clearHabitTodayStatus = useMutation(clearHabitTodayStatusRef);
-  const respondStaleHabitPrompt = useMutation(respondStaleHabitPromptRef);
-  const resolveMissedHabits = useMutation(resolveMissedHabitsRef);
 
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const doneCount = habits.filter((habit) => habit.todayStatus === "completed").length;
+  const completionRate = habits.length > 0 ? Math.round((doneCount / habits.length) * 100) : 0;
+  const remainingCount = Math.max(habits.length - doneCount, 0);
 
-  const groupedHabits = React.useMemo(() => {
-    const list = habits || [];
-    return ANCHOR_ORDER.map((anchor) => ({
-      anchor,
-      items: list.filter((habit) => (habit.anchor || "anytime") === anchor),
-    })).filter((group) => group.items.length > 0);
-  }, [habits]);
-
-  const doneCount = (habits || []).filter((habit) => habit.todayStatus === "completed").length;
-  const totalCount = (habits || []).length;
-  const isLoading = habits === undefined;
-
-  React.useEffect(() => {
-    void resolveMissedHabits({ dayKey, lookbackDays: 21 }).catch(() => undefined);
-  }, [dayKey, resolveMissedHabits]);
-
-  const runHabitAction = async ({
-    operation,
-    successLabel,
-    errorLabel,
-    successVariant = "success",
-  }: {
-    operation: () => Promise<unknown>;
-    successLabel: string;
-    errorLabel: string;
-    successVariant?: "success" | "warning" | "default";
-  }) => {
-    setIsSubmitting(true);
+  const handleComplete = async (habit: (typeof habits)[number], value?: number) => {
     try {
-      await operation();
-      toast.show({ variant: successVariant, label: successLabel });
+      await logHabit({
+        idempotencyKey: idempotencyKey("habits.log"),
+        habitId: habit.habitId,
+        dayKey,
+        value,
+      });
+      toast.show({ variant: "success", label: value === undefined ? "Habit logged" : "Habit value logged" });
+      setPendingValueHabit(null);
+      setPendingValue("");
     } catch {
-      toast.show({ variant: "danger", label: errorLabel });
-    } finally {
-      setIsSubmitting(false);
+      toast.show({ variant: "danger", label: "Failed to log habit" });
     }
   };
 
-  const handleLog = async (habitId: string) => {
-    await runHabitAction({
-      operation: () =>
-        logHabit({
-          idempotencyKey: `habits.log:${habitId}:${Date.now()}`,
-          habitId: habitId as Id<"habits">,
-          dayKey,
-        }),
-      successLabel: "Marked Done for Today",
-      errorLabel: "Failed to log habit",
-    });
+  const handleSnooze = async (habitId: Id<"habits">) => {
+    try {
+      await snoozeHabit({
+        idempotencyKey: idempotencyKey("habits.snooze"),
+        habitId,
+        dayKey,
+        snoozedUntil: Date.now() + 60 * 60 * 1000,
+      });
+      toast.show({ variant: "success", label: "Habit snoozed for 1 hour" });
+    } catch {
+      toast.show({ variant: "danger", label: "Failed to snooze habit" });
+    }
   };
 
-  const handleSkip = async (habitId: string) => {
-    await runHabitAction({
-      operation: () =>
-        skipHabit({
-          idempotencyKey: `habits.skip:${habitId}:${Date.now()}`,
-          habitId: habitId as Id<"habits">,
-          dayKey,
-        }),
-      successLabel: "Marked Skipped for Today",
-      errorLabel: "Failed to skip habit",
-    });
-  };
-
-  const handleSnooze = async (habitId: string) => {
-    await runHabitAction({
-      operation: () =>
-        snoozeHabit({
-          idempotencyKey: `habits.snooze:${habitId}:${Date.now()}`,
-          habitId: habitId as Id<"habits">,
-          dayKey,
-          snoozedUntil: Date.now() + 60 * 60 * 1000,
-        }),
-      successLabel: "Snoozed for Today (1 Hour)",
-      errorLabel: "Failed to snooze habit",
-    });
-  };
-
-  const handleUndoToday = async (habitId: string) => {
-    await runHabitAction({
-      operation: () =>
-        clearHabitTodayStatus({
-          idempotencyKey: `habits.clearToday:${habitId}:${dayKey}:${Date.now()}`,
-          habitId: habitId as Id<"habits">,
-          dayKey,
-        }),
-      successLabel: "Cleared Today Status",
-      errorLabel: "Failed to clear today status",
-    });
-  };
-
-  const handleArchive = async (habitId: string) => {
-    await runHabitAction({
-      operation: () =>
-        archiveHabit({
-          idempotencyKey: `habits.archive:${habitId}:${Date.now()}`,
-          habitId: habitId as Id<"habits">,
-        }),
-      successLabel: "Habit archived",
-      errorLabel: "Failed to archive habit",
-    });
-  };
-
-  const handleRelapse = async (habitId: string) => {
-    await runHabitAction({
-      operation: () =>
-        relapseHabit({
-          idempotencyKey: `habits.relapse:${habitId}:${Date.now()}`,
-          habitId: habitId as Id<"habits">,
-          dayKey,
-        }),
-      successLabel: "Relapse logged for today",
-      errorLabel: "Failed to log relapse",
-      successVariant: "warning",
-    });
-  };
-
-  const handleStalePrompt = async (
-    habitId: string,
-    action: "keep" | "pause_30" | "archive",
-  ) => {
-    const successLabel =
-      action === "keep"
-        ? "Habit kept active"
-        : action === "pause_30"
-          ? "Habit paused for 30 days"
-          : "Habit archived";
-
-    await runHabitAction({
-      operation: () =>
-        respondStaleHabitPrompt({
-          idempotencyKey: `habits.stalePrompt:${habitId}:${action}:${Date.now()}`,
-          habitId: habitId as Id<"habits">,
-          dayKey,
-          action,
-        }),
-      successLabel,
-      errorLabel: "Failed to update stale habit",
-    });
+  const handleSkip = async (habitId: Id<"habits">) => {
+    try {
+      await skipHabit({
+        idempotencyKey: idempotencyKey("habits.skip"),
+        habitId,
+        dayKey,
+      });
+      toast.show({ variant: "success", label: "Habit skipped" });
+    } catch {
+      toast.show({ variant: "danger", label: "Failed to skip habit" });
+    }
   };
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <ScrollView className="flex-1 bg-background" contentContainerClassName="px-4 pt-4 pb-24 gap-4">
-        <View className="flex-row items-center justify-between">
-          <View>
-            <Text className="text-3xl font-sans-extrabold text-foreground">Habits</Text>
-            <Text className="text-sm font-sans-medium text-muted-foreground mt-1">
-              {isTodayView ? "Today" : "Selected day"} {doneCount}/{totalCount} completed
-            </Text>
-          </View>
-          <View className="flex-row gap-2">
-            <Button label="+" onPress={() => router.push("/(tabs)/habits/add")} />
-          </View>
-        </View>
-
-        <BentoDashboard consistency={consistency} />
-        <View className="flex-row gap-2 mt-2 bg-surface rounded-2xl border border-border p-2">
-          <Button
-            label="View Consistency"
-            variant="ghost"
-            style={{ flex: 1 }}
-            onPress={() => router.push("/(tabs)/habits/consistency")}
-          />
-          <Button
-            label="Manage"
-            variant="ghost"
-            style={{ flex: 1 }}
-            onPress={() => router.push("/(tabs)/habits/manage")}
-          />
-        </View>
-
-        <DaySelector
-          days={weekDays}
-          selectedDayKey={selectedDayKey}
-          localTodayKey={localTodayKey}
-          onSelect={setSelectedDayKey}
-        />
-
-        {(lifecycle?.paused.length || 0) > 0 || (lifecycle?.archived.length || 0) > 0 ? (
-          <View className="bg-surface rounded-2xl border border-border p-4 gap-3 shadow-sm">
-            <SectionLabel>Lifecycle Summary</SectionLabel>
-            <Text className="text-sm text-foreground font-sans-semibold">
-              Paused: {(lifecycle?.paused || []).length} · Archived: {(lifecycle?.archived || []).length}
-            </Text>
-            <Text className="text-xs text-muted-foreground font-sans-medium">
-              Resume and restore actions live in Manage Habits.
-            </Text>
+    <Container className="flex-1 bg-background" isScrollable={false}>
+      <View className="px-4 pt-4">
+        <View className="flex-row items-start justify-between">
+          <Text className="text-3xl font-sans-extrabold text-foreground">Habits</Text>
+          <View className="flex-row gap-1">
             <Button
-              label="Open Manage Habits"
               variant="ghost"
-              onPress={() => router.push("/(tabs)/habits/manage")}
-            />
+              onPress={() => setLowEnergyMode((value) => !value)}
+              isIconOnly
+            >
+              <Ionicons
+                name={lowEnergyMode ? "battery-half" : "battery-half-outline"}
+                size={18}
+                color={colors.foreground}
+              />
+            </Button>
+            <Button variant="ghost" onPress={() => router.push("/(tabs)/habits/add")} isIconOnly>
+              <Ionicons name="add" size={22} color={colors.foreground} />
+            </Button>
+            <Button
+              variant="ghost"
+              onPress={() => router.push("/(tabs)/habits/consistency")}
+              isIconOnly
+            >
+              <Ionicons name="map-outline" size={20} color={colors.foreground} />
+            </Button>
           </View>
-        ) : null}
-
-        {isTodayView && (stalePrompts || []).length > 0 ? (
-          <View className="bg-surface rounded-2xl border border-border p-4 gap-3 shadow-sm">
-            <SectionLabel>Still Relevant?</SectionLabel>
-            {(stalePrompts || []).map((prompt) => (
-              <View key={prompt.habitId} className="border border-border rounded-xl p-3 gap-3 bg-background">
-                <Text className="text-sm text-foreground font-sans-semibold">{prompt.name}</Text>
-                <Text className="text-xs text-muted-foreground font-sans-medium">
-                  No engagement for {prompt.inactiveDays} days
-                  {prompt.stage === "overdue" ? " · Action recommended" : ""}
-                </Text>
-                <View className="flex-row flex-wrap gap-2">
-                  <ActionPill
-                    label="Keep"
-                    tone="success"
-                    onPress={() => handleStalePrompt(String(prompt.habitId), "keep")}
-                    disabled={isSubmitting}
-                  />
-                  <ActionPill
-                    label="Pause 30d"
-                    tone="primary"
-                    onPress={() => handleStalePrompt(String(prompt.habitId), "pause_30")}
-                    disabled={isSubmitting}
-                  />
-                  <ActionPill
-                    label="Archive"
-                    tone="danger"
-                    onPress={() => handleStalePrompt(String(prompt.habitId), "archive")}
-                    disabled={isSubmitting}
-                  />
-                </View>
-              </View>
-            ))}
-          </View>
-        ) : null}
-
-        <View className="bg-surface rounded-2xl border border-border p-4 gap-3 shadow-sm">
-          <SectionLabel>Quick Actions</SectionLabel>
-          <Button label="Add Habit" onPress={() => router.push("/(tabs)/habits/add")} />
-          <Button
-            label="Manage Paused/Archived"
-            variant="ghost"
-            onPress={() => router.push("/(tabs)/habits/manage")}
-          />
-          {!isTodayView ? (
-            <Text className="text-xs text-muted-foreground font-sans-medium">
-              Viewing history. Switch to today to log actions.
-            </Text>
-          ) : null}
         </View>
+        <Text className="text-sm font-sans-medium text-muted-foreground mt-1">
+          {doneCount}/{habits.length} done today
+          {lowEnergyMode ? " · low-energy mode" : ""}
+        </Text>
+      </View>
 
-        {isLoading ? (
-          <View className="py-12 items-center justify-center">
-            <Text className="text-base text-muted-foreground font-sans-medium">Loading...</Text>
+      {gentleReturn ? (
+        <View className="mx-4 mt-3 rounded-2xl border border-border bg-surface px-4 py-3">
+          <Text className="text-xs uppercase tracking-[0.6px] text-muted-foreground font-sans-semibold">
+            Gentle Return
+          </Text>
+          <Text className="text-sm text-foreground font-sans-semibold mt-1">Start with: {gentleReturn.name}</Text>
+          <Text className="text-xs text-muted-foreground mt-1">Inactive for 3+ days detected.</Text>
+        </View>
+      ) : null}
+
+      <View className="mx-4 mt-3 rounded-3xl border border-border bg-surface px-4 py-4">
+        <View className="flex-row items-center justify-between">
+          <Text className="text-sm font-sans-semibold text-foreground">{"Today's progress"}</Text>
+          <Text className="text-sm font-sans-bold text-foreground">{completionRate}%</Text>
+        </View>
+        <View className="mt-3 h-2 rounded-full bg-muted overflow-hidden">
+          <View className="h-full rounded-full bg-primary" style={{ width: `${completionRate}%` }} />
+        </View>
+        <Text className="mt-3 text-xs font-sans-medium text-muted-foreground">
+          {remainingCount > 0
+            ? `${remainingCount} habit${remainingCount === 1 ? "" : "s"} left to complete`
+            : habits.length === 0
+              ? "Add your first habit to start tracking progress."
+              : "Everything is complete for today."}
+        </Text>
+        {analytics ? (
+          <Text className="mt-2 text-xs text-muted-foreground">
+            7d: {analytics.completion7d.ratePct}% · 30d: {analytics.completion30d.ratePct}% ·
+            Low energy: {analytics.energyCompletion.low}%
+          </Text>
+        ) : null}
+      </View>
+
+      {pendingValueHabit ? (
+        <View className="mx-4 mt-3 rounded-2xl border border-border bg-surface px-4 py-3 gap-2">
+          <Text className="text-sm text-foreground font-sans-semibold">Log value for {pendingValueHabit.name}</Text>
+          <TextInput
+            className="rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground font-sans-medium"
+            keyboardType="decimal-pad"
+            value={pendingValue}
+            onChangeText={setPendingValue}
+            placeholder={
+              pendingValueHabit.targetType === "duration"
+                ? "Minutes"
+                : pendingValueHabit.targetUnit || "Value"
+            }
+            placeholderTextColor="#6b7280"
+          />
+          <View className="flex-row gap-2">
+            <Button
+              variant="secondary"
+              className="flex-1"
+              onPress={() => {
+                setPendingValueHabit(null);
+                setPendingValue("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="ghost"
+              className="flex-1"
+              onPress={() => {
+                const value = Number(pendingValue);
+                if (!Number.isFinite(value)) {
+                  toast.show({ variant: "warning", label: "Enter a valid numeric value" });
+                  return;
+                }
+                const matching = habits.find((habit) => habit.habitId === pendingValueHabit.habitId);
+                if (!matching) {
+                  toast.show({ variant: "danger", label: "Habit not found" });
+                  return;
+                }
+                void handleComplete(matching, value);
+              }}
+            >
+              Log Value
+            </Button>
           </View>
-        ) : groupedHabits.length === 0 ? (
-          <View className="py-12 items-center justify-center">
-            <Text className="text-base text-muted-foreground font-sans-semibold">No habits yet</Text>
-            <Text className="text-sm text-muted-foreground mt-1 font-sans-medium">
-              Add your first habit to get started
+        </View>
+      ) : null}
+
+      <ScrollView
+        className="flex-1"
+        contentContainerClassName="px-4 pt-4 pb-24 gap-3"
+        showsVerticalScrollIndicator={false}
+        contentInsetAdjustmentBehavior="automatic"
+      >
+        {habits.length === 0 ? (
+          <View className="rounded-3xl border border-dashed border-border bg-surface px-6 py-10 items-center justify-center">
+            <View className="h-12 w-12 rounded-full bg-primary/10 items-center justify-center">
+              <Ionicons name="leaf-outline" size={24} color={colors.accent} />
+            </View>
+            <Text className="mt-4 text-base text-foreground font-sans-semibold">No habits due today</Text>
+            <Text className="text-sm text-muted-foreground/80 text-center mt-1 font-sans-medium">
+              Add a habit or switch off low-energy mode.
             </Text>
+            <Pressable
+              className="mt-5 rounded-xl bg-primary px-4 py-2.5"
+              onPress={() => router.push("/(tabs)/habits/add")}
+            >
+              <Text className="text-sm font-sans-semibold text-primary-foreground">Create habit</Text>
+            </Pressable>
           </View>
         ) : (
-          groupedHabits.map((group) => (
-            <View key={group.anchor} className="gap-3">
-              <SectionLabel>{toTitleCase(group.anchor)}</SectionLabel>
-              <View className="bg-surface rounded-2xl border border-border p-4 gap-3 shadow-sm">
-                {group.items.map((habit) => {
-                  const status = formatStatus(habit.todayStatus);
-                  const resolved =
-                    status === "Done Today" ||
-                    status === "Skipped Today" ||
-                    status === "Relapsed" ||
-                    status === "Missed";
-                  const hasTodayStatus = status !== "Pending";
+          habits.map((habit) => (
+            <HabitCard
+              key={habit.habitId}
+              habit={habit}
+              onPress={() =>
+                router.push({
+                  pathname: "/(tabs)/habits/[id]",
+                  params: { id: habit.habitId },
+                })
+              }
+              onEditPress={() =>
+                router.push({ pathname: "/(tabs)/habits/edit", params: { id: habit.habitId } })
+              }
+              onStatsPress={() =>
+                router.push({
+                  pathname: "/(tabs)/habits/[id]",
+                  params: { id: habit.habitId },
+                })
+              }
+              onCompletePress={() => {
+                if ((habit.kind ?? "build") === "break") {
+                  const breakGoal = habit.breakGoal ?? (habit.targetValue === 0 ? "quit" : "limit");
+                  const breakMetric = habit.breakMetric ?? (habit.targetType === "duration" ? "minutes" : "times");
+                  if (breakGoal === "limit" && breakMetric === "minutes") {
+                    setPendingValueHabit({
+                      habitId: habit.habitId,
+                      name: habit.name,
+                      targetType: "duration",
+                      targetValue: habit.targetValue,
+                      targetUnit: "minutes",
+                    });
+                    setPendingValue("");
+                    return;
+                  }
+                  void handleComplete(habit, 1);
+                  return;
+                }
 
-                  return (
-                    <HabitCard
-                      key={habit.habitId}
-                      habit={habit}
-                      status={status}
-                      hasTodayStatus={hasTodayStatus}
-                      resolved={resolved}
-                      isTodayView={isTodayView}
-                      isSubmitting={isSubmitting}
-                      onLog={() => handleLog(habit.habitId)}
-                      onSkip={() => handleSkip(habit.habitId)}
-                      onSnooze={() => handleSnooze(habit.habitId)}
-                      onRelapse={() => handleRelapse(habit.habitId)}
-                      onUndo={() => handleUndoToday(habit.habitId)}
-                      onArchive={() => handleArchive(habit.habitId)}
-                      onEdit={() => router.push({ pathname: "/(tabs)/habits/edit", params: { id: habit.habitId } })}
-                      onStats={() => router.push({ pathname: "/(tabs)/habits/habit-consistency", params: { id: habit.habitId } })}
-                    />
-                  );
-                })}
-              </View>
-            </View>
+                if (habit.targetType === "quantity" || habit.targetType === "duration") {
+                  setPendingValueHabit({
+                    habitId: habit.habitId,
+                    name: habit.name,
+                    targetType: habit.targetType,
+                    targetValue: habit.targetValue,
+                    targetUnit: habit.targetUnit,
+                  });
+                  setPendingValue("");
+                  return;
+                }
+                void handleComplete(habit);
+              }}
+              onSkipPress={() => void handleSkip(habit.habitId)}
+              onSnoozePress={() => void handleSnooze(habit.habitId)}
+            />
           ))
         )}
       </ScrollView>
-    </GestureHandlerRootView>
+    </Container>
   );
 }

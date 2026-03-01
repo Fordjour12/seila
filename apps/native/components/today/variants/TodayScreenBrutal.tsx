@@ -337,7 +337,7 @@ export function TodayScreenBrutalist() {
               <Text style={[PT.headlineSM, { marginTop: 6 }]}>
                 {nextFocus ? nextFocus.text : "No focus task set"}
               </Text>
-              <Pressable onPress={() => router.push("/(tabs)/tasks")} style={s.focusFeatureLink}>
+              <Pressable onPress={() => router.push("/(tabs)/tasks/index" as never)} style={s.focusFeatureLink}>
                 <Text style={[PT.rubric, { color: T.amber }]}>Open task queue →</Text>
               </Pressable>
             </View>

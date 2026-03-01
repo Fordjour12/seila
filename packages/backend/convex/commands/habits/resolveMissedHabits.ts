@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 
 import { mutation } from "../../_generated/server";
-import { dayKeyValidator, isHabitActiveOnDay, upsertHabitLog } from "../../habits/shared";
+import { dayKeyValidator, isHabitActiveOnDay, isHabitScheduledOnDay, upsertHabitLog } from "../../habits/shared";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -26,16 +26,6 @@ function getLastDays(dayKey: string, daysBack: number) {
   return keys;
 }
 
-function weekday(dayKey: string) {
-  return parseDayKey(dayKey).getDay();
-}
-
-function isScheduled(cadence: "daily" | "weekdays" | { customDays: number[] }, day: number) {
-  if (cadence === "daily") return true;
-  if (cadence === "weekdays") return day >= 1 && day <= 5;
-  return cadence.customDays.includes(day);
-}
-
 export const resolveMissedHabits = mutation({
   args: {
     dayKey: dayKeyValidator,
@@ -53,10 +43,9 @@ export const resolveMissedHabits = mutation({
         .withIndex("by_day_key", (q) => q.eq("dayKey", day))
         .collect();
       const hasLog = new Set(dayLogs.map((log) => String(log.habitId)));
-      const dayWeekday = weekday(day);
-
       for (const habit of habits) {
         if (habit.archivedAt) continue;
+        if ((habit.kind ?? "build") === "break") continue;
         if (
           !isHabitActiveOnDay({
             dayKey: day,
@@ -67,7 +56,17 @@ export const resolveMissedHabits = mutation({
         ) {
           continue;
         }
-        if (!isScheduled(habit.cadence, dayWeekday)) continue;
+        if (
+          !isHabitScheduledOnDay({
+            dayKey: day,
+            cadence: habit.cadence,
+            frequencyType: habit.frequencyType,
+            frequencyConfig: habit.frequencyConfig,
+            startDayKey: habit.startDayKey,
+          })
+        ) {
+          continue;
+        }
         if (hasLog.has(String(habit._id))) continue;
 
         await upsertHabitLog(ctx, {

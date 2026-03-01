@@ -8,6 +8,7 @@ import {
   transactionSearchRef,
 } from "../lib/finance-refs";
 import { getLocalDayKey } from "../lib/date";
+import { HABITS_ENABLED } from "../lib/features";
 import { tasksInboxRef, todayHabitsRef } from "../lib/productivity-refs";
 
 type SearchableRoute = {
@@ -79,7 +80,7 @@ export function useSearchResults(
   const shouldSearch = trimmedQuery.length >= 2;
   const dayKey = getLocalDayKey();
 
-  const habits = useQuery(todayHabitsRef, { dayKey });
+  const habits = useQuery(todayHabitsRef, HABITS_ENABLED ? { dayKey } : "skip");
   const tasks = useQuery(tasksInboxRef, {});
   const accountSummary = useQuery(accountSummaryRef, {});
   const envelopes = useQuery(api.queries.envelopeSummary.envelopeSummary);
@@ -119,15 +120,17 @@ export function useSearchResults(
       }
     }
 
-    for (const habit of habits || []) {
-      if (!fuzzyMatch(trimmedQuery, habit.name)) continue;
-      results.push({
-        type: "habit",
-        key: `habit:${habit.habitId}`,
-        id: habit.habitId,
-        label: habit.name,
-        subtitle: habit.anchor ? `${habit.anchor} routine` : undefined,
-      });
+    if (HABITS_ENABLED) {
+      for (const habit of habits || []) {
+        if (!fuzzyMatch(trimmedQuery, habit.name)) continue;
+        results.push({
+          type: "habit",
+          key: `habit:${habit.habitId}`,
+          id: habit.habitId,
+          label: habit.name,
+          subtitle: habit.anchor ? `${habit.anchor} routine` : undefined,
+        });
+      }
     }
 
     for (const task of tasks || []) {

@@ -129,6 +129,7 @@ import type * as queries_debtStrategy from "../queries/debtStrategy.js";
 import type * as queries_envelopeSummary from "../queries/envelopeSummary.js";
 import type * as queries_financeSecuritySettings from "../queries/financeSecuritySettings.js";
 import type * as queries_habitHistory from "../queries/habitHistory.js";
+import type * as queries_habitInsights from "../queries/habitInsights.js";
 import type * as queries_habitManagement from "../queries/habitManagement.js";
 import type * as queries_habitStalePrompts from "../queries/habitStalePrompts.js";
 import type * as queries_hardModeDayClose from "../queries/hardModeDayClose.js";
@@ -292,6 +293,7 @@ declare const fullApi: ApiFromModules<{
   "queries/envelopeSummary": typeof queries_envelopeSummary;
   "queries/financeSecuritySettings": typeof queries_financeSecuritySettings;
   "queries/habitHistory": typeof queries_habitHistory;
+  "queries/habitInsights": typeof queries_habitInsights;
   "queries/habitManagement": typeof queries_habitManagement;
   "queries/habitStalePrompts": typeof queries_habitStalePrompts;
   "queries/hardModeDayClose": typeof queries_hardModeDayClose;

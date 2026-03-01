@@ -31,7 +31,27 @@ export const difficultyValidator = v.union(
 );
 
 export const kindValidator = v.union(v.literal("build"), v.literal("break"));
+export const breakGoalValidator = v.union(v.literal("quit"), v.literal("limit"));
+export const breakMetricValidator = v.union(v.literal("times"), v.literal("minutes"));
 export const dayKeyValidator = v.string();
+export const targetTypeValidator = v.union(
+  v.literal("binary"),
+  v.literal("quantity"),
+  v.literal("duration"),
+);
+export const frequencyTypeValidator = v.union(v.literal("daily"), v.literal("weekly"));
+export const frequencyConfigValidator = v.object({
+  everyXDays: v.optional(v.number()),
+  weekdays: v.optional(v.array(v.number())),
+});
+export const identityTagsValidator = v.array(v.string());
+export const energyLevelValidator = v.union(v.literal("low"), v.literal("medium"), v.literal("high"));
+export const timePreferenceValidator = v.union(
+  v.literal("morning"),
+  v.literal("afternoon"),
+  v.literal("evening"),
+  v.literal("flexible"),
+);
 
 const HABIT_EVENT_TYPES = new Set([
   "habit.created",
@@ -338,6 +358,56 @@ export function assertValidHabitTarget(args: { targetValue?: number; targetUnit?
   }
 }
 
+export function inferBreakGoal(args: {
+  kind?: "build" | "break";
+  breakGoal?: "quit" | "limit";
+  targetValue?: number;
+}) {
+  if (args.kind !== "break") return undefined;
+  if (args.breakGoal) return args.breakGoal;
+  return args.targetValue === 0 ? "quit" : "limit";
+}
+
+export function inferBreakMetric(args: {
+  breakMetric?: "times" | "minutes";
+  targetType?: "binary" | "quantity" | "duration";
+  targetUnit?: string;
+}) {
+  if (args.breakMetric) return args.breakMetric;
+  if (args.targetType === "duration" || args.targetUnit === "minutes") return "minutes";
+  return "times";
+}
+
+export function assertValidFrequencyConfig(args: {
+  frequencyType?: "daily" | "weekly";
+  frequencyConfig?: { everyXDays?: number; weekdays?: number[] };
+}) {
+  if (!args.frequencyType || !args.frequencyConfig) {
+    return;
+  }
+
+  const { frequencyType, frequencyConfig } = args;
+  if (frequencyType === "daily") {
+    if (
+      typeof frequencyConfig.everyXDays === "number" &&
+      (!Number.isInteger(frequencyConfig.everyXDays) || frequencyConfig.everyXDays <= 0)
+    ) {
+      throw new ConvexError("everyXDays must be an integer greater than zero");
+    }
+    return;
+  }
+
+  const weekdays = frequencyConfig.weekdays ?? [];
+  if (weekdays.length === 0) {
+    throw new ConvexError("weekly frequency requires at least one weekday");
+  }
+  for (const day of weekdays) {
+    if (!Number.isInteger(day) || day < 0 || day > 6) {
+      throw new ConvexError("weekdays must use integers 0-6");
+    }
+  }
+}
+
 export function isHabitActiveOnDay(args: {
   dayKey: string;
   startDayKey?: string;
@@ -357,6 +427,53 @@ export function isHabitActiveOnDay(args: {
   return true;
 }
 
+function dayKeyWeekday(dayKey: string) {
+  const [year, month, day] = dayKey.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+}
+
+export function isHabitScheduledOnDay(args: {
+  dayKey: string;
+  cadence: "daily" | "weekdays" | { customDays: number[] };
+  frequencyType?: "daily" | "weekly";
+  frequencyConfig?: { everyXDays?: number; weekdays?: number[] };
+  startDayKey?: string;
+}) {
+  const { dayKey, cadence, frequencyType, frequencyConfig } = args;
+  const weekday = dayKeyWeekday(dayKey);
+
+  if (frequencyType === "weekly") {
+    const weekdays = frequencyConfig?.weekdays ?? [];
+    return weekdays.includes(weekday);
+  }
+
+  if (frequencyType === "daily") {
+    const everyXDays = frequencyConfig?.everyXDays;
+    if (
+      typeof everyXDays === "number" &&
+      Number.isInteger(everyXDays) &&
+      everyXDays > 1 &&
+      args.startDayKey
+    ) {
+      const [startYear, startMonth, startDay] = args.startDayKey.split("-").map(Number);
+      const [year, month, day] = dayKey.split("-").map(Number);
+      const start = Date.UTC(startYear, startMonth - 1, startDay);
+      const current = Date.UTC(year, month - 1, day);
+      const diffDays = Math.floor((current - start) / (24 * 60 * 60 * 1000));
+      return diffDays >= 0 && diffDays % everyXDays === 0;
+    }
+    return true;
+  }
+
+  if (cadence === "daily") {
+    return true;
+  }
+  if (cadence === "weekdays") {
+    return weekday >= 1 && weekday <= 5;
+  }
+  return cadence.customDays.includes(weekday);
+}
+
 export async function upsertHabitLog(
   ctx: MutationCtx,
   args: {
@@ -364,6 +481,8 @@ export async function upsertHabitLog(
     dayKey: string;
     status: "completed" | "skipped" | "snoozed" | "missed" | "relapsed";
     occurredAt: number;
+    value?: number;
+    completed?: boolean;
     snoozedUntil?: number;
   },
 ) {
@@ -378,6 +497,8 @@ export async function upsertHabitLog(
     await ctx.db.patch(existing._id, {
       status: args.status,
       occurredAt: args.occurredAt,
+      value: args.value,
+      completed: args.completed,
       snoozedUntil: args.snoozedUntil,
       updatedAt: Date.now(),
     });
@@ -389,6 +510,8 @@ export async function upsertHabitLog(
     dayKey: args.dayKey,
     status: args.status,
     occurredAt: args.occurredAt,
+    value: args.value,
+    completed: args.completed,
     snoozedUntil: args.snoozedUntil,
     createdAt: Date.now(),
     updatedAt: Date.now(),
