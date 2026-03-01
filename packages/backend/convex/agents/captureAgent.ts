@@ -1,6 +1,6 @@
 "use node";
 
-import { Agent, createTool, google, components, sharedTools, z } from "../agent";
+import { Agent, createTool, components, defaultLanguageModel, sharedTools, z } from "../agent";
 import { CAPTURE_SYSTEM } from "../lib/prompts/capture";
 import { makeFunctionReference } from "convex/server";
 
@@ -10,7 +10,7 @@ const activeSuggestionsRef = makeFunctionReference<"query", {}, unknown>(
 
 export const captureAgent = new Agent(components.agent, {
   name: "captureAgent",
-  languageModel: google("gemini-2.0-flash"),
+  languageModel: defaultLanguageModel,
   instructions: CAPTURE_SYSTEM,
   tools: {
     ...sharedTools,

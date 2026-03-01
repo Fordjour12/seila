@@ -1,6 +1,6 @@
 "use node";
 
-import { Agent, createTool, google, components, sharedTools, z } from "../agent";
+import { Agent, createTool, components, defaultLanguageModel, sharedTools, z } from "../agent";
 import { WEEKLY_SUMMARY_SYSTEM } from "../lib/prompts/weeklySummary";
 import { makeFunctionReference } from "convex/server";
 
@@ -23,7 +23,7 @@ const activePatternsRef = makeFunctionReference<"query", {}, unknown>(
 
 export const summaryAgent = new Agent(components.agent, {
   name: "summaryAgent",
-  languageModel: google("gemini-2.0-flash"),
+  languageModel: defaultLanguageModel,
   instructions: WEEKLY_SUMMARY_SYSTEM,
   tools: {
     ...sharedTools,

@@ -1,6 +1,6 @@
 "use node";
 
-import { Agent, createTool, google, components, sharedTools, z } from "../agent";
+import { Agent, createTool, components, defaultLanguageModel, sharedTools, z } from "../agent";
 import { HARD_MODE_PLAN_SYSTEM } from "../lib/prompts/hardModePlan";
 import { makeFunctionReference } from "convex/server";
 
@@ -17,7 +17,7 @@ const recentEventsForPatternsRef = makeFunctionReference<"query", { since: numbe
 
 export const plannerAgent = new Agent(components.agent, {
   name: "plannerAgent",
-  languageModel: google("gemini-2.0-flash"),
+  languageModel: defaultLanguageModel,
   instructions: HARD_MODE_PLAN_SYSTEM,
   tools: {
     ...sharedTools,

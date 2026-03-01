@@ -1,6 +1,6 @@
 "use node";
 
-import { Agent, createTool, google, components, sharedTools, z } from "../agent";
+import { Agent, createTool, components, defaultLanguageModel, sharedTools, z } from "../agent";
 import { PATTERN_EXPLAIN_SYSTEM } from "../lib/prompts/patternExplain";
 import { makeFunctionReference } from "convex/server";
 
@@ -12,7 +12,7 @@ const getPatternByTypeRef = makeFunctionReference<
 
 export const patternAgent = new Agent(components.agent, {
   name: "patternAgent",
-  languageModel: google("gemini-2.0-flash"),
+  languageModel: defaultLanguageModel,
   instructions: PATTERN_EXPLAIN_SYSTEM,
   tools: {
     ...sharedTools,

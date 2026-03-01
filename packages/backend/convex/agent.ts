@@ -1,7 +1,7 @@
 "use node";
 
 import { Agent, createTool } from "@convex-dev/agent";
-import { google } from "@ai-sdk/google";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import type { ToolSet } from "ai";
 import { z } from "zod";
 import { makeFunctionReference } from "convex/server";
@@ -13,6 +13,19 @@ const readAiContextRef = makeFunctionReference<"query", {}, unknown>(
 const lastCheckinRef = makeFunctionReference<"query", {}, unknown>(
   "queries/lastCheckin:internalLastCheckin",
 );
+
+const openRouterApiKey = process.env.OPENROUTER_API_KEY;
+
+if (!openRouterApiKey) {
+  throw new Error("Missing OPENROUTER_API_KEY for OpenRouter provider.");
+}
+
+const openrouter = createOpenRouter({
+  apiKey: openRouterApiKey,
+});
+
+const openRouterModel = process.env.OPENROUTER_MODEL ?? "openai/gpt-4o-mini";
+export const defaultLanguageModel = openrouter.chat(openRouterModel);
 
 // ─────────────────────────────────────────────
 // BASE_SYSTEM — shared across every agent
@@ -70,4 +83,4 @@ export const sharedTools: ToolSet = {
 // Re-exports for agent definitions
 // ─────────────────────────────────────────────
 
-export { Agent, createTool, google, components, z };
+export { Agent, createTool, components, z };
